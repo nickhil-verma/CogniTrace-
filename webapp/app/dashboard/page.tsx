@@ -1,0 +1,54 @@
+'use client';
+
+import React from 'react';
+import { PatientStatus } from '@/components/dashboard/PatientStatus';
+import { TodaysCare } from '@/components/dashboard/TodaysCare';
+import { RecentChanges } from '@/components/dashboard/RecentChanges';
+import { CommandCenterCard } from '@/components/dashboard/CommandCenterCard';
+import { usePatientSummary } from '@/hooks/usePatientSummary';
+import { Skeleton } from '@/components/ui/skeleton';
+
+export default function DashboardPage() {
+  const { data: summary, isLoading, error } = usePatientSummary();
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Header */}
+      <div className="space-y-1">
+        <h1 className="text-3xl font-extrabold tracking-tight text-[#123B35]">
+          Good morning, Priya
+        </h1>
+        <p className="text-sm font-medium text-[#66736F]">
+          Here's how things are going with Mom today.
+        </p>
+      </div>
+
+      {error && (
+        <div className="p-3.5 rounded-2xl bg-[#E7A23B]/10 text-xs font-semibold text-[#123B35] border border-[#E7A23B]/30">
+          {error}
+        </div>
+      )}
+
+      {/* Main Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column (Patient Status + AI Command Center Card) */}
+        <div className="lg:col-span-2 space-y-6">
+          {isLoading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : (
+            <PatientStatus summary={summary} />
+          )}
+
+          {/* AI Voice Command Center Hero Card */}
+          <CommandCenterCard />
+        </div>
+
+        {/* Right Column (Today's Care + Recent Changes) */}
+        <div className="space-y-6">
+          <TodaysCare />
+          <RecentChanges changes={summary?.observedChanges} />
+        </div>
+      </div>
+    </div>
+  );
+}
