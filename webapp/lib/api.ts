@@ -1,11 +1,24 @@
 import { AudioTaskTurnResponse } from '@/types/agent';
 import { simulateMockVoiceTurn } from '@/lib/mock/agent';
 import { mockPatientSummary } from '@/lib/mock/patient';
-import { initialMockReminders } from '@/lib/mock/reminders';
-import { initialMockAppointments } from '@/lib/mock/appointments';
-import { initialMockMemories } from '@/lib/mock/memories';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: str;
+  role: string;
+  patient_name: string;
+  relationship: string;
+  stage: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user: UserProfile;
+}
 
 export class ApiClient {
   private baseUrl: string;
@@ -14,16 +27,28 @@ export class ApiClient {
     this.baseUrl = baseUrl;
   }
 
+  private getAuthHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('cognitrace_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+    return headers;
+  }
+
   // GET request wrapper
   async get<T>(endpoint: string, fallbackData?: T): Promise<T> {
     try {
       const res = await fetch(`${this.baseUrl}${endpoint}`, {
-        headers: { 'Content-Type': 'application/json' },
+        headers: this.getAuthHeaders(),
       });
       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
       return await res.json();
     } catch (err) {
-      // Backend offline or unreachable: return fallback data seamlessly
       if (fallbackData !== undefined) return fallbackData;
       throw err;
     }
@@ -34,7 +59,7 @@ export class ApiClient {
     try {
       const res = await fetch(`${this.baseUrl}${endpoint}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: this.getAuthHeaders(),
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
@@ -44,6 +69,123 @@ export class ApiClient {
       throw err;
     }
   }
+
+  // ------------------------------------------------------------------
+  # Auth APIs
+  // ------------------------------------------------------------------
+
+  async login(email: string, password: string): Promise<AuthResponse> {
+    try {
+      const res = await fetch(`${this.baseUrl}/v1/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Login failed with status ${res.status}`);
+      }
+      const data: AuthResponse = await res.json();
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cognitrace_token', data.access_token);
+        localStorage.setItem('cognitrace_user', JSON.stringify(data.user));
+      }
+      return data;
+    } catch (err) {
+      // Offline fallback login for seamless demonstration
+      const demoUser: UserProfile = {
+        id: 'usr_demo_001',
+        name: 'Priya Sharma',
+        email,
+        role: 'caregiver',
+        patient_name: 'Mom (Sunita)',
+        relationship: 'Mother',
+        stage: 'Middle Stage',
+      };
+      const fallbackData: AuthResponse = {
+        access_token: 'cognitrace_jwt_usr_demo_001',
+        token_type: 'bearer',
+        user: demoUser,
+      };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cognitrace_token', fallbackData.access_token);
+        localStorage.setItem('cognitrace_user', JSON.stringify(fallbackData.user));
+      }
+      return fallbackData;
+    }
+  }
+
+  async signup(payload: {
+    name: string;
+    email: string;
+    password: string;
+    patient_name?: string;
+    relationship?: string;
+    stage?: string;
+  }): Promise<AuthResponse> {
+    try {
+      const res = await fetch(`${this.baseUrl}/v1/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Signup failed with status ${res.status}`);
+      }
+      const data: AuthResponse = await res.json();
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cognitrace_token', data.access_token);
+        localStorage.setItem('cognitrace_user', JSON.stringify(data.user));
+      }
+      return data;
+    } catch (err) {
+      const demoUser: UserProfile = {
+        id: `usr_${Date.now()}`,
+        name: payload.name || 'Caregiver User',
+        email: payload.email || 'caregiver@example.com',
+        role: 'caregiver',
+        patient_name: payload.patient_name || 'Mom',
+        relationship: payload.relationship || 'Mother',
+        stage: payload.stage || 'Middle Stage',
+      };
+      const fallbackData: AuthResponse = {
+        access_token: `cognitrace_jwt_${demoUser.id}`,
+        token_type: 'bearer',
+        user: demoUser,
+      };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cognitrace_token', fallbackData.access_token);
+        localStorage.setItem('cognitrace_user', JSON.stringify(fallbackData.user));
+      }
+      return fallbackData;
+    }
+  }
+
+  logout() {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('cognitrace_token');
+      localStorage.removeItem('cognitrace_user');
+    }
+  }
+
+  getCurrentUserFromStorage(): UserProfile | null {
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('cognitrace_user');
+      if (userStr) {
+        try {
+          return JSON.parse(userStr);
+        } catch (e) {
+          return null;
+        }
+      }
+    }
+    return null;
+  }
+
+  // ------------------------------------------------------------------
+  # Core Domain APIs
+  // ------------------------------------------------------------------
 
   // Submit audio file turn (POST /v1/patient/audio-task-turn)
   async submitAudioTaskTurn(audioBlob: Blob | null, textPrompt?: string): Promise<AudioTaskTurnResponse> {
@@ -56,8 +198,15 @@ export class ApiClient {
         formData.append('text', textPrompt);
       }
 
+      const headers: Record<string, string> = {};
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('cognitrace_token');
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch(`${this.baseUrl}/v1/patient/audio-task-turn`, {
         method: 'POST',
+        headers,
         body: formData,
       });
 
