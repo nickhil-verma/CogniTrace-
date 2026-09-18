@@ -12,6 +12,19 @@ class Settings(BaseSettings):
     WHISPER_MODEL_SIZE: str = "tiny"
     WHISPER_DEVICE: str = "cpu"
     WHISPER_COMPUTE_TYPE: str = "int8"
+    WHISPER_MODEL_DIR: str = "/opt/models/whisper"
+    HF_HUB_OFFLINE: bool = False
+
+    # Database & Redis Settings
+    POSTGRES_URI: str = "postgresql://postgres:postgres@localhost:5432/cognitrace"
+    POSTGRES_MAX_POOL: int = 20
+    REDIS_URL: str = "redis://localhost:6379/0"
+
+    # Storage Adapter Settings ('local' or 's3')
+    STORAGE_PROVIDER: str = "local"
+    S3_BUCKET_NAME: str = "cognitrace-audio-uploads"
+    AWS_REGION: str = "us-east-1"
+    LOCAL_STORAGE_DIR: str = "data/uploads"
     
     model_config = SettingsConfigDict(
         env_file=".env",
