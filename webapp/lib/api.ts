@@ -27,6 +27,21 @@ export class ApiClient {
     this.baseUrl = baseUrl;
   }
 
+  public getBaseUrl(): string {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('cognitrace_api_url');
+      if (saved) return saved;
+    }
+    return this.baseUrl;
+  }
+
+  public setBaseUrl(url: string) {
+    this.baseUrl = url;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('cognitrace_api_url', url);
+    }
+  }
+
   private getAuthHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -43,7 +58,7 @@ export class ApiClient {
   // GET request wrapper
   async get<T>(endpoint: string, fallbackData?: T): Promise<T> {
     try {
-      const res = await fetch(`${this.baseUrl}${endpoint}`, {
+      const res = await fetch(`${this.getBaseUrl()}${endpoint}`, {
         headers: this.getAuthHeaders(),
       });
       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
@@ -57,7 +72,7 @@ export class ApiClient {
   // POST request wrapper
   async post<T>(endpoint: string, body: any, fallbackResponse?: T): Promise<T> {
     try {
-      const res = await fetch(`${this.baseUrl}${endpoint}`, {
+      const res = await fetch(`${this.getBaseUrl()}${endpoint}`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(body),
@@ -76,7 +91,7 @@ export class ApiClient {
 
   async login(email: string, password: string, role: string = 'caregiver'): Promise<AuthResponse> {
     try {
-      const res = await fetch(`${this.baseUrl}/v1/auth/login`, {
+      const res = await fetch(`${this.getBaseUrl()}/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role }),
@@ -118,7 +133,7 @@ export class ApiClient {
 
   async patientLogin(): Promise<AuthResponse> {
     try {
-      const res = await fetch(`${this.baseUrl}/v1/auth/patient-login`, {
+      const res = await fetch(`${this.getBaseUrl()}/v1/auth/patient-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -163,7 +178,7 @@ export class ApiClient {
     stage?: string;
   }): Promise<AuthResponse> {
     try {
-      const res = await fetch(`${this.baseUrl}/v1/auth/signup`, {
+      const res = await fetch(`${this.getBaseUrl()}/v1/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -243,7 +258,7 @@ export class ApiClient {
         if (token) headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch(`${this.baseUrl}/v1/patient/audio-task-turn`, {
+      const res = await fetch(`${this.getBaseUrl()}/v1/patient/audio-task-turn`, {
         method: 'POST',
         headers,
         body: formData,
