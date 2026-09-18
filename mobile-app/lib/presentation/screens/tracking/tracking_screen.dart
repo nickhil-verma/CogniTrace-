@@ -136,7 +136,7 @@ class TrackingScreen extends ConsumerWidget {
                 data: (obs) {
                   return ListView.separated(
                     shrinkWrap: true,
-                    physics: const NeverScrollablePhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: obs.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {

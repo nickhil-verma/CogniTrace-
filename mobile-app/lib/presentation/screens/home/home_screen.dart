@@ -205,7 +205,7 @@ class HomeScreen extends ConsumerWidget {
                   data: (reminders) {
                     return ListView.separated(
                       shrinkWrap: true,
-                      physics: const NeverScrollablePhysics(),
+                      physics: const NeverScrollableScrollPhysics(),
                       itemCount: reminders.take(3).length,
                       separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (context, index) {

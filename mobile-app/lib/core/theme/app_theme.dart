@@ -25,7 +25,7 @@ abstract class AppTheme {
         bodyLarge: baseTextTheme.bodyLarge?.copyWith(color: AppColors.primaryText),
         bodyMedium: baseTextTheme.bodyMedium?.copyWith(color: AppColors.secondaryText),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(

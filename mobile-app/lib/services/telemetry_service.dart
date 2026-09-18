@@ -23,15 +23,21 @@ class TelemetryService {
 
   TelemetryService({CogniTraceApi? api}) : _api = api;
 
-  Future<void> logEvent(String eventName, [Map<String, dynamic>? metadata]) async {
+  Future<void> logEvent(
+    String eventName, [
+    Map<String, dynamic>? metadata,
+  ]) async {
     final event = TelemetryEvent(
       eventName: eventName,
       timestamp: DateTime.now(),
       metadata: metadata,
     );
+
     try {
-      if (_api != null) {
-        await _api.syncTelemetry(event.toJson());
+      final api = _api;
+
+      if (api != null) {
+        await api.syncTelemetry(event.toJson());
       }
     } catch (_) {
       // Telemetry failures should never interrupt UI

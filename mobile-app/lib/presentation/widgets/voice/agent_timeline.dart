@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_radius.dart';
-import '../../domain/entities/cognitrace_entities.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../domain/entities/cognitrace_entities.dart';
 
 /// Renders the step-by-step agent tool execution timeline for transparent caregiver AI actions.
 class AgentTimeline extends StatelessWidget {
@@ -45,7 +45,7 @@ class AgentTimeline extends StatelessWidget {
           const SizedBox(height: 12),
           ListView.separated(
             shrinkWrap: true,
-            physics: const NeverScrollablePhysics(),
+            physics: const NeverScrollableScrollPhysics(),
             itemCount: actions.length,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (context, index) {

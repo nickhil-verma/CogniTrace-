@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_radius.dart';
-import '../../domain/entities/cognitrace_entities.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../domain/entities/cognitrace_entities.dart';
 
 class PatientStatusCard extends StatelessWidget {
   final PatientEntity patient;
