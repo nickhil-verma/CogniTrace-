@@ -31,51 +31,52 @@ class HomeScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top Header Row with Language Selector & Patient Switcher
+                // Responsive Header
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Good morning ☀️',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                            color: AppColors.primaryText,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Good morning ☀️',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.5,
+                              color: AppColors.primaryText,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          "Here's how things are going with Mom today.",
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.secondaryText,
+                          const SizedBox(height: 2),
+                          const Text(
+                            "Here's how things are going with Mom today.",
+                            softWrap: true,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.secondaryText,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    Row(
-                      children: [
-                        const LanguageSelector(),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () => context.push('/patient-profile'),
-                          child: Container(
-                            width: 38,
-                            height: 38,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.mint,
-                            ),
-                            child: const Center(
-                              child: Text('👵', style: TextStyle(fontSize: 18)),
-                            ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => context.push('/patient-profile'),
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.mint,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            '👵',
+                            style: TextStyle(fontSize: 18),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -185,7 +186,8 @@ class HomeScreen extends ConsumerWidget {
                       borderRadius: AppRadius.largeBorderRadius,
                     ),
                     child: const Center(
-                        child: CircularProgressIndicator(color: AppColors.deepTeal)),
+                        child: CircularProgressIndicator(
+                            color: AppColors.deepTeal)),
                   ),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
@@ -271,7 +273,8 @@ class HomeScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 90), // Bottom padding for floating nav bar
+                const SizedBox(
+                    height: 90), // Bottom padding for floating nav bar
               ],
             ),
           ),
