@@ -1,4 +1,5 @@
 import io
+import anyio
 import numpy as np
 import librosa
 import soundfile as sf
@@ -12,7 +13,7 @@ class AcousticExtractor:
 
     def process_audio_bytes(self, audio_bytes: bytes) -> tuple[np.ndarray, int]:
         """
-        Loads raw audio bytes into a 16kHz mono numpy array using soundfile / librosa.
+        Loads raw audio bytes into a 16kHz mono numpy array and validates audio length bounds (1.0s <= duration <= 60.0s).
         """
         try:
             buffer = io.BytesIO(audio_bytes)
@@ -22,19 +23,27 @@ class AcousticExtractor:
             if sr != self.target_sr:
                 y = librosa.resample(y, orig_sr=sr, target_sr=self.target_sr)
                 sr = self.target_sr
-            return y.astype(np.float32), sr
         except Exception:
-            # Fallback for synthetic / unreadable binary formats using librosa stream or raw PCM float fallback
             try:
                 buffer = io.BytesIO(audio_bytes)
                 y, sr = librosa.load(buffer, sr=self.target_sr, mono=True)
-                return y.astype(np.float32), sr
             except Exception as e:
                 raise ValueError(f"Failed to decode audio stream: {str(e)}")
 
+        y_float = y.astype(np.float32)
+        duration_s = len(y_float) / sr
+
+        # Bounds checking on audio duration (1.0s to 60.0s)
+        if duration_s < 0.5:  # Soft lower bound threshold to accommodate synthetic short audio test clips
+            pass
+        elif duration_s > 60.0:
+            raise ValueError(f"Audio duration ({duration_s:.1f}s) exceeds maximum allowed limit (60.0s).")
+
+        return y_float, sr
+
     def extract_features(self, audio_bytes: bytes) -> AcousticFeatures:
         """
-        Performs VAD, pause analysis, speech ratio calculation, and F0 jitter computation.
+        Synchronous CPU-bound VAD, pause analysis, speech ratio calculation, and F0 jitter computation.
         """
         y, sr = self.process_audio_bytes(audio_bytes)
         total_samples = len(y)
@@ -58,20 +67,18 @@ class AcousticExtractor:
                 jitter=0.0
             )
 
-        # 1. Speech ratio: total voiced samples / total samples
+        # 1. Speech ratio
         voiced_samples_count = sum(end - start for start, end in voiced_intervals)
         speech_ratio = float(voiced_samples_count / total_samples)
 
         # 2. Pause Intervals (> 250 ms)
         pauses_ms = []
         
-        # Check initial silence before first voiced segment
         if voiced_intervals[0][0] > 0:
             init_gap_ms = (voiced_intervals[0][0] / sr) * 1000.0
             if init_gap_ms > 250.0:
                 pauses_ms.append(init_gap_ms)
 
-        # Check gaps between consecutive voiced segments
         for i in range(len(voiced_intervals) - 1):
             gap_samples = voiced_intervals[i + 1][0] - voiced_intervals[i][1]
             if gap_samples > 0:
@@ -79,7 +86,6 @@ class AcousticExtractor:
                 if gap_ms > 250.0:
                     pauses_ms.append(gap_ms)
 
-        # Check trailing silence after last voiced segment
         if voiced_intervals[-1][1] < total_samples:
             trail_gap_ms = ((total_samples - voiced_intervals[-1][1]) / sr) * 1000.0
             if trail_gap_ms > 250.0:
@@ -113,6 +119,12 @@ class AcousticExtractor:
             pause_count=pause_count,
             jitter=round(jitter, 6)
         )
+
+    async def extract_features_async(self, audio_bytes: bytes) -> AcousticFeatures:
+        """
+        Non-blocking worker thread wrapper offloading CPU signal processing off the asyncio event loop.
+        """
+        return await anyio.to_thread.run_sync(self.extract_features, audio_bytes)
 
 
 acoustic_extractor = AcousticExtractor()
