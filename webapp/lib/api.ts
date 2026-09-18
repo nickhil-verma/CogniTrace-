@@ -71,7 +71,7 @@ export class ApiClient {
   }
 
   // ------------------------------------------------------------------
-  # Auth APIs
+  // Auth APIs
   // ------------------------------------------------------------------
 
   async login(email: string, password: string): Promise<AuthResponse> {
@@ -184,7 +184,7 @@ export class ApiClient {
   }
 
   // ------------------------------------------------------------------
-  # Core Domain APIs
+  // Core Domain APIs
   // ------------------------------------------------------------------
 
   // Submit audio file turn (POST /v1/patient/audio-task-turn)
