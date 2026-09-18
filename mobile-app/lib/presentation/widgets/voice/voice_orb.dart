@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_shadows.dart';
-import '../providers/voice_agent_provider.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_shadows.dart';
+import '../../providers/voice_agent_provider.dart';
 
 /// Animated VoiceOrb widget - Visual identity of CogniTrace.
 /// Supports 6 distinct animated states: IDLE, LISTENING, PROCESSING, EXECUTING, SPEAKING, ERROR.

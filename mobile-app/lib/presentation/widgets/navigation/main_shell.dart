@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/widgets/organic_background.dart';
+import '../../../core/widgets/organic_background.dart';
 import 'floating_voice_nav_bar.dart';
 
 class MainShell extends StatelessWidget {

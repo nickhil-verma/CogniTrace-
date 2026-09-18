@@ -37,7 +37,7 @@ class MemoriesScreen extends ConsumerWidget {
                 data: (memories) {
                   return ListView.separated(
                     shrinkWrap: true,
-                    physics: const NeverScrollablePhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: memories.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 16),
                     itemBuilder: (context, index) {
