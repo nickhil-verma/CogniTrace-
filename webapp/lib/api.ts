@@ -74,12 +74,12 @@ export class ApiClient {
   // Auth APIs
   // ------------------------------------------------------------------
 
-  async login(email: string, password: string): Promise<AuthResponse> {
+  async login(email: string, password: string, role: string = 'caregiver'): Promise<AuthResponse> {
     try {
       const res = await fetch(`${this.baseUrl}/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, role }),
       });
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
@@ -89,27 +89,66 @@ export class ApiClient {
       if (typeof window !== 'undefined') {
         localStorage.setItem('cognitrace_token', data.access_token);
         localStorage.setItem('cognitrace_user', JSON.stringify(data.user));
+        localStorage.setItem('cognitrace_user_role', data.user.role || role);
       }
       return data;
     } catch (err) {
-      // Offline fallback login for seamless demonstration
       const demoUser: UserProfile = {
-        id: 'usr_demo_001',
-        name: 'Priya Sharma',
+        id: role === 'patient' ? 'usr_patient_001' : 'usr_demo_001',
+        name: role === 'patient' ? 'Sunita Sharma' : 'Priya Sharma',
         email,
-        role: 'caregiver',
+        role: role === 'patient' ? 'patient' : 'caregiver',
         patient_name: 'Mom (Sunita)',
-        relationship: 'Mother',
+        relationship: role === 'patient' ? 'Self' : 'Mother',
         stage: 'Middle Stage',
       };
       const fallbackData: AuthResponse = {
-        access_token: 'cognitrace_jwt_usr_demo_001',
+        access_token: `cognitrace_jwt_${demoUser.id}`,
         token_type: 'bearer',
         user: demoUser,
       };
       if (typeof window !== 'undefined') {
         localStorage.setItem('cognitrace_token', fallbackData.access_token);
         localStorage.setItem('cognitrace_user', JSON.stringify(fallbackData.user));
+        localStorage.setItem('cognitrace_user_role', demoUser.role);
+      }
+      return fallbackData;
+    }
+  }
+
+  async patientLogin(): Promise<AuthResponse> {
+    try {
+      const res = await fetch(`${this.baseUrl}/v1/auth/patient-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error(`Patient login failed`);
+      const data: AuthResponse = await res.json();
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cognitrace_token', data.access_token);
+        localStorage.setItem('cognitrace_user', JSON.stringify(data.user));
+        localStorage.setItem('cognitrace_user_role', 'patient');
+      }
+      return data;
+    } catch (err) {
+      const demoUser: UserProfile = {
+        id: 'usr_patient_001',
+        name: 'Sunita Sharma (Mom)',
+        email: 'sunita.patient@example.com',
+        role: 'patient',
+        patient_name: 'Sunita',
+        relationship: 'Self',
+        stage: 'Middle Stage',
+      };
+      const fallbackData: AuthResponse = {
+        access_token: 'cognitrace_jwt_usr_patient_001',
+        token_type: 'bearer',
+        user: demoUser,
+      };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cognitrace_token', fallbackData.access_token);
+        localStorage.setItem('cognitrace_user', JSON.stringify(fallbackData.user));
+        localStorage.setItem('cognitrace_user_role', 'patient');
       }
       return fallbackData;
     }
