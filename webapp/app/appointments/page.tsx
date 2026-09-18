@@ -7,10 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Calendar, Plus, MapPin, Phone, User, Clock, AlertCircle } from 'lucide-react';
+import { Calendar, Plus, MapPin, User, Clock, Trash2 } from 'lucide-react';
 
 export default function AppointmentsPage() {
-  const { appointments, addAppointment, cancelAppointment } = useAppointments();
+  const { appointments, addAppointment, cancelAppointment, deleteAppointment } = useAppointments();
   const [isAddOpen, setIsAddOpen] = useState(false);
 
   // Form states
@@ -77,8 +77,19 @@ export default function AppointmentsPage() {
                   {apt.title}
                 </CardTitle>
               </div>
-              <div className="p-3 rounded-2xl bg-[#BFDCD6]/30 text-[#17665B]">
-                <Calendar className="w-6 h-6" />
+              <div className="flex items-center space-x-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => deleteAppointment(apt.id)}
+                  className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                  title="Delete Appointment"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+                <div className="p-3 rounded-2xl bg-[#BFDCD6]/30 text-[#17665B]">
+                  <Calendar className="w-6 h-6" />
+                </div>
               </div>
             </CardHeader>
 

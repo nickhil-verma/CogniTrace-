@@ -3,16 +3,17 @@
 import React from 'react';
 import { Memory } from '@/types/memory';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Mic, Users } from 'lucide-react';
+import { Calendar, MapPin, Mic, Users, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface MemoryCardProps {
   memory: Memory;
   onSelect?: (memory: Memory) => void;
   onReminisce?: (memory: Memory) => void;
+  onDelete?: (id: string) => void;
 }
 
-export function MemoryCard({ memory, onSelect, onReminisce }: MemoryCardProps) {
+export function MemoryCard({ memory, onSelect, onReminisce, onDelete }: MemoryCardProps) {
   return (
     <div className="group rounded-3xl border border-[#DDE7E3] bg-white overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
       <div>
@@ -23,10 +24,22 @@ export function MemoryCard({ memory, onSelect, onReminisce }: MemoryCardProps) {
             alt={memory.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 flex items-center space-x-1.5">
             <Badge variant="teal" className="shadow-sm">
               {memory.date}
             </Badge>
+            {onDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(memory.id);
+                }}
+                className="w-7 h-7 rounded-full bg-white/90 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-md transition-colors"
+                title="Delete Memory"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
 

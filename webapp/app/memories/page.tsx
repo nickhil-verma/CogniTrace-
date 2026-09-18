@@ -8,14 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Memory } from '@/types/memory';
-import { Image as ImageIcon, Plus, Sparkles, UploadCloud } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function MemoriesPage() {
   const router = useRouter();
-  const { memories, selectedMemory, setSelectedMemory, addMemory } = useMemories();
+  const { memories, selectedMemory, setSelectedMemory, addMemory, deleteMemory } = useMemories();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [reminisceActiveMemory, setReminisceActiveMemory] = useState<Memory>(memories[0]);
+  const [reminisceActiveMemory, setReminisceActiveMemory] = useState<Memory>(memories[0] || null);
 
   // Form states
   const [title, setTitle] = useState('');
@@ -27,7 +27,7 @@ export default function MemoriesPage() {
   const handleUploadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !description) return;
-    addMemory({
+    const newMem = {
       title,
       date: date || 'Recent',
       location: location || 'Home',
@@ -36,7 +36,8 @@ export default function MemoriesPage() {
       people: ['Mom', 'Caregiver'],
       tags: ['Family', 'Memory'],
       reminiscencePrompt: `Mom, do you remember when we enjoyed ${title}?`
-    });
+    };
+    addMemory(newMem);
     setIsUploadOpen(false);
     setTitle('');
     setDescription('');
@@ -88,6 +89,7 @@ export default function MemoriesPage() {
               memory={mem}
               onSelect={(m) => setSelectedMemory(m)}
               onReminisce={(m) => setReminisceActiveMemory(m)}
+              onDelete={(id) => deleteMemory(id)}
             />
           ))}
         </div>
@@ -138,7 +140,7 @@ export default function MemoriesPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[#123B35]">Image URL (or mock photo)</label>
+            <label className="text-xs font-bold text-[#123B35]">Image URL (or photo link)</label>
             <Input
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}

@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { FileEdit, Plus, Sparkles, Clock, Trash2, CheckCircle2 } from 'lucide-react';
+import { Plus, Sparkles, Clock, Trash2, Search } from 'lucide-react';
 
 interface JournalEntry {
   id: string;
@@ -15,7 +15,10 @@ interface JournalEntry {
   time: string;
   date: string;
   mood?: string;
+  category?: string;
 }
+
+const STORAGE_KEY = 'cognitrace_journal_v1';
 
 const initialEntries: JournalEntry[] = [
   {
@@ -24,7 +27,8 @@ const initialEntries: JournalEntry[] = [
     content: 'Mom seemed happier today. She recognized the old neighborhood bench where we used to sit and pointed out the bougainvillea flowers.',
     time: '5:42 PM',
     date: 'Today',
-    mood: 'Joyful'
+    mood: 'Joyful',
+    category: 'Mood & Activity'
   },
   {
     id: 'j_2',
@@ -32,7 +36,8 @@ const initialEntries: JournalEntry[] = [
     content: 'Appointment completed smoothly. Dr. Sharma noted her cognitive vitals are stable. Next check-in scheduled for next month.',
     time: '11:30 AM',
     date: 'Yesterday',
-    mood: 'Calm'
+    mood: 'Calm',
+    category: 'Medical'
   },
   {
     id: 'j_3',
@@ -40,19 +45,43 @@ const initialEntries: JournalEntry[] = [
     content: 'Looked through the 1987 Goa vacation photos together. Mom sang an old Konkani lullaby she remembered from her childhood.',
     time: '8:15 PM',
     date: '2 Days Ago',
-    mood: 'Reflective'
+    mood: 'Reflective',
+    category: 'Memory & Speech'
   }
 ];
 
 export default function JournalPage() {
   const [entries, setEntries] = useState<JournalEntry[]>(initialEntries);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
 
   // Form states
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [mood, setMood] = useState('Calm');
+  const [category, setCategory] = useState('Mood & Activity');
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        setEntries(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.warn('Failed to load journal entries', e);
+    } finally {
+      setIsLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded && typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    }
+  }, [entries, isLoaded]);
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +92,8 @@ export default function JournalPage() {
       content,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       date: 'Today',
-      mood: 'Calm'
+      mood,
+      category
     };
     setEntries([item, ...entries]);
     setIsAddOpen(false);
@@ -79,11 +109,16 @@ export default function JournalPage() {
     setIsSummarizing(true);
     setTimeout(() => {
       setAiSummary(
-        'AI Weekly Summary: Caretaker logged 3 reflective observations. Mom exhibited joyful mood during park walks and Goa photo reminiscence sessions. Cognitive vitals remain stable following Dr. Sharma’s consultation.'
+        `AI Weekly Summary: Caregiver logged ${entries.length} observations. Mom exhibited positive mood during park walks and photo reminiscence sessions. Cognitive vitals remain stable following medical check-in.`
       );
       setIsSummarizing(false);
-    }, 800);
+    }, 700);
   };
+
+  const filteredEntries = entries.filter((e) =>
+    e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    e.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -95,7 +130,7 @@ export default function JournalPage() {
             Reflective Care Journal
           </h1>
           <p className="text-sm text-[#66736F]">
-            Record daily thoughts, emotional moments, and caregiver notes.
+            Record daily thoughts, emotional moments, and caregiver notes with persistence.
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -115,6 +150,17 @@ export default function JournalPage() {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="relative max-w-md">
+        <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-[#66736F]" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search journal entries..."
+          className="pl-10"
+        />
+      </div>
+
       {/* AI Weekly Summary Card */}
       {aiSummary && (
         <Card className="bg-[#BFDCD6]/30 border-[#BFDCD6] p-5 space-y-2">
@@ -128,11 +174,14 @@ export default function JournalPage() {
 
       {/* Journal List */}
       <div className="space-y-4">
-        {entries.map((entry) => (
+        {filteredEntries.map((entry) => (
           <Card key={entry.id} className="p-6 space-y-3">
             <div className="flex items-start justify-between">
               <div>
-                <h4 className="text-lg font-bold text-[#123B35]">{entry.title}</h4>
+                <div className="flex items-center space-x-2">
+                  <h4 className="text-lg font-bold text-[#123B35]">{entry.title}</h4>
+                  {entry.category && <Badge variant="teal">{entry.category}</Badge>}
+                </div>
                 <div className="flex items-center space-x-2 text-xs text-[#66736F] mt-0.5">
                   <Clock className="w-3.5 h-3.5 text-[#17665B]" />
                   <span>{entry.date} at {entry.time}</span>
@@ -175,6 +224,35 @@ export default function JournalPage() {
               placeholder="e.g. Afternoon garden walk"
               required
             />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-[#123B35]">Mood</label>
+              <select
+                value={mood}
+                onChange={(e) => setMood(e.target.value)}
+                className="w-full h-11 rounded-2xl border border-[#DDE7E3] px-3 text-sm text-[#123B35]"
+              >
+                <option value="Joyful">Joyful</option>
+                <option value="Calm">Calm</option>
+                <option value="Reflective">Reflective</option>
+                <option value="Confused">Confused</option>
+                <option value="Restless">Restless</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-[#123B35]">Category</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full h-11 rounded-2xl border border-[#DDE7E3] px-3 text-sm text-[#123B35]"
+              >
+                <option value="Mood & Activity">Mood & Activity</option>
+                <option value="Medical">Medical</option>
+                <option value="Memory & Speech">Memory & Speech</option>
+                <option value="Motor Telemetry">Motor Telemetry</option>
+              </select>
+            </div>
           </div>
           <div className="space-y-1">
             <label className="text-xs font-bold text-[#123B35]">Reflective Notes</label>
