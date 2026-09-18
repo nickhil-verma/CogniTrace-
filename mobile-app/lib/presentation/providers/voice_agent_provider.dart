@@ -1,4 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import '../../core/constants/api_constants.dart';
+import '../../data/datasources/remote/cognitrace_api.dart';
 import '../../domain/entities/cognitrace_entities.dart';
 import '../../services/voice_recorder_service.dart';
 import '../../data/datasources/remote/mock_cognitrace_api.dart';
@@ -50,7 +53,11 @@ class VoiceAgentState {
 
 class VoiceAgentNotifier extends StateNotifier<VoiceAgentState> {
   final VoiceRecorderService _recorder = VoiceRecorderService();
-  final MockCogniTraceApi _api = MockCogniTraceApi();
+  final MockCogniTraceApi _mockApi = MockCogniTraceApi();
+  final CogniTraceApi _remoteApi = CogniTraceApi(
+    dio: Dio(),
+    baseUrl: ApiConstants.baseUrl,
+  );
 
   VoiceAgentNotifier()
       : super(const VoiceAgentState(status: VoiceAgentStatus.idle));
@@ -94,10 +101,15 @@ class VoiceAgentNotifier extends StateNotifier<VoiceAgentState> {
     state = state.copyWith(status: VoiceAgentStatus.processing);
 
     try {
-      final response = await _api.sendAudioTaskTurn(
-        audioPath: audioPath,
-        patientId: 'patient_mom_01',
-      );
+      final response = ApiConstants.useMockApi
+          ? await _mockApi.sendAudioTaskTurn(
+              audioPath: audioPath,
+              patientId: 'patient_mom_01',
+            )
+          : await _remoteApi.sendAudioTaskTurn(
+              audioPath: audioPath,
+              patientId: 'patient_mom_01',
+            );
 
       final transcript = response['transcript'] as String?;
       final responseText = response['response_text'] as String?;

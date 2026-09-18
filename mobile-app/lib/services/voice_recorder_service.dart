@@ -21,10 +21,10 @@ class VoiceRecorderService {
 
     if (await _audioRecorder.hasPermission()) {
       final dir = await getTemporaryDirectory();
-      _currentPath = '${dir.path}/cognitrace_input_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      _currentPath = '${dir.path}/cognitrace_input_${DateTime.now().millisecondsSinceEpoch}.wav';
 
       await _audioRecorder.start(
-        const RecordConfig(encoder: AudioEncoder.aacLc),
+        const RecordConfig(encoder: AudioEncoder.wav),
         path: _currentPath!,
       );
       _isRecording = true;
