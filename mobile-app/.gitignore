@@ -23,3 +23,11 @@ build/
 **/android/app/debug/
 **/android/app/profile/
 **/android/app/release/
+
+# Flutter generated project files
+.metadata
+*.iml
+pubspec.lock
+
+# Generated Android project
+android_backup/
