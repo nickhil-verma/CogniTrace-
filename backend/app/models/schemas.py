@@ -113,6 +113,7 @@ class PatientSummaryResponse(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str
+    role: Optional[str] = "caregiver"
 
 
 class SignupRequest(BaseModel):

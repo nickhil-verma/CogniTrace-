@@ -16,6 +16,16 @@ USERS_DB: Dict[str, Dict] = {
         "patient_name": "Mom (Sunita)",
         "relationship": "Mother",
         "stage": "Middle Stage"
+    },
+    "sunita.patient@example.com": {
+        "id": "usr_patient_001",
+        "name": "Sunita Sharma",
+        "email": "sunita.patient@example.com",
+        "password": "1234",
+        "role": "patient",
+        "patient_name": "Sunita (Mom)",
+        "relationship": "Self",
+        "stage": "Middle Stage"
     }
 }
 
@@ -23,13 +33,13 @@ USERS_DB: Dict[str, Dict] = {
 @router.post("/login", response_model=AuthResponse)
 async def login(payload: LoginRequest):
     """
-    Authenticates caregiver credentials and returns session token.
+    Authenticates caregiver or patient credentials and returns session token.
     """
     email_clean = payload.email.strip().lower()
+    role_requested = payload.role or "caregiver"
     user_data = USERS_DB.get(email_clean)
 
     if not user_data:
-        # Auto-provision user account for easy demo access if password length is valid
         if len(payload.password) < 4:
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
@@ -37,12 +47,12 @@ async def login(payload: LoginRequest):
         name = email_clean.split("@")[0].replace(".", " ").title()
         user_data = {
             "id": user_id,
-            "name": name if name else "Caregiver User",
+            "name": name if name else ("Sunita Sharma" if role_requested == "patient" else "Caregiver User"),
             "email": email_clean,
             "password": payload.password,
-            "role": "caregiver",
+            "role": role_requested,
             "patient_name": "Mom (Sunita)",
-            "relationship": "Mother",
+            "relationship": "Self" if role_requested == "patient" else "Mother",
             "stage": "Middle Stage"
         }
         USERS_DB[email_clean] = user_data
@@ -51,14 +61,37 @@ async def login(payload: LoginRequest):
         id=user_data["id"],
         name=user_data["name"],
         email=user_data["email"],
-        role=user_data["role"],
+        role=user_data.get("role", role_requested),
         patient_name=user_data["patient_name"],
         relationship=user_data["relationship"],
         stage=user_data["stage"]
     )
 
-    # Generate token
     token = f"cognitrace_jwt_{user_data['id']}"
+
+    return AuthResponse(
+        access_token=token,
+        token_type="bearer",
+        user=user_profile
+    )
+
+
+@router.post("/patient-login", response_model=AuthResponse)
+async def patient_login(payload: Optional[dict] = None):
+    """
+    Dedicated quick-access patient portal login (1-tap or PIN auth).
+    """
+    patient_user = USERS_DB.get("sunita.patient@example.com")
+    user_profile = UserProfile(
+        id=patient_user["id"],
+        name=patient_user["name"],
+        email=patient_user["email"],
+        role="patient",
+        patient_name="Sunita (Mom)",
+        relationship="Self",
+        stage="Middle Stage"
+    )
+    token = f"cognitrace_jwt_{patient_user['id']}"
 
     return AuthResponse(
         access_token=token,
@@ -111,11 +144,7 @@ async def signup(payload: SignupRequest):
 
 @router.get("/me", response_model=UserProfile)
 async def get_current_user(authorization: Optional[str] = Header(None)):
-    """
-    Returns current authenticated caregiver user profile.
-    """
     if not authorization:
-        # Default fallback profile if token unsupplied
         return UserProfile(
             id="usr_demo_001",
             name="Priya Sharma",
@@ -133,7 +162,7 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
                 id=user_data["id"],
                 name=user_data["name"],
                 email=user_data["email"],
-                role=user_data["role"],
+                role=user_data.get("role", "caregiver"),
                 patient_name=user_data["patient_name"],
                 relationship=user_data["relationship"],
                 stage=user_data["stage"]
