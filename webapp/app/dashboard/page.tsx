@@ -5,11 +5,18 @@ import { PatientStatus } from '@/components/dashboard/PatientStatus';
 import { TodaysCare } from '@/components/dashboard/TodaysCare';
 import { RecentChanges } from '@/components/dashboard/RecentChanges';
 import { CommandCenterCard } from '@/components/dashboard/CommandCenterCard';
+import { PatientDashboard } from '@/components/dashboard/PatientDashboard';
 import { usePatientSummary } from '@/hooks/usePatientSummary';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
+  const { isPatient } = useUserRole();
   const { data: summary, isLoading, error } = usePatientSummary();
+
+  if (isPatient) {
+    return <PatientDashboard />;
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">

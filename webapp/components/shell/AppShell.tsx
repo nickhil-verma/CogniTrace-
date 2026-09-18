@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Mic,
@@ -15,13 +15,14 @@ import {
   FileEdit,
   Settings,
   Heart,
-  ChevronRight,
-  Menu,
-  X
+  Shield,
+  PhoneCall
 } from 'lucide-react';
 import { LanguageSelector } from './LanguageSelector';
+import { RoleSwitcher } from './RoleSwitcher';
+import { useUserRole } from '@/hooks/useUserRole';
 
-const NAV_ITEMS = [
+const CAREGIVER_NAV = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Voice Command', href: '/command-center', icon: Mic, highlight: true },
   { label: 'Care Tracking', href: '/tracking', icon: LineChart },
@@ -34,54 +35,74 @@ const NAV_ITEMS = [
   { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
+const PATIENT_NAV = [
+  { label: 'Talk with Voice AI', href: '/command-center', icon: Mic, highlight: true },
+  { label: 'My Photo Album', href: '/memories', icon: ImageIcon },
+  { label: 'Today’s Reminders', href: '/reminders', icon: Bell },
+  { label: 'Daily Tap Game', href: '/tracking', icon: LineChart },
+];
+
 const MOBILE_BOTTOM_NAV = [
   { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Tracking', href: '/tracking', icon: LineChart },
   { label: 'Voice', href: '/command-center', icon: Mic, isVoiceOrb: true },
   { label: 'Memories', href: '/memories', icon: ImageIcon },
-  { label: 'More', href: '/settings', icon: Settings },
+  { label: 'Reminders', href: '/reminders', icon: Bell },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const { isPatient } = useUserRole();
 
-  // If on Landing page `/`, don't wrap in app sidebar shell
   if (pathname === '/') {
     return <>{children}</>;
   }
 
+  const navItems = isPatient ? PATIENT_NAV : CAREGIVER_NAV;
+
   return (
-    <div className="min-h-screen bg-[#F5F8F6] text-[#123B35] flex flex-col md:flex-row font-sans antialiased">
+    <div className={`min-h-screen flex flex-col md:flex-row font-sans antialiased ${
+      isPatient ? 'bg-[#FFFBF5] text-[#123B35]' : 'bg-[#F5F8F6] text-[#123B35]'
+    }`}>
       {/* ================= DESKTOP SIDEBAR ================= */}
       <aside className="hidden md:flex flex-col w-64 border-r border-[#DDE7E3] bg-white p-5 space-y-6 shrink-0 justify-between sticky top-0 h-screen">
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Logo & Brand */}
-          <Link href="/dashboard" className="flex items-center space-x-3 px-2 group">
-            <div className="w-10 h-10 rounded-2xl bg-[#17665B] text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
-              <Heart className="w-5 h-5 fill-current text-[#BFDCD6]" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-[#123B35]">CogniTrace</h1>
-              <span className="text-[10px] font-semibold text-[#3E9C87] tracking-widest uppercase">
-                Cognitive Care
-              </span>
-            </div>
-          </Link>
+          <div className="flex items-center justify-between">
+            <Link href={isPatient ? "/command-center" : "/dashboard"} className="flex items-center space-x-3 group">
+              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-md transition-transform group-hover:scale-105 ${
+                isPatient ? 'bg-[#E36C59] text-white' : 'bg-[#17665B] text-white'
+              }`}>
+                <Heart className="w-5 h-5 fill-current text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-[#123B35]">CogniTrace</h1>
+                <span className="text-[10px] font-semibold text-[#3E9C87] tracking-widest uppercase">
+                  {isPatient ? 'Patient Portal' : 'Cognitive Care'}
+                </span>
+              </div>
+            </Link>
+          </div>
 
-          {/* Nav Items */}
-          <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-220px)] pr-1">
-            {NAV_ITEMS.map((item) => {
+          {/* Role Switcher Button */}
+          <div className="pt-1 pb-1">
+            <RoleSwitcher className="w-full justify-center py-2" />
+          </div>
+
+          {/* Navigation Items */}
+          <nav className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-260px)] pr-1">
+            {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-200 ${
+                  className={`flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-bold transition-all duration-200 ${
                     isActive
-                      ? 'bg-[#17665B] text-white shadow-sm'
+                      ? isPatient
+                        ? 'bg-[#E36C59] text-white shadow-sm'
+                        : 'bg-[#17665B] text-white shadow-sm'
                       : item.highlight
                       ? 'bg-[#BFDCD6]/30 text-[#123B35] hover:bg-[#BFDCD6]/60 border border-[#BFDCD6]/50'
                       : 'text-[#66736F] hover:bg-[#F5F8F6] hover:text-[#123B35]'
@@ -89,7 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   <div className="flex items-center space-x-3">
                     <Icon
-                      className={`w-4 h-4 ${
+                      className={`w-5 h-5 ${
                         isActive
                           ? 'text-white'
                           : item.highlight
@@ -108,30 +129,45 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
 
-        {/* Footer Language Selector & Caregiver Profile */}
+        {/* Footer Language & Profile */}
         <div className="pt-4 border-t border-[#DDE7E3] space-y-3">
-          <LanguageSelector />
-          <div className="flex items-center space-x-3 p-2.5 rounded-2xl bg-[#F5F8F6] border border-[#DDE7E3]">
-            <div className="w-8 h-8 rounded-full bg-[#3E9C87] text-white flex items-center justify-center font-bold text-xs">
-              P
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-[#123B35] truncate">Priya (Caregiver)</p>
-              <p className="text-[10px] text-[#66736F] truncate">Mom’s Care Team</p>
-            </div>
-          </div>
+          {isPatient ? (
+            <a
+              href="tel:911"
+              className="flex items-center justify-center space-x-2 w-full p-2.5 rounded-2xl bg-red-500 text-white font-bold text-xs shadow-md hover:bg-red-600 transition-colors"
+            >
+              <PhoneCall className="w-4 h-4 animate-bounce" />
+              <span>Call Caregiver Emergency</span>
+            </a>
+          ) : (
+            <>
+              <LanguageSelector />
+              <div className="flex items-center space-x-3 p-2.5 rounded-2xl bg-[#F5F8F6] border border-[#DDE7E3]">
+                <div className="w-8 h-8 rounded-full bg-[#3E9C87] text-white flex items-center justify-center font-bold text-xs">
+                  P
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-[#123B35] truncate">Priya (Caregiver)</p>
+                  <p className="text-[10px] text-[#66736F] truncate">Mom’s Care Team</p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </aside>
 
       {/* ================= MOBILE HEADER ================= */}
       <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-[#DDE7E3] sticky top-0 z-40">
-        <Link href="/dashboard" className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-xl bg-[#17665B] text-white flex items-center justify-center">
-            <Heart className="w-4 h-4 text-[#BFDCD6]" />
+        <Link href={isPatient ? "/command-center" : "/dashboard"} className="flex items-center space-x-2">
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-white ${
+            isPatient ? 'bg-[#E36C59]' : 'bg-[#17665B]'
+          }`}>
+            <Heart className="w-4 h-4 text-white" />
           </div>
           <span className="text-lg font-bold text-[#123B35]">CogniTrace</span>
         </Link>
         <div className="flex items-center space-x-2">
+          <RoleSwitcher />
           <LanguageSelector />
         </div>
       </header>
@@ -154,7 +190,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 className="relative -top-5 flex flex-col items-center group"
               >
-                <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#17665B] to-[#3E9C87] text-white flex items-center justify-center shadow-xl border-4 border-[#F5F8F6] group-active:scale-95 transition-transform">
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xl border-4 border-[#F5F8F6] group-active:scale-95 transition-transform ${
+                  isPatient ? 'bg-gradient-to-tr from-[#E36C59] to-[#C85C82]' : 'bg-gradient-to-tr from-[#17665B] to-[#3E9C87]'
+                }`}>
                   <Mic className="w-6 h-6 text-white animate-pulse" />
                 </div>
                 <span className="text-[10px] font-bold text-[#17665B] mt-0.5">Voice AI</span>
@@ -167,7 +205,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center py-1 px-2.5 rounded-xl transition-colors ${
-                isActive ? 'text-[#17665B] font-bold' : 'text-[#66736F]'
+                isActive ? (isPatient ? 'text-[#E36C59] font-bold' : 'text-[#17665B] font-bold') : 'text-[#66736F]'
               }`}
             >
               <Icon className="w-5 h-5 mb-0.5" />
