@@ -65,27 +65,33 @@ export function PatientDashboard() {
           </div>
 
           <div className="space-y-3">
-            {reminders.slice(0, 4).map((rem) => (
-              <div
-                key={rem.id}
-                onClick={() => toggleComplete(rem.id)}
-                className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
-                  rem.status === 'Completed'
-                    ? 'bg-[#F5F8F6] border-[#DDE7E3] text-[#66736F] line-through'
-                    : 'bg-[#BFDCD6]/20 border-[#BFDCD6] text-[#123B35] hover:bg-[#BFDCD6]/40'
-                }`}
-              >
-                <div className="space-y-0.5">
-                  <p className="font-bold text-base">{rem.title}</p>
-                  <p className="text-xs text-[#66736F]">{rem.time}</p>
-                </div>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  rem.status === 'Completed' ? 'bg-[#17665B] text-white' : 'border-2 border-[#17665B] text-transparent'
-                }`}>
-                  <CheckCircle2 className="w-5 h-5 fill-current text-white" />
-                </div>
+            {reminders.length === 0 ? (
+              <div className="p-6 text-center text-xs text-[#66736F] border border-dashed border-[#DDE7E3] rounded-2xl">
+                No active care tasks scheduled yet.
               </div>
-            ))}
+            ) : (
+              reminders.slice(0, 4).map((rem) => (
+                <div
+                  key={rem.id}
+                  onClick={() => toggleComplete(rem.id)}
+                  className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
+                    rem.status === 'Completed'
+                      ? 'bg-[#F5F8F6] border-[#DDE7E3] text-[#66736F] line-through'
+                      : 'bg-[#BFDCD6]/20 border-[#BFDCD6] text-[#123B35] hover:bg-[#BFDCD6]/40'
+                  }`}
+                >
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-base">{rem.title}</p>
+                    <p className="text-xs text-[#66736F]">{rem.time}</p>
+                  </div>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    rem.status === 'Completed' ? 'bg-[#17665B] text-white' : 'border-2 border-[#17665B] text-transparent'
+                  }`}>
+                    <CheckCircle2 className="w-5 h-5 fill-current text-white" />
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </Card>
 
