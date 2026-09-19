@@ -8,6 +8,7 @@ from app.models.schemas import (
     PatientSummaryResponse,
     ReminiscencePromptRequest,
     ReminiscencePromptResponse,
+    CaretakerReminderRequest,
 )
 from app.services.longitudinal_tracker import longitudinal_tracker
 
@@ -93,14 +94,14 @@ async def generate_reminiscence_prompt(payload: ReminiscencePromptRequest):
 
 
 @router.post("/v1/caretaker/reminders")
-async def create_caretaker_reminder(payload: dict):
+async def create_caretaker_reminder(payload: CaretakerReminderRequest):
     """
     Creates or updates patient reminder.
     """
     return {
         "status": "created",
         "id": f"rem_{int(datetime.utcnow().timestamp())}",
-        "reminder": payload
+        "reminder": payload.model_dump(exclude_none=True)
     }
 
 
