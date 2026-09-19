@@ -48,41 +48,56 @@ export async function simulateMockVoiceTurn(userPromptText: string): Promise<Aud
 
   // 3. Synthesize response with Gemini API if key is present
   if (apiKey && apiKey !== 'AQ.Ab8RN6LqjBmwVMdowBJZ6_kVfXs29firXQKFCsCuLMzeGiHJFQ_invalid') {
-    try {
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-      const promptPayload = {
-        contents: [
-          {
-            parts: [
-              {
-                text: `You are CogniTrace AI Voice Companion, an empathetic assistant for Sunita.
+    const candidateModels = [
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-flash-001',
+      'gemini-1.5-flash',
+      'gemini-pro'
+    ];
+
+    const promptPayload = {
+      contents: [
+        {
+          parts: [
+            {
+              text: `You are CogniTrace AI Voice Companion, an empathetic assistant for Sunita.
 Use the following care memory context if relevant:
 ${ragContextText || "Sunita Sharma: Evening medication Donepezil 5mg at 8 PM. Doctor consultation Dr. Anita Sharma tomorrow 10:30 AM."}
 
 User prompt: ${userPromptText}
 
 Output a short, warm, supportive 1-2 sentence response directly to Sunita in first/second person.`
-              }
-            ]
-          }
-        ]
-      };
-
-      const res = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(promptPayload)
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const geminiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (geminiText) {
-          aiResponseText = geminiText.trim();
+            }
+          ]
         }
+      ]
+    };
+
+    for (const modelName of candidateModels) {
+      try {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+        const res = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(promptPayload)
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const geminiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (geminiText) {
+            aiResponseText = geminiText.trim();
+            break;
+          }
+        } else {
+          const errBody = await res.json().catch(() => ({}));
+          console.warn(`[Gemini API] Model '${modelName}' returned HTTP ${res.status}:`, errBody?.error?.message || res.statusText);
+        }
+      } catch (err) {
+        console.warn(`[Gemini API] Request error for model '${modelName}':`, err);
       }
-    } catch (err) {
-      console.warn('[AI API] Direct generation warning, using structured fallback:', err);
     }
   }
 
