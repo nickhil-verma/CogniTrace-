@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.database.postgres import init_postgres_pool, close_postgres_pool, check_postgres_health
 from app.services.redis_service import redis_service
+from app.database.dynamodb import dynamodb_service
 from app.routers import assessments, analytics, auth
 
 
@@ -16,6 +17,7 @@ async def lifespan(app: FastAPI):
     # Startup lifecycle
     await init_postgres_pool()
     await redis_service.init_redis()
+    dynamodb_service.ensure_table_exists()
     yield
     # Shutdown lifecycle
     await close_postgres_pool()
@@ -24,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="CogniTrace Dementia Detection Engine API",
-    description="Multimodal Dementia Risk Scoring, Digital Biomarkers, Redis Rate Limiting & Storage Decoupling",
+    description="Multimodal Dementia Risk Scoring, Digital Biomarkers, Redis Rate Limiting & DynamoDB User Persistence",
     version="2.0.0",
     lifespan=lifespan,
     docs_url="/docs",
@@ -39,6 +41,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 # Correlation ID (X-Request-ID) Middleware
@@ -76,19 +79,22 @@ async def health_live():
     return {"status": "alive", "timestamp": time.time()}
 
 
-# Readiness Probe (Checks Postgres Pool & Redis Connection)
+# Readiness Probe (Checks Postgres Pool, Redis Connection & DynamoDB Table)
 @app.get("/health/ready", tags=["System Probes"])
 async def health_ready():
     pg_ok = await check_postgres_health()
     redis_ok = await redis_service.check_health()
-    
-    is_ready = pg_ok or True  # Allow ready in local dev / degraded mode
+    ddb_ok = dynamodb_service.check_health()
+
+    is_ready = True
     return {
         "status": "ready" if is_ready else "not_ready",
         "postgres": "connected" if pg_ok else "offline_or_degraded",
         "redis": "connected" if redis_ok else "offline_or_in_memory_fallback",
+        "dynamodb": "connected" if ddb_ok else "configured_with_in_memory_fallback",
         "timestamp": time.time()
     }
+
 
 
 # Aggregated Health Check Endpoint

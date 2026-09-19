@@ -20,11 +20,15 @@ class Settings(BaseSettings):
     POSTGRES_MAX_POOL: int = 20
     REDIS_URL: str = "redis://localhost:6379/0"
 
-    # Storage Adapter Settings ('local' or 's3')
+    # Storage Adapter & AWS DynamoDB Settings (loaded dynamically from .env)
     STORAGE_PROVIDER: str = "local"
     S3_BUCKET_NAME: str = "cognitrace-audio-uploads"
     AWS_REGION: str = "us-east-1"
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    DYNAMODB_TABLE_NAME: str = "CogniTrace"
     LOCAL_STORAGE_DIR: str = "data/uploads"
+
     
     model_config = SettingsConfigDict(
         env_file=".env",

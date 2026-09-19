@@ -53,9 +53,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isPatient } = useUserRole();
 
-  if (pathname === '/') {
+  if (pathname === '/' || pathname === '/login' || pathname === '/onboarding') {
     return <>{children}</>;
   }
+
 
   const navItems = isPatient ? PATIENT_NAV : CAREGIVER_NAV;
 

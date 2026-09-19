@@ -220,3 +220,25 @@ def test_auth_login_signup_endpoints():
     assert login_res.status_code == 200
     login_data = login_res.json()
     assert "access_token" in login_data
+
+
+def test_dynamodb_rag_vector_storage():
+    rag_payload = {
+        "user_id": "usr_test_rag_001",
+        "vector_id": "vec_test_1001",
+        "text_chunk": "Patient remembers ocean sunset view in Goa.",
+        "embedding": [0.1, 0.2, 0.3, 0.4, 0.5],
+        "metadata": {"topic": "Goa Vacation", "source": "Audio Transcript"}
+    }
+    store_res = client.post("/v1/rag/vectors", json=rag_payload)
+    assert store_res.status_code == 200
+    store_data = store_res.json()
+    assert store_data["status"] in ["stored", "fallback_stored"]
+    assert store_data["vector_id"] == "vec_test_1001"
+
+    get_res = client.get("/v1/rag/vectors/usr_test_rag_001")
+    assert get_res.status_code == 200
+    get_data = get_res.json()
+    assert get_data["count"] >= 1
+    assert get_data["patient_id"] == "usr_test_rag_001"
+
