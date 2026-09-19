@@ -207,6 +207,78 @@ class DynamoDBService:
 
         return [val for key, val in self.in_memory_fallback.items() if key.startswith(f"VEC#{user_id}")]
 
+    def seed_dummy_rag_vectors(self):
+        """
+        Seeds initial dummy RAG vector embedding records into DynamoDB / fallback store for RAG research.
+        """
+        seed_items = [
+            {
+                "user_id": "patient_001",
+                "vector_id": "vec_mem_001",
+                "text_chunk": "Goa Family Vacation Memory (Summer 1987): Mom watching the sunset by the ocean waves with family. Reminiscence prompt: Mom, do you remember watching the sunset by the ocean in Goa?",
+                "embedding": [0.12, 0.45, 0.88, 0.33, 0.67, 0.91, 0.24, 0.15],
+                "metadata": {"category": "Memory", "topic": "Goa Beach 1987", "people": ["Mom", "Caregiver"]}
+            },
+            {
+                "user_id": "patient_001",
+                "vector_id": "vec_med_002",
+                "text_chunk": "Medication Dosage Schedule: Take Donepezil 5mg tablet with water after dinner every evening at 8:00 PM.",
+                "embedding": [0.85, 0.11, 0.22, 0.94, 0.05, 0.31, 0.76, 0.42],
+                "metadata": {"category": "Medication", "title": "Evening Medicine", "time": "8:00 PM"}
+            },
+            {
+                "user_id": "patient_001",
+                "vector_id": "vec_apt_003",
+                "text_chunk": "Doctor Appointment: Consultation with Dr. Anita Sharma (Cognitive Neurology) tomorrow at 10:30 AM at City Care Hospital, Suite 402.",
+                "embedding": [0.33, 0.77, 0.54, 0.18, 0.92, 0.61, 0.29, 0.84],
+                "metadata": {"category": "Appointment", "doctor": "Dr. Anita Sharma", "specialty": "Neurology"}
+            },
+            {
+                "user_id": "patient_001",
+                "vector_id": "vec_bio_004",
+                "text_chunk": "Acoustic & Linguistic Biomarkers: Speech ratio 72%, mean pause duration 380ms, type-token ratio 0.58. Cognitive drift is stable.",
+                "embedding": [0.44, 0.66, 0.19, 0.82, 0.37, 0.55, 0.71, 0.28],
+                "metadata": {"category": "Clinical", "risk_tier": "MCI", "composite_score": 0.34}
+            },
+            {
+                "user_id": "usr_demo_001",
+                "vector_id": "vec_demo_005",
+                "text_chunk": "Caregiver Priya Sharma observation log: Mom enjoyed the Goa photo reminiscence session. Evening Donepezil medication confirmed.",
+                "embedding": [0.55, 0.22, 0.77, 0.44, 0.99, 0.11, 0.33, 0.88],
+                "metadata": {"category": "Caregiver Log", "caregiver": "Priya"}
+            }
+        ]
+
+        for item in seed_items:
+            self.save_rag_vector(
+                user_id=item["user_id"],
+                vector_id=item["vector_id"],
+                text_chunk=item["text_chunk"],
+                embedding=item["embedding"],
+                metadata=item["metadata"]
+            )
+        logger.info(f"[DynamoDB] Seeded {len(seed_items)} dummy RAG vector chunks into vector database.")
+
+    def search_rag_vectors(self, user_id: str, query: str, top_k: int = 3) -> List[Dict[str, Any]]:
+        """
+        Performs vector context retrieval matching the query text against stored RAG vector chunks.
+        """
+        vectors = self.get_user_rag_vectors(user_id)
+        if not vectors:
+            vectors = [val for key, val in self.in_memory_fallback.items() if key.startswith("VEC#")]
+
+        query_terms = query.lower().split()
+        scored_results = []
+
+        for vec in vectors:
+            text = vec.get("text_chunk", "").lower()
+            score = sum(1.0 for term in query_terms if term in text)
+            if score > 0 or len(vectors) <= 3:
+                scored_results.append((score, vec))
+
+        scored_results.sort(key=lambda x: x[0], reverse=True)
+        return [item[1] for item in scored_results[:top_k]]
+
     def check_health(self) -> bool:
         """
         Health probe for DynamoDB connectivity.
@@ -221,3 +293,5 @@ class DynamoDBService:
 
 
 dynamodb_service = DynamoDBService()
+dynamodb_service.seed_dummy_rag_vectors()
+

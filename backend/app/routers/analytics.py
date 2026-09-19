@@ -149,3 +149,24 @@ async def get_rag_vectors(patient_id: str):
     }
 
 
+@router.post("/v1/rag/search", tags=["RAG Research & DynamoDB Vectors"])
+async def search_rag_context(payload: dict):
+    """
+    Performs RAG context search matching query against stored vector chunks in DynamoDB.
+    """
+    query = payload.get("query", "")
+    patient_id = payload.get("patient_id") or payload.get("user_id", "patient_001")
+
+    matching_chunks = dynamodb_service.search_rag_vectors(patient_id, query)
+    context_text = "\n".join([c.get("text_chunk", "") for c in matching_chunks])
+
+    return {
+        "query": query,
+        "patient_id": patient_id,
+        "matched_chunks_count": len(matching_chunks),
+        "context": context_text,
+        "chunks": matching_chunks
+    }
+
+
+
