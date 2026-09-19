@@ -15,7 +15,17 @@ export default function MemoriesPage() {
   const router = useRouter();
   const { memories, selectedMemory, setSelectedMemory, addMemory, deleteMemory } = useMemories();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [reminisceActiveMemory, setReminisceActiveMemory] = useState<Memory>(memories[0] || null);
+  const [reminisceActiveMemory, setReminisceActiveMemory] = useState<Memory | null>(null);
+
+  React.useEffect(() => {
+    if (memories.length > 0) {
+      if (!reminisceActiveMemory || !memories.some((m) => m.id === reminisceActiveMemory.id)) {
+        setReminisceActiveMemory(memories[0]);
+      }
+    } else {
+      setReminisceActiveMemory(null);
+    }
+  }, [memories, reminisceActiveMemory]);
 
   // Form states
   const [title, setTitle] = useState('');
@@ -82,17 +92,24 @@ export default function MemoriesPage() {
           <span className="text-xs text-[#66736F]">{memories.length} memories preserved</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {memories.map((mem) => (
-            <MemoryCard
-              key={mem.id}
-              memory={mem}
-              onSelect={(m) => setSelectedMemory(m)}
-              onReminisce={(m) => setReminisceActiveMemory(m)}
-              onDelete={(id) => deleteMemory(id)}
-            />
-          ))}
-        </div>
+        {memories.length === 0 ? (
+          <div className="p-12 text-center border-2 border-dashed border-[#DDE7E3] rounded-3xl bg-white space-y-3">
+            <p className="text-base font-bold text-[#123B35]">No photo memories preserved yet.</p>
+            <p className="text-xs text-[#66736F]">Click "Add New Memory" above to upload your first family photo memory!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {memories.map((mem) => (
+              <MemoryCard
+                key={mem.id}
+                memory={mem}
+                onSelect={(m) => setSelectedMemory(m)}
+                onReminisce={(m) => setReminisceActiveMemory(m)}
+                onDelete={(id) => deleteMemory(id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Upload Memory Modal */}

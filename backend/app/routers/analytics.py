@@ -183,6 +183,17 @@ async def create_caretaker_memory(payload: dict):
     }
 
 
+@router.delete("/v1/caretaker/memories/{mem_id}")
+@router.post("/v1/caretaker/memories/{mem_id}/delete")
+async def delete_caretaker_memory(mem_id: str, patient_id: str = "patient_001"):
+    """
+    Deletes photo memory item from DynamoDB.
+    """
+    dynamodb_service.delete_memory(patient_id, mem_id)
+    return {"status": "deleted", "id": mem_id}
+
+
+
 
 @router.post("/v1/rag/vectors", tags=["RAG Research & DynamoDB Vectors"])
 async def store_rag_vector(payload: dict):
