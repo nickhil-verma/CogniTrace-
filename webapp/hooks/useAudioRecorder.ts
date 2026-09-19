@@ -64,7 +64,16 @@ export function useAudioRecorder() {
     // 2. Initialize MediaRecorder audio stream & volume analyzer
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      
+      let mimeType = '';
+      if (typeof MediaRecorder !== 'undefined') {
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
+        else if (MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/webm';
+        else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) mimeType = 'audio/ogg;codecs=opus';
+        else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+      }
+
+      const mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
 
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -95,8 +104,9 @@ export function useAudioRecorder() {
       };
 
       mediaRecorder.onstop = () => {
+        const actualType = mediaRecorder.mimeType || mimeType || 'audio/webm';
         const finalBlob = audioChunksRef.current.length > 0
-          ? new Blob(audioChunksRef.current, { type: 'audio/wav' })
+          ? new Blob(audioChunksRef.current, { type: actualType })
           : null;
         
         setAudioBlob(finalBlob);

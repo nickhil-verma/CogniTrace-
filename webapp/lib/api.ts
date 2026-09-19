@@ -252,7 +252,8 @@ export class ApiClient {
     try {
       const formData = new FormData();
       if (audioBlob) {
-        formData.append('file', audioBlob, 'voice_command.wav');
+        const ext = audioBlob.type.includes('webm') ? 'webm' : (audioBlob.type.includes('ogg') ? 'ogg' : (audioBlob.type.includes('mp4') ? 'mp4' : 'wav'));
+        formData.append('file', audioBlob, `voice_command.${ext}`);
       }
       if (textPrompt) {
         formData.append('text', textPrompt);
