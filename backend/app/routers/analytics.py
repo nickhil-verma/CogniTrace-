@@ -92,19 +92,94 @@ async def generate_reminiscence_prompt(payload: ReminiscencePromptRequest):
     return ReminiscencePromptResponse(prompt=prompt)
 
 
+from app.database.dynamodb import dynamodb_service
+
+
+@router.get("/v1/caretaker/reminders")
+async def get_caretaker_reminders(patient_id: str = "patient_001"):
+    """
+    Retrieves all patient reminders from DynamoDB.
+    """
+    return dynamodb_service.get_reminders(patient_id)
+
+
 @router.post("/v1/caretaker/reminders")
 async def create_caretaker_reminder(payload: dict):
     """
-    Creates or updates patient reminder.
+    Creates or updates patient reminder in DynamoDB.
     """
+    patient_id = payload.get("patient_id") or payload.get("user_id", "patient_001")
+    saved_item = dynamodb_service.save_reminder(patient_id, payload)
     return {
         "status": "created",
-        "id": f"rem_{int(datetime.utcnow().timestamp())}",
-        "reminder": payload
+        "id": saved_item.get("id"),
+        "reminder": saved_item
     }
 
 
-from app.database.dynamodb import dynamodb_service
+@router.put("/v1/caretaker/reminders/{rem_id}/toggle")
+async def toggle_caretaker_reminder(rem_id: str, patient_id: str = "patient_001"):
+    """
+    Toggles completion status of reminder in DynamoDB.
+    """
+    updated = dynamodb_service.toggle_reminder(patient_id, rem_id)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Reminder not found")
+    return {"status": "updated", "reminder": updated}
+
+
+@router.delete("/v1/caretaker/reminders/{rem_id}")
+async def delete_caretaker_reminder(rem_id: str, patient_id: str = "patient_001"):
+    """
+    Deletes reminder from DynamoDB.
+    """
+    dynamodb_service.delete_reminder(patient_id, rem_id)
+    return {"status": "deleted", "id": rem_id}
+
+
+@router.get("/v1/caretaker/appointments")
+async def get_caretaker_appointments(patient_id: str = "patient_001"):
+    """
+    Retrieves all medical appointments from DynamoDB.
+    """
+    return dynamodb_service.get_appointments(patient_id)
+
+
+@router.post("/v1/caretaker/appointments")
+async def create_caretaker_appointment(payload: dict):
+    """
+    Schedules medical appointment in DynamoDB.
+    """
+    patient_id = payload.get("patient_id") or payload.get("user_id", "patient_001")
+    saved_item = dynamodb_service.save_appointment(patient_id, payload)
+    return {
+        "status": "scheduled",
+        "id": saved_item.get("id"),
+        "appointment": saved_item
+    }
+
+
+@router.get("/v1/caretaker/memories")
+async def get_caretaker_memories(patient_id: str = "patient_001"):
+    """
+    Retrieves all photo memories from DynamoDB.
+    """
+    return dynamodb_service.get_memories(patient_id)
+
+
+@router.post("/v1/caretaker/memories")
+async def create_caretaker_memory(payload: dict):
+    """
+    Creates photo memory album item in DynamoDB.
+    """
+    patient_id = payload.get("patient_id") or payload.get("user_id", "patient_001")
+    saved_item = dynamodb_service.save_memory(patient_id, payload)
+    return {
+        "status": "created",
+        "id": saved_item.get("id"),
+        "memory": saved_item
+    }
+
 
 
 @router.post("/v1/rag/vectors", tags=["RAG Research & DynamoDB Vectors"])

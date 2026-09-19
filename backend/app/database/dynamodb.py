@@ -207,6 +207,227 @@ class DynamoDBService:
 
         return [val for key, val in self.in_memory_fallback.items() if key.startswith(f"VEC#{user_id}")]
 
+    # ------------------------------------------------------------------
+    # Reminders CRUD
+    # ------------------------------------------------------------------
+    def save_reminder(self, user_id: str, reminder_data: Dict[str, Any]) -> Dict[str, Any]:
+        rem_id = reminder_data.get("id") or f"rem_{int(datetime.utcnow().timestamp() * 1000)}"
+        item = {
+            "PK": f"USER#{user_id}",
+            "SK": f"REMINDER#{rem_id}",
+            "id": rem_id,
+            "title": reminder_data.get("title", "Care Task"),
+            "time": reminder_data.get("time", "8:00 PM"),
+            "date": reminder_data.get("date", "Today"),
+            "category": reminder_data.get("category", "General"),
+            "status": reminder_data.get("status", "Upcoming"),
+            "patientName": reminder_data.get("patientName", "Mom"),
+            "dosageOrDetails": reminder_data.get("dosageOrDetails", ""),
+            "recurring": reminder_data.get("recurring", "Daily"),
+            "created_at": reminder_data.get("createdAt") or datetime.utcnow().isoformat()
+        }
+        self.in_memory_fallback[f"REM#{user_id}#{rem_id}"] = item
+
+        if self.table:
+            try:
+                self.table.put_item(Item=item)
+                logger.info(f"[DynamoDB] Saved reminder '{rem_id}' ({item['title']}) for user '{user_id}'.")
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Error putting reminder: {e}")
+
+        return item
+
+    def get_reminders(self, user_id: str) -> List[Dict[str, Any]]:
+        if self.table:
+            try:
+                resp = self.table.query(
+                    KeyConditionExpression="PK = :pk AND begins_with(SK, :sk_prefix)",
+                    ExpressionAttributeValues={
+                        ":pk": f"USER#{user_id}",
+                        ":sk_prefix": "REMINDER#"
+                    }
+                )
+                if resp.get("Items"):
+                    return resp["Items"]
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Error querying reminders: {e}")
+
+        items = [val for key, val in self.in_memory_fallback.items() if key.startswith(f"REM#{user_id}")]
+        return items if items else self._get_default_seed_reminders()
+
+    def toggle_reminder(self, user_id: str, rem_id: str) -> Optional[Dict[str, Any]]:
+        reminders = self.get_reminders(user_id)
+        target = next((r for r in reminders if r.get("id") == rem_id), None)
+        if target:
+            target["status"] = "Completed" if target.get("status") != "Completed" else "Upcoming"
+            self.save_reminder(user_id, target)
+            return target
+        return None
+
+    def delete_reminder(self, user_id: str, rem_id: str) -> bool:
+        self.in_memory_fallback.pop(f"REM#{user_id}#{rem_id}", None)
+        if self.table:
+            try:
+                self.table.delete_item(Key={"PK": f"USER#{user_id}", "SK": f"REMINDER#{rem_id}"})
+                return True
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Delete reminder error: {e}")
+        return True
+
+    def _get_default_seed_reminders(self) -> List[Dict[str, Any]]:
+        return [
+          {
+            "id": "rem_1",
+            "title": "Evening Medicine (Donepezil 5mg)",
+            "time": "8:00 PM",
+            "date": "Today",
+            "category": "Medication",
+            "status": "Upcoming",
+            "patientName": "Mom",
+            "dosageOrDetails": "Take 1 tablet with water after dinner",
+            "recurring": "Daily"
+          },
+          {
+            "id": "rem_2",
+            "title": "Afternoon Mindful Walk in Park",
+            "time": "4:30 PM",
+            "date": "Today",
+            "category": "Activity",
+            "status": "Completed",
+            "patientName": "Mom",
+            "dosageOrDetails": "Light 15 min walk with caregiver",
+            "recurring": "Daily"
+          },
+          {
+            "id": "rem_3",
+            "title": "Hydration Water Break",
+            "time": "2:00 PM",
+            "date": "Today",
+            "category": "Hydration",
+            "status": "Upcoming",
+            "patientName": "Mom",
+            "dosageOrDetails": "1 glass warm water",
+            "recurring": "Every 2 Hours"
+          }
+        ]
+
+    # ------------------------------------------------------------------
+    # Appointments CRUD
+    # ------------------------------------------------------------------
+    def save_appointment(self, user_id: str, apt_data: Dict[str, Any]) -> Dict[str, Any]:
+        apt_id = apt_data.get("id") or f"apt_{int(datetime.utcnow().timestamp() * 1000)}"
+        item = {
+            "PK": f"USER#{user_id}",
+            "SK": f"APPOINTMENT#{apt_id}",
+            "id": apt_id,
+            "title": apt_data.get("title", "Doctor Consultation"),
+            "doctorName": apt_data.get("doctorName", "Dr. Anita Sharma"),
+            "specialty": apt_data.get("specialty", "Cognitive Neurology"),
+            "date": apt_data.get("date", "Tomorrow"),
+            "time": apt_data.get("time", "10:30 AM"),
+            "location": apt_data.get("location", "City Care Hospital, Suite 402"),
+            "notes": apt_data.get("notes", "Bring prescriptions and observation log"),
+            "status": apt_data.get("status", "Upcoming")
+        }
+        self.in_memory_fallback[f"APT#{user_id}#{apt_id}"] = item
+
+        if self.table:
+            try:
+                self.table.put_item(Item=item)
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Error putting appointment: {e}")
+
+        return item
+
+    def get_appointments(self, user_id: str) -> List[Dict[str, Any]]:
+        if self.table:
+            try:
+                resp = self.table.query(
+                    KeyConditionExpression="PK = :pk AND begins_with(SK, :sk_prefix)",
+                    ExpressionAttributeValues={
+                        ":pk": f"USER#{user_id}",
+                        ":sk_prefix": "APPOINTMENT#"
+                    }
+                )
+                if resp.get("Items"):
+                    return resp["Items"]
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Error querying appointments: {e}")
+
+        items = [val for key, val in self.in_memory_fallback.items() if key.startswith(f"APT#{user_id}")]
+        return items if items else [
+            {
+                "id": "apt_101",
+                "title": "Dr. Anita Sharma Consultation",
+                "doctorName": "Dr. Anita Sharma",
+                "specialty": "Cognitive Neurology",
+                "date": "Tomorrow",
+                "time": "10:30 AM",
+                "location": "City Care Hospital, Suite 402",
+                "notes": "Bring recent observation log & current prescriptions",
+                "status": "Upcoming"
+            }
+        ]
+
+    # ------------------------------------------------------------------
+    # Memories CRUD
+    # ------------------------------------------------------------------
+    def save_memory(self, user_id: str, memory_data: Dict[str, Any]) -> Dict[str, Any]:
+        mem_id = memory_data.get("id") or f"mem_{int(datetime.utcnow().timestamp() * 1000)}"
+        item = {
+            "PK": f"USER#{user_id}",
+            "SK": f"MEMORY#{mem_id}",
+            "id": mem_id,
+            "title": memory_data.get("title", "Family Memory"),
+            "date": memory_data.get("date", "Summer 1987"),
+            "location": memory_data.get("location", "Goa Beach"),
+            "imageUrl": memory_data.get("imageUrl", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"),
+            "description": memory_data.get("description", "Family vacation watching the ocean sunset."),
+            "people": memory_data.get("people", ["Mom", "Caregiver"]),
+            "tags": memory_data.get("tags", ["Vacation", "Goa"]),
+            "reminiscencePrompt": memory_data.get("reminiscencePrompt", "Mom, do you remember watching the ocean waves in Goa?")
+        }
+        self.in_memory_fallback[f"MEM#{user_id}#{mem_id}"] = item
+
+        if self.table:
+            try:
+                self.table.put_item(Item=item)
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Error putting memory: {e}")
+
+        return item
+
+    def get_memories(self, user_id: str) -> List[Dict[str, Any]]:
+        if self.table:
+            try:
+                resp = self.table.query(
+                    KeyConditionExpression="PK = :pk AND begins_with(SK, :sk_prefix)",
+                    ExpressionAttributeValues={
+                        ":pk": f"USER#{user_id}",
+                        ":sk_prefix": "MEMORY#"
+                    }
+                )
+                if resp.get("Items"):
+                    return resp["Items"]
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Error querying memories: {e}")
+
+        items = [val for key, val in self.in_memory_fallback.items() if key.startswith(f"MEM#{user_id}")]
+        return items if items else [
+            {
+                "id": "mem_1",
+                "title": "Goa Family Vacation Memory",
+                "date": "Summer 1987",
+                "location": "Goa Beach",
+                "imageUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+                "description": "Mom watching the sunset by the ocean waves with family.",
+                "people": ["Mom", "Caregiver"],
+                "tags": ["Vacation", "Goa"],
+                "reminiscencePrompt": "Mom, do you remember watching the sunset by the ocean in Goa?"
+            }
+        ]
+
+
     def seed_dummy_rag_vectors(self):
         """
         Seeds initial dummy RAG vector embedding records into DynamoDB / fallback store for RAG research.

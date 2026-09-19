@@ -13,16 +13,28 @@ export function useMemories() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        setMemories(JSON.parse(saved));
+    async function loadMemories() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMemories(parsed);
+          }
+        }
+
+        const apiData = await api.getMemories('patient_001');
+        if (Array.isArray(apiData) && apiData.length > 0) {
+          setMemories(apiData);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(apiData));
+        }
+      } catch (e) {
+        console.warn('Backend memories fetch warning:', e);
+      } finally {
+        setIsLoaded(true);
       }
-    } catch (e) {
-      console.warn('Failed to parse saved memories', e);
-    } finally {
-      setIsLoaded(true);
     }
+    loadMemories();
   }, []);
 
   useEffect(() => {
@@ -31,12 +43,18 @@ export function useMemories() {
     }
   }, [memories, isLoaded]);
 
-  const addMemory = useCallback((newMem: Omit<Memory, 'id'>) => {
+  const addMemory = useCallback(async (newMem: Omit<Memory, 'id'>) => {
     const item: Memory = {
       ...newMem,
       id: `mem_${Date.now()}`
     };
     setMemories((prev) => [item, ...prev]);
+
+    try {
+      await api.createMemory(item);
+    } catch (e) {
+      console.warn('API create memory warning:', e);
+    }
   }, []);
 
   const deleteMemory = useCallback((id: string) => {
