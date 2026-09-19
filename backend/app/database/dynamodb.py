@@ -279,6 +279,47 @@ class DynamoDBService:
         scored_results.sort(key=lambda x: x[0], reverse=True)
         return [item[1] for item in scored_results[:top_k]]
 
+    def seed_initial_users(self):
+        """
+        Seeds initial caregiver and patient user profiles into DynamoDB and fallback store.
+        """
+        seed_users = [
+            {
+                "id": "usr_demo_001",
+                "name": "Priya Sharma",
+                "email": "priya.caregiver@example.com",
+                "password": "password",
+                "role": "caregiver",
+                "patient_name": "Sunita (Mom)",
+                "relationship": "Mother",
+                "stage": "Middle Stage"
+            },
+            {
+                "id": "usr_patient_001",
+                "name": "Sunita Sharma",
+                "email": "sunita.patient@example.com",
+                "password": "1234",
+                "role": "patient",
+                "patient_name": "Sunita",
+                "relationship": "Self",
+                "stage": "Middle Stage"
+            },
+            {
+                "id": "patient_001",
+                "name": "Sunita Sharma (Mom)",
+                "email": "patient_001@cognitrace.health",
+                "password": "pin_1234_patient",
+                "role": "patient",
+                "patient_name": "Sunita",
+                "relationship": "Self",
+                "stage": "Middle Stage"
+            }
+        ]
+
+        for u in seed_users:
+            self.save_user(u)
+        logger.info(f"[DynamoDB] Seeded {len(seed_users)} user profiles into DynamoDB database.")
+
     def check_health(self) -> bool:
         """
         Health probe for DynamoDB connectivity.
@@ -293,5 +334,7 @@ class DynamoDBService:
 
 
 dynamodb_service = DynamoDBService()
+dynamodb_service.seed_initial_users()
 dynamodb_service.seed_dummy_rag_vectors()
+
 
