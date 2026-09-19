@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Sparkles } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface SuggestedCommandProps {
   commands: string[];
@@ -9,18 +10,20 @@ interface SuggestedCommandProps {
 }
 
 export function SuggestedCommand({ commands, onSelectCommand }: SuggestedCommandProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="space-y-2">
       <div className="flex items-center space-x-1 text-xs text-[#66736F] font-medium">
         <Sparkles className="w-3.5 h-3.5 text-[#17665B]" />
-        <span>Suggested voice commands:</span>
+        <span>{t('commandCenter.suggestedCommandsTitle')}</span>
       </div>
       <div className="flex flex-wrap gap-2">
         {commands.map((cmd, i) => (
           <button
             key={i}
             onClick={() => onSelectCommand(cmd)}
-            className="rounded-full bg-white border border-[#DDE7E3] px-3.5 py-2 text-xs font-medium text-[#123B35] hover:bg-[#BFDCD6]/30 hover:border-[#17665B]/40 transition-all duration-200 shadow-2xs"
+            className="rounded-full bg-white border border-[#DDE7E3] px-3.5 py-2 text-xs font-medium text-[#123B35] hover:bg-[#BFDCD6]/30 hover:border-[#17665B]/40 transition-all duration-200 shadow-2xs cursor-pointer"
           >
             {cmd}
           </button>

@@ -6,12 +6,13 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Heart, ArrowRight, Loader2, AlertCircle, Shield, Mic, Sparkles, CheckCircle2, UserCheck } from 'lucide-react';
+import { Heart, ArrowRight, Loader2, AlertCircle, Shield, UserCheck } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'caregiver' | 'patient'>('caregiver');
 
   // Caregiver form state
@@ -76,7 +77,7 @@ export default function LoginPage() {
             <Heart className="w-7 h-7 fill-current text-[#BFDCD6]" />
           </div>
           <h1 className="text-3xl font-extrabold text-[#123B35] tracking-tight">CogniTrace Care</h1>
-          <p className="text-xs text-[#66736F] font-semibold">Multimodal Dementia & Cognitive Care Portal</p>
+          <p className="text-xs text-[#66736F] font-semibold">{t('login.subtitle')}</p>
         </div>
 
         {/* Role Selector Tabs */}
@@ -84,27 +85,27 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => { setActiveTab('caregiver'); setError(null); }}
-            className={`py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 ${
+            className={`py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
               activeTab === 'caregiver'
                 ? 'bg-[#17665B] text-white shadow-md'
                 : 'text-[#66736F] hover:text-[#123B35]'
             }`}
           >
             <Shield className="w-4 h-4" />
-            <span>Caregiver Sign In</span>
+            <span>{t('login.caregiverTab')}</span>
           </button>
 
           <button
             type="button"
             onClick={() => { setActiveTab('patient'); setError(null); }}
-            className={`py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 ${
+            className={`py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
               activeTab === 'patient'
                 ? 'bg-[#E36C59] text-white shadow-md'
                 : 'text-[#66736F] hover:text-[#123B35]'
             }`}
           >
             <Heart className="w-4 h-4 fill-current" />
-            <span>Patient Portal Access</span>
+            <span>{t('login.patientTab')}</span>
           </button>
         </div>
 
@@ -119,7 +120,7 @@ export default function LoginPage() {
         {activeTab === 'caregiver' && (
           <form onSubmit={handleCaregiverLogin} className="space-y-4 animate-in fade-in duration-200">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-[#123B35]">Caregiver Email Address</label>
+              <label className="text-xs font-bold text-[#123B35]">{t('login.emailLabel')}</label>
               <Input
                 type="email"
                 value={email}
@@ -129,7 +130,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-[#123B35]">Password</label>
+              <label className="text-xs font-bold text-[#123B35]">{t('login.passwordLabel')}</label>
               <Input
                 type="password"
                 value={password}
@@ -142,11 +143,11 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Authenticating Caregiver...
+                  {t('login.signingIn')}
                 </>
               ) : (
                 <>
-                  Sign In to Caregiver Dashboard
+                  {t('login.signInCaregiver')}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </>
               )}
@@ -171,7 +172,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <h2 className="text-xl font-extrabold text-[#123B35]">Welcome Back, Sunita!</h2>
-                <p className="text-xs text-[#66736F] font-medium">Mom’s Simplified Companion Portal</p>
+                <p className="text-xs text-[#66736F] font-medium">{t('patient.dailyCompanion')}</p>
               </div>
             </div>
 
@@ -180,7 +181,7 @@ export default function LoginPage() {
               type="button"
               onClick={handlePatientQuickLogin}
               disabled={loading}
-              className="w-full py-4 text-base font-extrabold bg-[#E36C59] hover:bg-[#c85544] text-white shadow-xl rounded-2xl flex items-center justify-center space-x-2"
+              className="w-full py-4 text-base font-extrabold bg-[#E36C59] hover:bg-[#c85544] text-white shadow-xl rounded-2xl flex items-center justify-center space-x-2 cursor-pointer"
             >
               {loading ? (
                 <>
@@ -190,7 +191,7 @@ export default function LoginPage() {
               ) : (
                 <>
                   <UserCheck className="w-5 h-5 mr-2" />
-                  <span>Tap Here to Open My Portal</span>
+                  <span>{t('patient.tapToSpeak')}</span>
                 </>
               )}
             </Button>
@@ -198,9 +199,9 @@ export default function LoginPage() {
             {/* Option 2: Big 4-Digit PIN Access */}
             <div className="space-y-3 pt-2 border-t border-[#DDE7E3]">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#123B35]">Or Enter 4-Digit PIN:</span>
-                <button onClick={handlePinClear} className="text-[11px] font-bold text-[#C85C82] hover:underline">
-                  Clear
+                <span className="text-xs font-bold text-[#123B35]">{t('login.patientSubheading')}</span>
+                <button onClick={handlePinClear} className="text-[11px] font-bold text-[#C85C82] hover:underline cursor-pointer">
+                  {t('login.clearPin')}
                 </button>
               </div>
 
@@ -227,7 +228,7 @@ export default function LoginPage() {
                     key={num}
                     type="button"
                     onClick={() => handlePinKeyPress(num)}
-                    className="h-12 rounded-2xl bg-[#F5F8F6] hover:bg-[#BFDCD6]/40 text-[#123B35] font-extrabold text-lg border border-[#DDE7E3] active:scale-95 transition-transform"
+                    className="h-12 rounded-2xl bg-[#F5F8F6] hover:bg-[#BFDCD6]/40 text-[#123B35] font-extrabold text-lg border border-[#DDE7E3] active:scale-95 transition-transform cursor-pointer"
                   >
                     {num}
                   </button>
@@ -236,7 +237,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => handlePinKeyPress('0')}
-                  className="h-12 rounded-2xl bg-[#F5F8F6] hover:bg-[#BFDCD6]/40 text-[#123B35] font-extrabold text-lg border border-[#DDE7E3] active:scale-95 transition-transform"
+                  className="h-12 rounded-2xl bg-[#F5F8F6] hover:bg-[#BFDCD6]/40 text-[#123B35] font-extrabold text-lg border border-[#DDE7E3] active:scale-95 transition-transform cursor-pointer"
                 >
                   0
                 </button>

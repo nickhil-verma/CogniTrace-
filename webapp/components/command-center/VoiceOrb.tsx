@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { VoiceState } from '@/types/agent';
 import { Mic, Volume2, Cpu, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface VoiceOrbProps {
   state: VoiceState;
@@ -12,49 +13,51 @@ interface VoiceOrbProps {
 }
 
 export function VoiceOrb({ state, volumeLevel = 0, onClick }: VoiceOrbProps) {
+  const { t } = useLanguage();
+
   // Orb dynamic styling & Framer Motion variants
   const getOrbStateContent = () => {
     switch (state) {
       case 'LISTENING':
         return {
-          label: 'Listening...',
-          sublabel: 'Speak naturally to CogniTrace',
+          label: t('commandCenter.orbListening'),
+          sublabel: t('commandCenter.orbListeningSub'),
           icon: <Mic className="w-8 h-8 text-white animate-pulse" />,
           color: 'from-[#17665B] to-[#3E9C87]',
         };
       case 'PROCESSING':
         return {
-          label: 'Reasoning...',
-          sublabel: 'Understanding intent & checking care logs',
+          label: t('commandCenter.orbReasoning'),
+          sublabel: t('commandCenter.orbReasoningSub'),
           icon: <Cpu className="w-8 h-8 text-white animate-spin" />,
           color: 'from-[#17665B] to-[#BFDCD6]',
         };
       case 'EXECUTING':
         return {
-          label: 'Executing action...',
-          sublabel: 'Updating schedule & care records',
+          label: t('commandCenter.orbExecuting'),
+          sublabel: t('commandCenter.orbExecutingSub'),
           icon: <CheckCircle2 className="w-8 h-8 text-white" />,
           color: 'from-[#3E9C87] to-[#17665B]',
         };
       case 'SPEAKING':
         return {
-          label: 'CogniTrace responding...',
-          sublabel: 'Voice feedback active',
+          label: t('commandCenter.orbSpeaking'),
+          sublabel: t('commandCenter.orbSpeakingSub'),
           icon: <Volume2 className="w-8 h-8 text-white" />,
           color: 'from-[#17665B] to-[#C85C82]',
         };
       case 'ERROR':
         return {
-          label: 'Tap to try again',
-          sublabel: 'Couldn’t process request',
+          label: t('commandCenter.orbError'),
+          sublabel: t('commandCenter.orbErrorSub'),
           icon: <AlertCircle className="w-8 h-8 text-white" />,
           color: 'from-[#C85C82] to-[#E7A23B]',
         };
       case 'IDLE':
       default:
         return {
-          label: 'Tap to speak',
-          sublabel: '"Remind Mom to take her medicine at 8 tonight"',
+          label: t('commandCenter.orbIdle'),
+          sublabel: t('commandCenter.orbIdleSub'),
           icon: <Mic className="w-8 h-8 text-[#123B35]" />,
           color: 'from-[#BFDCD6] to-[#F7DDE5]',
         };

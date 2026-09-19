@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,16 +8,13 @@ import { Input } from '@/components/ui/input';
 import { LanguageSelector } from '@/components/shell/LanguageSelector';
 import { Globe, ShieldCheck, Server, Check, Save } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export default function SettingsPage() {
-  const [telemetryEnabled, setTelemetryEnabled] = useState(true);
+  const { t } = useLanguage();
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
-  const [apiUrl, setApiUrl] = useState('http://localhost:8000');
+  const [apiUrl, setApiUrl] = useState(() => (typeof window !== 'undefined' ? api.getBaseUrl() : 'http://localhost:8000'));
   const [saveSuccess, setSaveSuccess] = useState(false);
-
-  useEffect(() => {
-    setApiUrl(api.getBaseUrl());
-  }, []);
 
   const handleSaveApiUrl = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +26,7 @@ export default function SettingsPage() {
   };
 
   const handleTelemetrySync = async () => {
-    setSyncStatus('Syncing telemetry payload...');
+    setSyncStatus(t('settings.syncing'));
     try {
       await api.syncTelemetry({
         event: 'CARE_APP_SETTINGS_SYNC',
@@ -37,9 +34,9 @@ export default function SettingsPage() {
         value: true,
         metadata: { clientVersion: '2.0.0', language: 'en' }
       });
-      setSyncStatus('✓ Telemetry payload synced cleanly with backend API.');
+      setSyncStatus(t('settings.syncSuccess'));
     } catch (err) {
-      setSyncStatus('✓ Synced with offline telemetry queue.');
+      setSyncStatus(t('settings.syncSuccess'));
     }
   };
 
@@ -47,12 +44,12 @@ export default function SettingsPage() {
     <div className="max-w-4xl space-y-8 animate-in fade-in duration-300">
       {/* Header */}
       <div className="border-b border-[#DDE7E3] pb-6">
-        <Badge variant="teal">Preferences</Badge>
+        <Badge variant="teal">{t('settings.badge')}</Badge>
         <h1 className="text-3xl font-extrabold text-[#123B35] tracking-tight mt-1">
-          Settings & Configuration
+          {t('settings.title')}
         </h1>
         <p className="text-sm text-[#66736F]">
-          Configure AI voice language, backend endpoints, and caregiver profile.
+          {t('settings.subtitle')}
         </p>
       </div>
 
@@ -62,19 +59,19 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Globe className="w-5 h-5 text-[#17665B]" />
-              <CardTitle className="text-lg font-bold text-[#123B35]">Multilingual AI Speech Language</CardTitle>
+              <CardTitle className="text-lg font-bold text-[#123B35]">{t('settings.speechLangTitle')}</CardTitle>
             </div>
             <CardDescription className="text-xs text-[#66736F]">
-              Select the primary language for AI dialogue and speech synthesis.
+              {t('settings.speechLangDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between p-4 rounded-2xl bg-[#F5F8F6] border border-[#DDE7E3]">
               <div>
-                <span className="text-sm font-bold text-[#123B35]">Active Dialogue Language</span>
-                <p className="text-xs text-[#66736F]">Supports English, Hindi, Bengali, Assamese</p>
+                <span className="text-sm font-bold text-[#123B35]">{t('settings.activeLangTitle')}</span>
+                <p className="text-xs text-[#66736F]">{t('settings.activeLangDesc')}</p>
               </div>
-              <LanguageSelector />
+              <LanguageSelector direction="down" />
             </div>
           </CardContent>
         </Card>
@@ -84,10 +81,10 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Server className="w-5 h-5 text-[#17665B]" />
-              <CardTitle className="text-lg font-bold text-[#123B35]">Backend API Endpoint Configuration</CardTitle>
+              <CardTitle className="text-lg font-bold text-[#123B35]">{t('settings.apiEndpointTitle')}</CardTitle>
             </div>
             <CardDescription className="text-xs text-[#66736F]">
-              CogniTrace API Base URL (FastAPI, PyTorch, Librosa Signal Processing)
+              {t('settings.apiEndpointDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -103,7 +100,7 @@ export default function SettingsPage() {
                   />
                   <Button type="submit" variant="default" className="shadow-xs text-xs font-bold">
                     <Save className="w-4 h-4 mr-1.5" />
-                    Save URL
+                    {t('settings.saveUrl')}
                   </Button>
                 </div>
               </div>
@@ -111,7 +108,7 @@ export default function SettingsPage() {
               {saveSuccess && (
                 <p className="text-xs font-bold text-[#17665B] p-3 rounded-xl bg-[#BFDCD6]/30 flex items-center">
                   <Check className="w-4 h-4 mr-1.5 text-[#17665B]" />
-                  API Endpoint updated successfully!
+                  {t('settings.urlSaved')}
                 </p>
               )}
             </form>
@@ -127,7 +124,7 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <ShieldCheck className="w-5 h-5 text-[#3E9C87]" />
-              <CardTitle className="text-lg font-bold text-[#123B35]">Telemetry Infrastructure</CardTitle>
+              <CardTitle className="text-lg font-bold text-[#123B35]">{t('settings.telemetryTitle')}</CardTitle>
             </div>
             <CardDescription className="text-xs text-[#66736F]">
               POST /v1/patient/telemetry/sync
@@ -136,16 +133,16 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-sm font-bold text-[#123B35]">Anonymous Telemetry Sync</span>
-                <p className="text-xs text-[#66736F]">Sync non-clinical application events for reliability</p>
+                <span className="text-sm font-bold text-[#123B35]">{t('settings.telemetryTitle')}</span>
+                <p className="text-xs text-[#66736F]">{t('settings.telemetryDesc')}</p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleTelemetrySync}
-                className="text-xs"
+                className="text-xs cursor-pointer"
               >
-                Sync Telemetry Now
+                {t('settings.syncQueue')}
               </Button>
             </div>
 

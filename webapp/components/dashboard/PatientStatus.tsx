@@ -5,16 +5,18 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Heart, Activity, Calendar } from 'lucide-react';
 import { PatientSummary } from '@/types/patient';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface PatientStatusProps {
   summary: PatientSummary | null;
 }
 
 export function PatientStatus({ summary }: PatientStatusProps) {
+  const { t } = useLanguage();
   const patient = summary || {
     name: 'Mom',
     currentStage: 'Middle Stage',
-    stageDescription: 'Needs slightly more support than last month',
+    stageDescription: t('dashboard.stageDescription'),
     lastUpdated: 'Today at 9:30 AM'
   };
 
@@ -23,10 +25,10 @@ export function PatientStatus({ summary }: PatientStatusProps) {
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="space-y-1">
           <CardDescription className="text-xs font-semibold tracking-wider text-[#66736F] uppercase">
-            Care Journey Overview
+            {t('dashboard.careJourneyOverview')}
           </CardDescription>
           <CardTitle className="text-2xl font-bold text-[#123B35]">
-            {patient.name}’s Care Journey
+            {t('dashboard.careJourneyTitle', { name: patient.name })}
           </CardTitle>
         </div>
         <div className="p-3 rounded-2xl bg-[#BFDCD6]/40 text-[#17665B]">
@@ -36,21 +38,21 @@ export function PatientStatus({ summary }: PatientStatusProps) {
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <Badge variant="teal" className="px-3.5 py-1 text-sm font-semibold">
-            Current Stage: {patient.currentStage}
+            {t('dashboard.currentStage', { stage: patient.currentStage })}
           </Badge>
           <span className="text-xs text-[#66736F] flex items-center">
             <Calendar className="w-3.5 h-3.5 mr-1" />
-            Updated {patient.lastUpdated}
+            {t('dashboard.updated', { time: patient.lastUpdated })}
           </span>
         </div>
 
         <p className="text-sm text-[#123B35] font-medium leading-relaxed bg-white p-3.5 rounded-2xl border border-[#DDE7E3]">
-          "{patient.stageDescription}"
+          &ldquo;{patient.stageDescription || t('dashboard.stageDescription')}&rdquo;
         </p>
 
         <div className="flex items-center space-x-2 text-xs text-[#66736F]">
           <Activity className="w-4 h-4 text-[#3E9C87]" />
-          <span>Observational care insights updated via daily caregiver journal & voice check-ins.</span>
+          <span>{t('dashboard.observationalNote')}</span>
         </div>
       </CardContent>
     </Card>

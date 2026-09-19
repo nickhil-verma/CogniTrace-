@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Clock, Heart, Shield, MessageCircle, Sparkles } from 'lucide-react';
+import { BookOpen, Clock } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 const CATEGORIES = [
   'All',
@@ -68,22 +69,36 @@ const ARTICLES = [
 
 export default function ResourcesPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const { t } = useLanguage();
 
   const filteredArticles = selectedCategory === 'All'
     ? ARTICLES
     : ARTICLES.filter((a) => a.category === selectedCategory);
+
+  const getCategoryLabel = (cat: string) => {
+    switch (cat) {
+      case 'All': return t('resources.catAll');
+      case 'Communication': return t('resources.catCommunication');
+      case 'Daily care': return t('resources.catDailyCare');
+      case 'Memory': return t('resources.catMemory');
+      case 'Appointments': return t('resources.catAppointments');
+      case 'Safety': return t('resources.catSafety');
+      case 'Caregiver support': return t('resources.catCaregiverSupport');
+      default: return cat;
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#DDE7E3] pb-6">
         <div>
-          <Badge variant="teal">Caregiver Library</Badge>
+          <Badge variant="teal">{t('resources.badge')}</Badge>
           <h1 className="text-3xl font-extrabold text-[#123B35] tracking-tight mt-1">
-            Practical Care Resources
+            {t('resources.title')}
           </h1>
           <p className="text-sm text-[#66736F]">
-            Editorial guidance on communication, daily routines, and caregiver self-care.
+            {t('resources.subtitle')}
           </p>
         </div>
       </div>
@@ -94,40 +109,45 @@ export default function ResourcesPage() {
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 ${
+            className={`px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${
               selectedCategory === cat
-                ? 'bg-[#17665B] text-white shadow-sm'
+                ? 'bg-[#17665B] text-white shadow-xs'
                 : 'bg-white border border-[#DDE7E3] text-[#66736F] hover:bg-[#F5F8F6] hover:text-[#123B35]'
             }`}
           >
-            {cat}
+            {getCategoryLabel(cat)}
           </button>
         ))}
       </div>
 
       {/* Articles Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredArticles.map((art) => (
-          <Card key={art.id} className="flex flex-col justify-between hover:shadow-lg transition-all duration-300">
+        {filteredArticles.map((article) => (
+          <Card key={article.id} className="flex flex-col justify-between hover:border-[#17665B]/30 transition-all group">
             <CardHeader className="space-y-2">
               <div className="flex items-center justify-between">
-                <Badge variant="default">{art.category}</Badge>
-                <span className="text-[10px] text-[#66736F] flex items-center">
-                  <Clock className="w-3 h-3 mr-1" />
-                  {art.readTime}
-                </span>
+                <Badge variant="teal" className="text-[10px]">
+                  {getCategoryLabel(article.category)}
+                </Badge>
+                <div className="flex items-center space-x-1 text-xs text-[#66736F]">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>{article.readTime}</span>
+                </div>
               </div>
-              <CardTitle className="text-lg font-bold text-[#123B35] leading-snug">
-                {art.title}
+              <CardTitle className="text-lg font-bold text-[#123B35] group-hover:text-[#17665B] transition-colors leading-snug">
+                {article.title}
               </CardTitle>
+              <CardDescription className="text-xs text-[#66736F] leading-relaxed">
+                {article.description}
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-xs text-[#66736F] leading-relaxed">
-                {art.description}
-              </p>
-              <div className="pt-3 border-t border-[#DDE7E3] flex items-center justify-between text-xs font-semibold text-[#17665B]">
-                <span>By {art.author}</span>
-                <span className="hover:underline cursor-pointer">Read Guide →</span>
+            <CardContent className="pt-0">
+              <div className="flex items-center justify-between border-t border-[#DDE7E3]/60 pt-3 text-xs text-[#66736F]">
+                <span>By {article.author}</span>
+                <span className="font-semibold text-[#17665B] flex items-center group-hover:translate-x-0.5 transition-transform">
+                  <BookOpen className="w-3.5 h-3.5 mr-1" />
+                  Guide
+                </span>
               </div>
             </CardContent>
           </Card>

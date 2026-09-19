@@ -3,27 +3,29 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Pill, Clock, CheckCircle2, Bell } from 'lucide-react';
+import { Pill, Clock, Bell } from 'lucide-react';
 import { useReminders } from '@/hooks/useReminders';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export function TodaysCare() {
   const { reminders, toggleComplete } = useReminders();
+  const { t } = useLanguage();
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-xl font-bold text-[#123B35]">
-          Today’s Care Schedule
+          {t('dashboard.todaysCareSchedule')}
         </CardTitle>
         <span className="text-xs text-[#66736F] font-medium flex items-center">
           <Clock className="w-3.5 h-3.5 mr-1" />
-          {reminders.length} active care tasks
+          {t('dashboard.activeCareTasks', { count: reminders.length })}
         </span>
       </CardHeader>
       <CardContent className="space-y-3">
         {reminders.length === 0 ? (
           <div className="p-6 text-center text-xs text-[#66736F] border border-dashed border-[#DDE7E3] rounded-2xl">
-            No reminders scheduled yet. Create one or ask AI Voice Assistant to schedule a reminder.
+            {t('dashboard.noRemindersScheduled')}
           </div>
         ) : (
           reminders.slice(0, 4).map((item) => (
@@ -48,11 +50,11 @@ export function TodaysCare() {
                   <h5 className={`text-sm font-bold ${item.status === 'Completed' ? 'line-through text-[#66736F]' : 'text-[#123B35]'}`}>
                     {item.title}
                   </h5>
-                  <p className="text-xs text-[#66736F]">{item.time} • {item.date || 'Today'}</p>
+                  <p className="text-xs text-[#66736F]">{item.time} • {item.date || t('common.today')}</p>
                 </div>
               </div>
               <Badge variant={item.status === 'Completed' ? 'teal' : 'accent'}>
-                {item.status}
+                {item.status === 'Completed' ? t('common.completed') : (item.status === 'Upcoming' ? t('common.upcoming') : item.status)}
               </Badge>
             </div>
           ))

@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import { Memory } from '@/types/memory';
 import { Button } from '@/components/ui/button';
-import { Mic, Sparkles, MapPin, Volume2 } from 'lucide-react';
+import { Mic, Sparkles, MapPin } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface ReminiscenceCardProps {
   memory: Memory;
@@ -12,6 +13,7 @@ interface ReminiscenceCardProps {
 }
 
 export function ReminiscenceCard({ memory, onStartVoiceSession }: ReminiscenceCardProps) {
+  const { t } = useLanguage();
   const [promptText, setPromptText] = useState(
     memory.reminiscencePrompt || `Mom, do you remember our trip to ${memory.location}?`
   );
@@ -39,8 +41,8 @@ export function ReminiscenceCard({ memory, onStartVoiceSession }: ReminiscenceCa
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-lg font-bold text-[#123B35]">Memory Moment</h4>
-            <p className="text-xs text-[#66736F]">Reminiscence Conversation Mode</p>
+            <h4 className="text-lg font-bold text-[#123B35]">{t('memories.memoryMoment')}</h4>
+            <p className="text-xs text-[#66736F]">{t('memories.reminiscenceMode')}</p>
           </div>
         </div>
         <Button
@@ -48,9 +50,9 @@ export function ReminiscenceCard({ memory, onStartVoiceSession }: ReminiscenceCa
           size="sm"
           onClick={handleGenerateNewPrompt}
           disabled={isGenerating}
-          className="text-xs text-[#17665B]"
+          className="text-xs text-[#17665B] cursor-pointer"
         >
-          {isGenerating ? 'Generating prompt...' : 'New Prompt'}
+          {isGenerating ? t('memories.generatingPrompt') : t('memories.newPrompt')}
         </Button>
       </div>
 
@@ -68,17 +70,17 @@ export function ReminiscenceCard({ memory, onStartVoiceSession }: ReminiscenceCa
 
       <div className="rounded-2xl bg-white p-4 border border-[#DDE7E3] space-y-3">
         <p className="text-sm font-semibold text-[#123B35] leading-relaxed">
-          "{promptText}"
+          &ldquo;{promptText}&rdquo;
         </p>
 
         <Button
           variant="teal"
           size="lg"
-          className="w-full shadow-md py-3 text-sm font-bold flex items-center justify-center space-x-2"
+          className="w-full shadow-md py-3 text-sm font-bold flex items-center justify-center space-x-2 cursor-pointer"
           onClick={() => onStartVoiceSession?.(promptText)}
         >
           <Mic className="w-5 h-5 text-white" />
-          <span>🎙 Talk about it with Mom</span>
+          <span>{t('memories.talkWithMom')}</span>
         </Button>
       </div>
     </div>
