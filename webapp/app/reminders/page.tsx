@@ -49,7 +49,7 @@ export default function RemindersPage() {
             Medication & Routine Reminders
           </h1>
           <p className="text-sm text-[#66736F]">
-            Backend Contract: POST /v1/caretaker/reminders
+            Manage daily medications and routine care tasks.
           </p>
         </div>
         <Button variant="default" onClick={() => setIsAddOpen(true)} className="shadow-md">

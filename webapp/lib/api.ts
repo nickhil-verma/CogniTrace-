@@ -105,6 +105,7 @@ export class ApiClient {
         localStorage.setItem('cognitrace_token', data.access_token);
         localStorage.setItem('cognitrace_user', JSON.stringify(data.user));
         localStorage.setItem('cognitrace_user_role', data.user.role || role);
+        window.dispatchEvent(new Event('cognitrace_role_change'));
       }
       return data;
     } catch (err) {
@@ -126,6 +127,7 @@ export class ApiClient {
         localStorage.setItem('cognitrace_token', fallbackData.access_token);
         localStorage.setItem('cognitrace_user', JSON.stringify(fallbackData.user));
         localStorage.setItem('cognitrace_user_role', demoUser.role);
+        window.dispatchEvent(new Event('cognitrace_role_change'));
       }
       return fallbackData;
     }
@@ -143,6 +145,7 @@ export class ApiClient {
         localStorage.setItem('cognitrace_token', data.access_token);
         localStorage.setItem('cognitrace_user', JSON.stringify(data.user));
         localStorage.setItem('cognitrace_user_role', 'patient');
+        window.dispatchEvent(new Event('cognitrace_role_change'));
       }
       return data;
     } catch (err) {
@@ -164,6 +167,7 @@ export class ApiClient {
         localStorage.setItem('cognitrace_token', fallbackData.access_token);
         localStorage.setItem('cognitrace_user', JSON.stringify(fallbackData.user));
         localStorage.setItem('cognitrace_user_role', 'patient');
+        window.dispatchEvent(new Event('cognitrace_role_change'));
       }
       return fallbackData;
     }
@@ -220,6 +224,8 @@ export class ApiClient {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('cognitrace_token');
       localStorage.removeItem('cognitrace_user');
+      localStorage.removeItem('cognitrace_user_role');
+      window.dispatchEvent(new Event('cognitrace_role_change'));
     }
   }
 
@@ -268,7 +274,7 @@ export class ApiClient {
       return await res.json();
     } catch (err) {
       console.warn(`[CogniTrace API] /v1/patient/audio-task-turn offline. Using intelligent simulation.`, err);
-      const promptText = textPrompt || "Remind Mom to take her medicine at 8 tonight.";
+      const promptText = textPrompt || "What should I do next?";
       return await simulateMockVoiceTurn(promptText);
     }
   }
@@ -287,6 +293,19 @@ export class ApiClient {
 
   async toggleReminder(remId: string, patientId: string = 'patient_001') {
     return this.post(`/v1/caretaker/reminders/${remId}/toggle?patient_id=${patientId}`, {});
+  }
+
+  async deleteReminder(remId: string, patientId: string = 'patient_001') {
+    try {
+      const res = await fetch(`${this.getBaseUrl()}/v1/caretaker/reminders/${remId}?patient_id=${patientId}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      console.warn('API delete reminder warning:', err);
+    }
   }
 
   async getAppointments(patientId: string = 'patient_001') {

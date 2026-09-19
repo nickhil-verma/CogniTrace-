@@ -54,7 +54,7 @@ export function VoiceOrb({ state, volumeLevel = 0, onClick }: VoiceOrbProps) {
       default:
         return {
           label: 'Tap to speak',
-          sublabel: '"Remind Mom to take her medicine at 8 tonight"',
+          sublabel: '"What should I do next?"',
           icon: <Mic className="w-8 h-8 text-[#123B35]" />,
           color: 'from-[#BFDCD6] to-[#F7DDE5]',
         };

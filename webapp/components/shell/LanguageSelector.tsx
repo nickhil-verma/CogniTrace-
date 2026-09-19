@@ -3,9 +3,15 @@
 import React from 'react';
 import { Globe } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useUserRole } from '@/hooks/useUserRole';
 
 export function LanguageSelector() {
   const { selectedLanguage, languages, changeLanguage } = useLanguage();
+  const { isPatient } = useUserRole();
+
+  if (isPatient) {
+    return null;
+  }
 
   return (
     <div className="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-full border border-[#DDE7E3] text-xs font-semibold text-[#123B35] shadow-2xs">

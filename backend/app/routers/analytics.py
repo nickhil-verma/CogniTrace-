@@ -118,6 +118,7 @@ async def create_caretaker_reminder(payload: dict):
 
 
 @router.put("/v1/caretaker/reminders/{rem_id}/toggle")
+@router.post("/v1/caretaker/reminders/{rem_id}/toggle")
 async def toggle_caretaker_reminder(rem_id: str, patient_id: str = "patient_001"):
     """
     Toggles completion status of reminder in DynamoDB.
@@ -129,6 +130,7 @@ async def toggle_caretaker_reminder(rem_id: str, patient_id: str = "patient_001"
 
 
 @router.delete("/v1/caretaker/reminders/{rem_id}")
+@router.post("/v1/caretaker/reminders/{rem_id}/delete")
 async def delete_caretaker_reminder(rem_id: str, patient_id: str = "patient_001"):
     """
     Deletes reminder from DynamoDB.

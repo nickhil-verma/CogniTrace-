@@ -50,7 +50,7 @@ export default function AppointmentsPage() {
             Doctor Appointments
           </h1>
           <p className="text-sm text-[#66736F]">
-            Backend Contract: POST /v1/caretaker/appointments
+            Schedule and track upcoming medical consultations.
           </p>
         </div>
         <Button variant="default" onClick={() => setIsAddOpen(true)} className="shadow-md">

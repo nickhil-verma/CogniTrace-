@@ -25,6 +25,7 @@ class DynamoDBService:
         self.resource = None
         self.table = None
         self.in_memory_fallback: Dict[str, Dict[str, Any]] = {}
+        self._seeded_reminders_users = set()
         self._init_client()
 
     def _init_client(self):
@@ -252,8 +253,15 @@ class DynamoDBService:
             except Exception as e:
                 logger.warning(f"[DynamoDB] Error querying reminders: {e}")
 
+        if user_id not in self._seeded_reminders_users:
+            self._seeded_reminders_users.add(user_id)
+            for rem in self._get_default_seed_reminders():
+                rem_key = f"REM#{user_id}#{rem['id']}"
+                if rem_key not in self.in_memory_fallback:
+                    self.in_memory_fallback[rem_key] = rem
+
         items = [val for key, val in self.in_memory_fallback.items() if key.startswith(f"REM#{user_id}")]
-        return items if items else self._get_default_seed_reminders()
+        return items
 
     def toggle_reminder(self, user_id: str, rem_id: str) -> Optional[Dict[str, Any]]:
         reminders = self.get_reminders(user_id)
@@ -265,7 +273,9 @@ class DynamoDBService:
         return None
 
     def delete_reminder(self, user_id: str, rem_id: str) -> bool:
-        self.in_memory_fallback.pop(f"REM#{user_id}#{rem_id}", None)
+        rem_key = f"REM#{user_id}#{rem_id}"
+        self.in_memory_fallback.pop(rem_key, None)
+        self._seeded_reminders_users.add(user_id)
         if self.table:
             try:
                 self.table.delete_item(Key={"PK": f"USER#{user_id}", "SK": f"REMINDER#{rem_id}"})

@@ -34,11 +34,10 @@ const CAREGIVER_NAV = [
   { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
-const PATIENT_NAV = [
-  { label: 'Talk with Voice AI', href: '/command-center', icon: Mic, highlight: true },
+const PATIENT_NAV: { label: string; href: string; icon: any; highlight?: boolean }[] = [
+  { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
   { label: 'My Photo Album', href: '/memories', icon: ImageIcon },
-  { label: 'Today’s Reminders', href: '/reminders', icon: Bell },
-  { label: 'Daily Tap Game', href: '/tracking', icon: LineChart },
+  { label: 'My Daily Goals', href: '/reminders', icon: Bell },
 ];
 
 const MOBILE_BOTTOM_NAV = [
@@ -185,7 +184,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={isPatient ? '/dashboard' : item.href}
                 className="relative -top-5 flex flex-col items-center group"
               >
                 <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xl border-4 border-[#F5F8F6] group-active:scale-95 transition-transform ${

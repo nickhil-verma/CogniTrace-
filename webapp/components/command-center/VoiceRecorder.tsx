@@ -46,7 +46,7 @@ export function VoiceRecorder({
           type="text"
           value={textInput}
           onChange={(e) => setTextInput(e.target.value)}
-          placeholder="Or type a care command (e.g., 'Remind Mom to take medicine at 8')"
+          placeholder="Type a task or question (e.g., 'What should I do next?')"
           className="rounded-full bg-white shadow-xs border-[#DDE7E3] h-12 text-sm px-5"
           disabled={voiceState === 'PROCESSING' || voiceState === 'EXECUTING'}
         />
