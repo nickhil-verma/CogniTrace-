@@ -102,6 +102,9 @@ async def assess_multimodal(
 # Frontend Contract Endpoints (Web & Flutter Compatibility)
 # ------------------------------------------------------------------
 
+from app.services.grok_agent import grok_agent
+
+
 @router.post("/v1/patient/audio-task-turn", response_model=AudioTaskTurnResponse)
 async def submit_audio_task_turn(
     file: Optional[UploadFile] = File(None),
@@ -109,7 +112,7 @@ async def submit_audio_task_turn(
     patient_id: str = Form("patient_001")
 ):
     """
-    Web App & Mobile App endpoint for patient voice interaction turns with Redis rate limiting.
+    Web App & Mobile App endpoint for patient voice interaction turns with Redis rate limiting and LangGraph Grok agent.
     """
     # Rate limiting check (30 minutes sliding window per patient for task completion actions)
     allowed = await redis_service.check_sliding_rate_limit(patient_id, "audio_turn", window_seconds=1800, max_requests=10)
@@ -140,6 +143,9 @@ async def submit_audio_task_turn(
 
     report = risk_engine.evaluate_risk(acoustic, linguistic)
 
+    # Execute LangGraph Grok Agent State Machine
+    agent_response = await grok_agent.run_agent_turn(linguistic.transcript, patient_id=patient_id)
+
     # Check emergency keywords guardrail
     guardrail = guardrail_manager.check_emergency_keywords(linguistic.transcript)
     alert = report.risk_tier in ["MCI", "HIGH_RISK"] or guardrail.emergency_detected
@@ -147,7 +153,7 @@ async def submit_audio_task_turn(
     if guardrail.emergency_detected:
         ai_response = f"Emergency Alert Triggered! {guardrail.recommended_action}"
     else:
-        ai_response = (
+        ai_response = agent_response.ai_response or (
             f"Thank you. I have analyzed your voice recording. "
             f"Speech clarity and fluency recorded. Risk tier: {report.risk_tier}."
         )
@@ -160,8 +166,11 @@ async def submit_audio_task_turn(
         riskTier=report.risk_tier,
         riskScore=report.composite_score,
         acousticFeatures=acoustic,
-        linguisticFeatures=linguistic
+        linguisticFeatures=linguistic,
+        actions=[act.model_dump() for act in agent_response.actions] if agent_response.actions else None,
+        executionTimeline=[step.model_dump() for step in agent_response.timeline] if agent_response.timeline else None
     )
+
 
 
 @router.post("/v1/patient/telemetry/sync", response_model=TelemetrySyncResponse)

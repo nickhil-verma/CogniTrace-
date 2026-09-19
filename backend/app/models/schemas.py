@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Dict, Optional, Literal
+from typing import List, Dict, Optional, Literal, Any
 from pydantic import BaseModel, Field
 
 
@@ -72,6 +72,8 @@ class AudioTaskTurnResponse(BaseModel):
     riskScore: float = 0.0
     acousticFeatures: Optional[AcousticFeatures] = None
     linguisticFeatures: Optional[LinguisticFeatures] = None
+    actions: Optional[List[Dict[str, Any]]] = None
+    executionTimeline: Optional[List[Dict[str, Any]]] = None
 
 
 class TelemetrySyncRequest(BaseModel):
