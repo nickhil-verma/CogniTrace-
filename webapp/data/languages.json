@@ -1,0 +1,122 @@
+{
+  "defaultLanguage": "en-US",
+  "languages": [
+    {
+      "code": "en-US",
+      "name": "English",
+      "nativeName": "English",
+      "flag": "🇺🇸",
+      "speechLang": "en-US"
+    },
+    {
+      "code": "hi-IN",
+      "name": "Hindi",
+      "nativeName": "हिन्दी",
+      "flag": "🇮🇳",
+      "speechLang": "hi-IN"
+    },
+    {
+      "code": "es-ES",
+      "name": "Spanish",
+      "nativeName": "Español",
+      "flag": "🇪🇸",
+      "speechLang": "es-ES"
+    },
+    {
+      "code": "fr-FR",
+      "name": "French",
+      "nativeName": "Français",
+      "flag": "🇫🇷",
+      "speechLang": "fr-FR"
+    },
+    {
+      "code": "de-DE",
+      "name": "German",
+      "nativeName": "Deutsch",
+      "flag": "🇩🇪",
+      "speechLang": "de-DE"
+    },
+    {
+      "code": "ta-IN",
+      "name": "Tamil",
+      "nativeName": "தமிழ்",
+      "flag": "🇮🇳",
+      "speechLang": "ta-IN"
+    },
+    {
+      "code": "te-IN",
+      "name": "Telugu",
+      "nativeName": "తెలుగు",
+      "flag": "🇮🇳",
+      "speechLang": "te-IN"
+    },
+    {
+      "code": "bn-IN",
+      "name": "Bengali",
+      "nativeName": "বাংলা",
+      "flag": "🇮🇳",
+      "speechLang": "bn-IN"
+    },
+    {
+      "code": "mr-IN",
+      "name": "Marathi",
+      "nativeName": "मराठी",
+      "flag": "🇮🇳",
+      "speechLang": "mr-IN"
+    },
+    {
+      "code": "gu-IN",
+      "name": "Gujarati",
+      "nativeName": "ગુજરાતી",
+      "flag": "🇮🇳",
+      "speechLang": "gu-IN"
+    }
+  ],
+  "translations": {
+    "en-US": {
+      "appName": "CogniTrace",
+      "patientPortal": "Patient Companion",
+      "caregiverPortal": "Caregiver Portal",
+      "talkWithVoiceAI": "Talk with Voice AI Assistant",
+      "tapToSpeak": "Tap Here to Speak",
+      "checklist": "Today's Simple Checklist",
+      "memories": "My Photo Album",
+      "listening": "Listening...",
+      "processing": "Processing your request...",
+      "speaking": "Speaking...",
+      "idle": "Tap microphone to speak",
+      "callEmergency": "Call Caregiver Emergency",
+      "logout": "Log Out"
+    },
+    "hi-IN": {
+      "appName": "कॉग्निट्रेस",
+      "patientPortal": "मरीज़ साथी",
+      "caregiverPortal": "देखभाल पोर्टल",
+      "talkWithVoiceAI": "वॉइस एआई सहायक से बात करें",
+      "tapToSpeak": "बोलने के लिए यहाँ टैप करें",
+      "checklist": "आज की आसान कार्य सूची",
+      "memories": "मेरी फोटो एलबम",
+      "listening": "सुन रहे हैं...",
+      "processing": "आपकी बात समझ रहे हैं...",
+      "speaking": "बोल रहे हैं...",
+      "idle": "बोलने के लिए माइक दबाएँ",
+      "callEmergency": "आपातकालीन कॉल",
+      "logout": "लॉग आउट"
+    },
+    "es-ES": {
+      "appName": "CogniTrace",
+      "patientPortal": "Compañero del Paciente",
+      "caregiverPortal": "Portal del Cuidador",
+      "talkWithVoiceAI": "Hablar con la IA de Voz",
+      "tapToSpeak": "Presione para Hablar",
+      "checklist": "Lista de Tareas de Hoy",
+      "memories": "Mi Álbum de Fotos",
+      "listening": "Escuchando...",
+      "processing": "Procesando su solicitud...",
+      "speaking": "Hablando...",
+      "idle": "Presione el micrófono",
+      "callEmergency": "Llamada de Emergencia",
+      "logout": "Cerrar Sesión"
+    }
+  }
+}

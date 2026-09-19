@@ -15,7 +15,6 @@ import {
   FileEdit,
   Settings,
   Heart,
-  Shield,
   PhoneCall
 } from 'lucide-react';
 import { LanguageSelector } from './LanguageSelector';
@@ -84,9 +83,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
 
-          {/* Role Switcher Button */}
+          {/* Role Status Badge (No mode switching, logout to change) */}
           <div className="pt-1 pb-1">
-            <RoleSwitcher className="w-full justify-center py-2" />
+            <RoleSwitcher className="w-full" />
           </div>
 
           {/* Navigation Items */}
@@ -131,6 +130,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Footer Language & Profile */}
         <div className="pt-4 border-t border-[#DDE7E3] space-y-3">
+          <LanguageSelector />
           {isPatient ? (
             <a
               href="tel:911"
@@ -140,18 +140,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span>Call Caregiver Emergency</span>
             </a>
           ) : (
-            <>
-              <LanguageSelector />
-              <div className="flex items-center space-x-3 p-2.5 rounded-2xl bg-[#F5F8F6] border border-[#DDE7E3]">
-                <div className="w-8 h-8 rounded-full bg-[#3E9C87] text-white flex items-center justify-center font-bold text-xs">
-                  P
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-[#123B35] truncate">Priya (Caregiver)</p>
-                  <p className="text-[10px] text-[#66736F] truncate">Mom’s Care Team</p>
-                </div>
+            <div className="flex items-center space-x-3 p-2.5 rounded-2xl bg-[#F5F8F6] border border-[#DDE7E3]">
+              <div className="w-8 h-8 rounded-full bg-[#3E9C87] text-white flex items-center justify-center font-bold text-xs">
+                P
               </div>
-            </>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-[#123B35] truncate">Priya (Caregiver)</p>
+                <p className="text-[10px] text-[#66736F] truncate">Mom’s Care Team</p>
+              </div>
+            </div>
           )}
         </div>
       </aside>
@@ -167,8 +164,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span className="text-lg font-bold text-[#123B35]">CogniTrace</span>
         </Link>
         <div className="flex items-center space-x-2">
-          <RoleSwitcher />
           <LanguageSelector />
+          <RoleSwitcher />
         </div>
       </header>
 
