@@ -104,14 +104,48 @@ async def create_caretaker_reminder(payload: dict):
     }
 
 
-@router.post("/v1/caretaker/appointments")
-async def create_caretaker_appointment(payload: dict):
+from app.database.dynamodb import dynamodb_service
+
+
+@router.post("/v1/rag/vectors", tags=["RAG Research & DynamoDB Vectors"])
+async def store_rag_vector(payload: dict):
     """
-    Schedules medical appointment.
+    Stores text chunk, vector embeddings array, and metadata in AWS DynamoDB for RAG research.
     """
+    user_id = payload.get("user_id") or payload.get("patient_id", "usr_demo_001")
+    vector_id = payload.get("vector_id") or f"vec_{int(datetime.utcnow().timestamp() * 1000)}"
+    text_chunk = payload.get("text_chunk", "")
+    embedding = payload.get("embedding", [0.0] * 1536)
+    metadata = payload.get("metadata", {})
+
+    success = dynamodb_service.save_rag_vector(
+        user_id=user_id,
+        vector_id=vector_id,
+        text_chunk=text_chunk,
+        embedding=embedding,
+        metadata=metadata
+    )
+
     return {
-        "status": "scheduled",
-        "id": f"apt_{int(datetime.utcnow().timestamp())}",
-        "appointment": payload
+        "status": "stored" if success else "fallback_stored",
+        "user_id": user_id,
+        "vector_id": vector_id,
+        "embedding_dimensions": len(embedding),
+        "table": dynamodb_service.table_name,
+        "timestamp": datetime.utcnow().isoformat()
     }
+
+
+@router.get("/v1/rag/vectors/{patient_id}", tags=["RAG Research & DynamoDB Vectors"])
+async def get_rag_vectors(patient_id: str):
+    """
+    Retrieves all RAG vector chunks stored in DynamoDB for a patient for RAG context retrieval.
+    """
+    vectors = dynamodb_service.get_user_rag_vectors(patient_id)
+    return {
+        "patient_id": patient_id,
+        "count": len(vectors),
+        "vectors": vectors
+    }
+
 
