@@ -8,8 +8,9 @@ import { api } from '@/lib/api';
 const STORAGE_KEY = 'cognitrace_reminders_v1';
 
 export function useReminders() {
-  const [reminders, setReminders] = useState<Reminder[]>(initialMockReminders);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+
 
   // Load from backend DynamoDB API & localStorage on mount
   useEffect(() => {
