@@ -1,44 +1,72 @@
 import '../../domain/entities/cognitrace_entities.dart';
 import '../../domain/repositories/cognitrace_repositories.dart';
-import '../datasources/remote/mock_cognitrace_api.dart';
 import '../datasources/remote/cognitrace_api.dart';
 
 class PatientRepositoryImpl implements PatientRepository {
-  final MockCogniTraceApi _mockApi;
+  final CogniTraceApi _api;
 
-  PatientRepositoryImpl(this._mockApi);
+  PatientRepositoryImpl(this._api);
 
   @override
-  Future<PatientEntity> getPatientSummary(String patientId) {
-    return _mockApi.getPatientSummary(patientId);
+  Future<PatientEntity> getPatientSummary(String patientId) async {
+    final data = await _api.getPatientSummary(patientId);
+
+    final indicators =
+        (data['clinicalIndicators'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
+
+    return PatientEntity(
+      id: data['patientId']?.toString() ?? patientId,
+      name: data['name']?.toString() ?? 'Patient',
+      relation: 'Patient',
+      careStage: data['riskTier']?.toString() ?? 'NORMAL',
+      stageDescription:
+          'Risk score: ${data['riskScore'] ?? 0.0}',
+      recentObservations: indicators,
+      upcomingCare: const [],
+    );
   }
 }
 
 class CareRepositoryImpl implements CareRepository {
-  final MockCogniTraceApi _mockApi;
+  final CogniTraceApi _api;
   final List<ReminderEntity> _localReminders = [];
   final List<AppointmentEntity> _localAppointments = [];
 
-  CareRepositoryImpl(this._mockApi);
+  CareRepositoryImpl(this._api);
 
   @override
   Future<List<ReminderEntity>> getReminders() async {
-    if (_localReminders.isEmpty) {
-      final mock = await _mockApi.getReminders();
-      _localReminders.addAll(mock);
-    }
     return List.unmodifiable(_localReminders);
   }
 
   @override
-  Future<ReminderEntity> createReminder(String title, DateTime dateTime, String category) async {
+  Future<ReminderEntity> createReminder(
+    String title,
+    DateTime dateTime,
+    String category,
+  ) async {
+    final response = await _api.createReminder({
+      'title': title,
+      'time':
+          '${dateTime.hour.toString().padLeft(2, '0')}:'
+          '${dateTime.minute.toString().padLeft(2, '0')}',
+      'patientId': 'patient_mom_01',
+    });
+
+    final reminderData =
+        response['reminder'] as Map<String, dynamic>? ?? {};
+
     final reminder = ReminderEntity(
-      id: 'rem_${DateTime.now().millisecondsSinceEpoch}',
-      title: title,
+      id: response['id']?.toString() ??
+          'rem_${DateTime.now().millisecondsSinceEpoch}',
+      title: reminderData['title']?.toString() ?? title,
       dateTime: dateTime,
       category: category,
       status: ReminderStatus.upcoming,
     );
+
     _localReminders.insert(0, reminder);
     return reminder;
   }
@@ -46,8 +74,10 @@ class CareRepositoryImpl implements CareRepository {
   @override
   Future<void> toggleReminder(String id) async {
     final index = _localReminders.indexWhere((r) => r.id == id);
+
     if (index != -1) {
       final current = _localReminders[index];
+
       _localReminders[index] = ReminderEntity(
         id: current.id,
         title: current.title,
@@ -62,10 +92,6 @@ class CareRepositoryImpl implements CareRepository {
 
   @override
   Future<List<AppointmentEntity>> getAppointments() async {
-    if (_localAppointments.isEmpty) {
-      final mock = await _mockApi.getAppointments();
-      _localAppointments.addAll(mock);
-    }
     return List.unmodifiable(_localAppointments);
   }
 
@@ -76,55 +102,80 @@ class CareRepositoryImpl implements CareRepository {
     DateTime dateTime,
     String location,
   ) async {
+    final response = await _api.createAppointment({
+      'title': specialty.isNotEmpty
+          ? '$specialty Follow-up'
+          : 'Medical Appointment',
+      'date':
+          '${dateTime.year.toString().padLeft(4, '0')}-'
+          '${dateTime.month.toString().padLeft(2, '0')}-'
+          '${dateTime.day.toString().padLeft(2, '0')}',
+      'doctor': doctorName,
+      'patientId': 'patient_mom_01',
+    });
+
+    final appointmentData =
+        response['appointment'] as Map<String, dynamic>? ?? {};
+
     final appointment = AppointmentEntity(
-      id: 'app_${DateTime.now().millisecondsSinceEpoch}',
-      doctorName: doctorName,
+      id: response['id']?.toString() ??
+          'apt_${DateTime.now().millisecondsSinceEpoch}',
+      doctorName:
+          appointmentData['doctor']?.toString() ?? doctorName,
       specialty: specialty,
       dateTime: dateTime,
       location: location,
       status: AppointmentStatus.scheduled,
     );
+
     _localAppointments.insert(0, appointment);
     return appointment;
   }
 }
 
 class MemoryRepositoryImpl implements MemoryRepository {
-  final MockCogniTraceApi _mockApi;
+  final CogniTraceApi _api;
 
-  MemoryRepositoryImpl(this._mockApi);
+  MemoryRepositoryImpl(this._api);
 
   @override
-  Future<List<MemoryEntity>> getMemories() => _mockApi.getMemories();
+  Future<List<MemoryEntity>> getMemories() async {
+    return const [];
+  }
 
   @override
   Future<MemoryEntity> getMemoryDetail(String id) async {
-    final memories = await _mockApi.getMemories();
-    return memories.firstWhere(
-      (m) => m.id == id,
-      orElse: () => memories.first,
+    throw UnimplementedError(
+      'Memory details are not currently exposed by the backend.',
     );
   }
 
   @override
-  Future<String> sendReminiscencePrompt(String memoryId, String promptText) async {
-    await Future.delayed(const Duration(milliseconds: 1200));
-    return "That memory from Goa was wonderful! Mom remembers walking along the tide with Rahul and laughing as the gentle waves touched her feet.";
+  Future<String> sendReminiscencePrompt(
+    String memoryId,
+    String promptText,
+  ) async {
+    final response = await _api.sendReminiscencePrompt({
+      'memory_id': memoryId,
+      'description': promptText,
+    });
+
+    return response['prompt']?.toString() ?? '';
   }
 }
 
 class VoiceRepositoryImpl implements VoiceRepository {
-  final MockCogniTraceApi _mockApi;
+  final CogniTraceApi _api;
 
-  VoiceRepositoryImpl(this._mockApi);
+  VoiceRepositoryImpl(this._api);
 
   @override
   Future<Map<String, dynamic>> sendAudioTaskTurn({
     required String audioPath,
     required String patientId,
     String? language,
-  }) async {
-    return _mockApi.sendAudioTaskTurn(
+  }) {
+    return _api.sendAudioTaskTurn(
       audioPath: audioPath,
       patientId: patientId,
       language: language,

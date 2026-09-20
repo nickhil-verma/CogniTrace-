@@ -8,6 +8,7 @@ from app.models.schemas import (
     PatientSummaryResponse,
     ReminiscencePromptRequest,
     ReminiscencePromptResponse,
+    CaretakerReminderRequest,
 )
 from app.services.longitudinal_tracker import longitudinal_tracker
 
@@ -108,8 +109,9 @@ async def create_caretaker_reminder(payload: dict):
     """
     Creates or updates patient reminder in DynamoDB.
     """
-    patient_id = payload.get("patient_id") or payload.get("user_id", "patient_001")
-    saved_item = dynamodb_service.save_reminder(patient_id, payload)
+    patient_id = payload.get("patient_id") or payload.get("user_id", "patient_001") if isinstance(payload, dict) else getattr(payload, "patient_id", "patient_001")
+    data = payload.model_dump(exclude_none=True) if hasattr(payload, "model_dump") else payload
+    saved_item = dynamodb_service.save_reminder(patient_id, data)
     return {
         "status": "created",
         "id": saved_item.get("id"),

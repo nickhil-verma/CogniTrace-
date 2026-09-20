@@ -18,7 +18,7 @@ class CogniTraceApi {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(
         audioPath,
-        filename: 'voice_command.aac',
+        filename: 'voice_command.wav',
       ),
       'patient_id': patientId,
       if (language != null) 'language': language,

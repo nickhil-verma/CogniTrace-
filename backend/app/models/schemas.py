@@ -88,6 +88,13 @@ class TelemetrySyncResponse(BaseModel):
     indicators: List[str]
 
 
+class CaretakerReminderRequest(BaseModel):
+    title: str
+    time: Optional[str] = None
+    category: Optional[str] = None
+    patientId: str
+
+
 class ReminiscencePromptRequest(BaseModel):
     memory_id: str
     description: str
