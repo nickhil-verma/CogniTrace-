@@ -195,28 +195,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* ================= MOBILE HEADER ================= */}
-      <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-[#DDE7E3] sticky top-0 z-40">
-        <Link href={isPatient ? "/command-center" : "/dashboard"} className="flex items-center space-x-2">
+      <header className="md:hidden flex items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 bg-white border-b border-[#DDE7E3] sticky top-0 z-40 gap-1.5 sm:gap-2">
+        <Link href={isPatient ? "/command-center" : "/dashboard"} className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
           <img
             src="/logo.svg"
             alt="CogniTrace Logo"
-            className="w-8 h-8 rounded-xl object-contain"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl object-contain shrink-0"
           />
-          <span className="text-lg font-bold text-[#123B35]">CogniTrace</span>
+          <span className="text-sm sm:text-base font-bold text-[#123B35] tracking-tight truncate max-w-[100px] xs:max-w-none">CogniTrace</span>
         </Link>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1 sm:space-x-2 shrink-0 min-w-0">
           <LanguageSelector direction="down" />
-          <RoleSwitcher />
+          <RoleSwitcher compact className="shrink-0" />
         </div>
       </header>
 
       {/* ================= MAIN CONTENT WORKSPACE ================= */}
-      <main className="flex-1 min-w-0 p-4 md:p-8 mb-20 md:mb-0 max-w-7xl mx-auto w-full">
+      <main className="flex-1 min-w-0 p-3 sm:p-4 md:p-8 mb-24 md:mb-0 max-w-7xl mx-auto w-full">
         {children}
       </main>
 
       {/* ================= MOBILE BOTTOM NAVIGATION ================= */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-[#DDE7E3] px-3 py-2 flex items-center justify-around shadow-lg">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-[#DDE7E3] px-2 py-1.5 sm:px-3 sm:py-2 flex items-center justify-around shadow-lg">
         {mobileBottomNav.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -226,12 +226,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.href}
                 href={isPatient ? '/dashboard' : item.href}
-                className="relative -top-5 flex flex-col items-center group"
+                className="relative -top-4 sm:-top-5 flex flex-col items-center group shrink-0"
               >
-                <div className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl border-4 border-[#F5F8F6] bg-gradient-to-tr from-[#164E48] to-[#3E9C87] group-active:scale-95 transition-transform">
-                  <Mic className="w-6 h-6 text-white animate-pulse" />
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-xl border-4 border-[#F5F8F6] bg-gradient-to-tr from-[#164E48] to-[#3E9C87] group-active:scale-95 transition-transform">
+                  <Mic className="w-5 h-5 sm:w-6 sm:h-6 text-white animate-pulse" />
                 </div>
-                <span className="text-[10px] font-bold text-[#17665B] mt-0.5">{t('nav.voiceAi')}</span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-[#17665B] mt-0.5">{t('nav.voiceAi')}</span>
               </Link>
             );
           }
@@ -240,12 +240,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center py-1 px-2.5 rounded-xl transition-colors ${
+              className={`flex flex-col items-center py-1 px-1.5 sm:px-2.5 rounded-xl transition-colors ${
                 isActive ? 'text-[#164E48] font-bold' : 'text-[#66736F]'
               }`}
             >
-              <Icon className="w-5 h-5 mb-0.5" />
-              <span className="text-[10px]">{item.label}</span>
+              <Icon className="w-4 h-4 sm:w-5 sm:h-5 mb-0.5" />
+              <span className="text-[9px] sm:text-[10px] truncate max-w-[64px] text-center">{item.label}</span>
             </Link>
           );
         })}

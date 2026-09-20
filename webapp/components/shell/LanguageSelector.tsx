@@ -127,19 +127,19 @@ export function LanguageSelector({ className = '', direction = 'auto' }: Languag
         aria-expanded={isOpen}
         aria-controls={listboxId}
         aria-label={`Language: ${currentLangObj.nativeName} (${currentLangObj.name}). Click to change language.`}
-        className="flex items-center justify-between w-full gap-2 px-3 py-1.5 bg-white hover:bg-[#F5F8F6] active:bg-[#BFDCD6]/20 rounded-xl border border-[#DDE7E3] text-xs font-semibold text-[#123B35] shadow-2xs hover:border-[#BFDCD6] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#17665B] focus-visible:ring-offset-1 transition-all cursor-pointer select-none"
+        className="flex items-center justify-between w-full gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 bg-white hover:bg-[#F5F8F6] active:bg-[#BFDCD6]/20 rounded-xl border border-[#DDE7E3] text-xs font-semibold text-[#123B35] shadow-2xs hover:border-[#BFDCD6] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#17665B] focus-visible:ring-offset-1 transition-all cursor-pointer select-none"
       >
-        <div className="flex items-center space-x-1.5 min-w-0">
+        <div className="flex items-center space-x-1 sm:space-x-1.5 min-w-0">
           <Globe className="w-3.5 h-3.5 text-[#17665B] shrink-0" aria-hidden="true" />
-          <span className="text-sm leading-none shrink-0" aria-hidden="true">
+          <span className="text-xs sm:text-sm leading-none shrink-0" aria-hidden="true">
             {currentLangObj.flag}
           </span>
-          <span className="truncate font-medium text-[#123B35]">
+          <span className="truncate font-medium text-[#123B35] hidden xs:inline sm:inline max-w-[70px] sm:max-w-none">
             {currentLangObj.nativeName}
           </span>
         </div>
         <ChevronDown
-          className={`w-3.5 h-3.5 text-[#66736F] shrink-0 transition-transform duration-200 ${
+          className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#66736F] shrink-0 transition-transform duration-200 ${
             isOpen ? 'rotate-180 text-[#17665B]' : ''
           }`}
           aria-hidden="true"
@@ -149,9 +149,9 @@ export function LanguageSelector({ className = '', direction = 'auto' }: Languag
       {/* Popover Dropdown */}
       {isOpen && (
         <div
-          className={`absolute z-50 min-w-[210px] w-full max-w-xs bg-white rounded-2xl border border-[#DDE7E3] shadow-lg py-1.5 transition-all animate-in fade-in zoom-in-95 duration-150 ${
+          className={`absolute z-50 min-w-[190px] sm:min-w-[210px] w-full max-w-xs bg-white rounded-2xl border border-[#DDE7E3] shadow-lg py-1.5 transition-all animate-in fade-in zoom-in-95 duration-150 ${
             openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
-          } left-0 right-auto`}
+          } right-0 left-auto sm:left-0 sm:right-auto`}
         >
           <div className="px-3 py-1.5 border-b border-[#DDE7E3]/60 text-[10px] font-bold text-[#66736F] uppercase tracking-wider">
             Select Language
