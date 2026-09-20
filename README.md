@@ -241,6 +241,10 @@ Rather than introducing expensive AWS Application Load Balancers or managing cus
 
 ---
 
+##Future Implementation
+<img width="1600" height="1280" alt="image" src="https://github.com/user-attachments/assets/49332f13-f219-4223-9361-4425e02871c7" />
+
+
 ## 🌟 Why CogniTrace Wins (Competitive Moat & Hackathon Supremacy)
 
 1. **AWS Track Specialization**: Full cloud integration with **AWS DynamoDB** single-table persistence, **AWS EC2** backend container engine, and **AWS Amplify** frontend hosting.
