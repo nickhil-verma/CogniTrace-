@@ -1,0 +1,20 @@
+{
+    # Admin & TLS settings
+    admin off
+}
+
+{$DOMAIN_NAME:localhost} {
+    # Reverse Proxy requests to FastAPI backend container
+    reverse_proxy api:8000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+
+        # Disable buffering for real-time audio streaming & WebSocket connections
+        flush_interval -1
+    }
+
+    # Enable Gzip and Zstandard response compression
+    encode zstd gzip
+}

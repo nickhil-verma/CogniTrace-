@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     CORS_ORIGINS: str = "*"
+    FRONTEND_URL: str = ""
+    AWS_APP_RUNNER_URL: str = ""
+    JWT_SECRET: str = "cognitrace_super_secret_jwt_key_2026"
     
     # Whisper configuration
     WHISPER_MODEL_SIZE: str = "tiny"
@@ -33,8 +36,6 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"
 
-
-    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -43,9 +44,17 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
-        if not self.CORS_ORIGINS or self.CORS_ORIGINS == "*":
+        origins = []
+        if self.CORS_ORIGINS and self.CORS_ORIGINS != "*":
+            origins.extend([o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()])
+        if self.FRONTEND_URL:
+            origins.append(self.FRONTEND_URL.strip())
+        if self.AWS_APP_RUNNER_URL:
+            origins.append(self.AWS_APP_RUNNER_URL.strip())
+        
+        if not origins:
             return ["*"]
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+        return list(set(origins))
 
 
 settings = Settings()
