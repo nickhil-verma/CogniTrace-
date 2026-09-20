@@ -273,7 +273,7 @@ export default function MemoryTriviaGamePage() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => speakAloud(`${roundData.question} Here are your options: ${roundData.options.join('. ')}`)}
+                onClick={() => speakAloud(getTriviaSpeech(roundData, currentLangObj?.code || 'en-US'))}
                 className="h-12 w-12 shrink-0 rounded-2xl bg-[#BFDCD6]/30 text-[#17665B] hover:bg-[#BFDCD6] cursor-pointer"
                 title="Read question aloud"
               >
