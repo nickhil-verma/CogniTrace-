@@ -41,7 +41,7 @@ export default function DashboardPage() {
 
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (Patient Status + Live Synapse Pulse Dyad Radar + AI Command Center Card) */}
+        {/* Left Column (Patient Status + Ask CogniTrace AI Command Center + Live Synapse Pulse Dyad Radar) */}
         <div className="lg:col-span-2 space-y-6">
           {isLoading ? (
             <Skeleton className="h-48 w-full" />
@@ -49,14 +49,14 @@ export default function DashboardPage() {
             <PatientStatus summary={summary} />
           )}
 
+          {/* AI Voice Command Center Hero Card ("Ask CogniTrace Anything") */}
+          <CommandCenterCard />
+
           {/* Live Synapse Pulse: Real-Time Dyad Health Radar & 30s Caregiver Reset */}
           <LiveSynapsePulseCard
             caregiverName="Priya"
             patientName="Sunita"
           />
-
-          {/* AI Voice Command Center Hero Card */}
-          <CommandCenterCard />
         </div>
 
         {/* Right Column (Today's Care + Recent Changes) */}
