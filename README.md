@@ -178,9 +178,9 @@ CogniTrace uses AWS DynamoDB (`CogniTrace` table) formatted with single-table de
 
 ```mermaid
 erDiagram
-    COGNITRACE_TABLE {
-        string partition_key PK "USER or CAREGIVER_CHAT or PATIENT_CHAT"
-        string sort_key SK "MSG or REMINDER or APPOINTMENT or VEC"
+    COGNITRACE_DYNAMODB_TABLE {
+        string Partition_Key_PK "USER | CAREGIVER_CHAT | PATIENT_CHAT"
+        string Sort_Key_SK "MSG | REMINDER | APPOINTMENT | VEC"
         string item_id "Unique Item UUID"
         string caregiver_id "Caregiver ID"
         string patient_id "Patient ID"
