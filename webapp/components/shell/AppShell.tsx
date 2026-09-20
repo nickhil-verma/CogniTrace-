@@ -25,6 +25,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { usePatientSettings } from '@/hooks/usePatientSettings';
 import { speakText } from '@/lib/speech';
 import { ToastContainer } from '@/components/ui/toast';
+import { PatientSpeechPlaybackBar } from '@/components/patient/PatientSpeechPlaybackBar';
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -217,9 +218,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* ================= MAIN CONTENT WORKSPACE ================= */}
-      <main className="flex-1 min-w-0 p-3 sm:p-4 md:p-8 mb-24 md:mb-0 max-w-7xl mx-auto w-full">
-        {children}
-      </main>
+      <div className="flex-1 flex flex-col min-w-0">
+        <PatientSpeechPlaybackBar />
+        <main className="flex-1 min-w-0 p-3 sm:p-4 md:p-8 mb-24 md:mb-0 max-w-7xl mx-auto w-full">
+          {children}
+        </main>
+      </div>
 
       {/* ================= MOBILE BOTTOM NAVIGATION ================= */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-[#DDE7E3] px-2 py-1.5 sm:px-3 sm:py-2 flex items-center justify-around shadow-lg">

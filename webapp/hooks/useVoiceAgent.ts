@@ -7,6 +7,11 @@ import { useAppointments } from './useAppointments';
 import { useMemories } from './useMemories';
 import { useLanguage } from './useLanguage';
 import { api } from '@/lib/api';
+import {
+  dispatchSpeechStart,
+  dispatchSpeechProgress,
+  dispatchSpeechEnd
+} from '@/lib/speechManager';
 
 export function useVoiceAgent() {
   const [voiceState, setVoiceState] = useState<VoiceState>('IDLE');
@@ -61,14 +66,49 @@ export function useVoiceAgent() {
       utterance.rate = 0.95;
       utterance.pitch = 1.0;
       utterance.lang = currentLangObj?.speechLang || 'en-US';
+
+      const totalChars = text.length;
+      let fallbackTimer: any = null;
+      let currentChar = 0;
+
+      utterance.onstart = () => {
+        dispatchSpeechStart(text);
+        const estimatedMs = Math.max(2000, (totalChars / 12) * 1000);
+        const stepIntervalMs = Math.max(100, estimatedMs / 50);
+        const increment = Math.max(1, Math.ceil(totalChars / 50));
+
+        fallbackTimer = setInterval(() => {
+          if (window.speechSynthesis.paused) return;
+          currentChar = Math.min(totalChars, currentChar + increment);
+          dispatchSpeechProgress(currentChar, totalChars);
+          if (currentChar >= totalChars && fallbackTimer) {
+            clearInterval(fallbackTimer);
+          }
+        }, stepIntervalMs);
+      };
+
+      utterance.onboundary = (event) => {
+        if (event.charIndex !== undefined) {
+          currentChar = Math.max(currentChar, event.charIndex);
+          dispatchSpeechProgress(currentChar, totalChars);
+        }
+      };
+
       utterance.onend = () => {
+        if (fallbackTimer) clearInterval(fallbackTimer);
+        dispatchSpeechProgress(totalChars, totalChars);
+        dispatchSpeechEnd();
         setVoiceState('IDLE');
         if (onEnded) onEnded();
       };
+
       utterance.onerror = () => {
+        if (fallbackTimer) clearInterval(fallbackTimer);
+        dispatchSpeechEnd();
         setVoiceState('IDLE');
         if (onEnded) onEnded();
       };
+
       window.speechSynthesis.speak(utterance);
     } else {
       setTimeout(() => {
