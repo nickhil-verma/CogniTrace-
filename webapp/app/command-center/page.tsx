@@ -45,7 +45,8 @@ function CommandCenterContent() {
     t('dashboard.suggestion2'),
     t('dashboard.suggestion3'),
     t('dashboard.suggestion4'),
-    t('dashboard.suggestion1')
+    t('dashboard.suggestion1'),
+    t('dashboard.suggestion5')
   ];
 
   return (

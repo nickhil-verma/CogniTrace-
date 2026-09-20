@@ -70,7 +70,8 @@
     "suggestion1": "Wie ging es Mama heute?",
     "suggestion2": "Erinnere mich an ihre Medikamente.",
     "suggestion3": "Was hat sich diesen Monat geändert?",
-    "suggestion4": "Zeige kürzliche Erinnerungen."
+    "suggestion4": "Zeige kürzliche Erinnerungen.",
+    "suggestion5": "Anstehende Termine anzeigen."
   },
   "patient": {
     "dailyCompanion": "Täglicher Patientenbegleiter",

@@ -70,7 +70,8 @@
     "suggestion1": "How has Mom been doing?",
     "suggestion2": "Remind me about her medicine.",
     "suggestion3": "What changed this month?",
-    "suggestion4": "Show recent memories."
+    "suggestion4": "Show recent memories.",
+    "suggestion5": "Show upcoming appointments."
   },
   "patient": {
     "dailyCompanion": "Patient Daily Companion",

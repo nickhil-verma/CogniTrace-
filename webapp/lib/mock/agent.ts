@@ -106,19 +106,69 @@ Output a short, warm, supportive 1-2 sentence response for the patient/caregiver
     if (!aiResponseText) {
       aiResponseText = "I've logged a reminder for Mom to take her evening medicine (Donepezil 5mg) at 8:00 PM tonight.";
     }
-  } else if (lower.includes('appointment') || lower.includes('doctor') || lower.includes('sharma')) {
-    actions.push({
-      id: `act_${Date.now()}`,
-      toolType: 'create_appointment',
-      title: 'Doctor Appointment Confirmed',
-      description: 'Dr. Anita Sharma - Cognitive Evaluation tomorrow at 10:30 AM at City Care Hospital.',
-      parameters: { doctorName: 'Dr. Anita Sharma', date: 'Tomorrow', time: '10:30 AM' },
-      status: 'completed',
-      timestamp: timestamp
-    });
+  } else if (/(appointment|appointments|doctor|sharma|अपॉइंटमेंट|cita|rendez-vous|termin)/i.test(lower)) {
+    const isCreate = /\b(book|schedule|create|make|set\s+up|add|new|बुक|reservar|créer|buchen)\b/i.test(lower);
+    if (isCreate) {
+      const docMatch = userPromptText.match(/dr\.?\s+([a-z\s]+)/i);
+      const docName = docMatch ? `Dr. ${docMatch[1].trim()}` : 'Dr. Anita Sharma';
+      actions.push({
+        id: `act_${Date.now()}`,
+        toolType: 'create_appointment',
+        title: 'Doctor Appointment Scheduled',
+        description: `Scheduled consultation with ${docName}`,
+        parameters: { doctorName: docName, date: 'Tomorrow', time: '10:30 AM' },
+        status: 'completed',
+        timestamp: timestamp
+      });
 
-    if (!aiResponseText) {
-      aiResponseText = "I've checked the DynamoDB schedule. Dr. Anita Sharma's consultation is confirmed for tomorrow at 10:30 AM.";
+      if (!aiResponseText) {
+        aiResponseText = `I have scheduled an appointment with ${docName} for tomorrow at 10:30 AM.`;
+      }
+    } else {
+      // Side-effect free retrieval: fetch actual appointments from localStorage or mock
+      let upcomingList: { doctorName?: string; title?: string; date?: string; time?: string; status?: string }[] = [];
+      if (typeof window !== 'undefined') {
+        try {
+          const saved = localStorage.getItem('cognitrace_appointments_v1');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) {
+              upcomingList = parsed.filter((a: { status?: string; date?: string }) => {
+                const s = String(a.status || '').toLowerCase();
+                if (s === 'completed' || s === 'cancelled' || s === 'canceled') return false;
+                const d = String(a.date || '').toLowerCase();
+                if (/\b(last\s+week|yesterday|ago|past)\b/.test(d)) return false;
+                return true;
+              });
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      if (upcomingList.length > 0) {
+        const first = upcomingList[0];
+        const docLabel = first.doctorName || first.title || 'Doctor Consultation';
+        const whenLabel = `${first.date || 'soon'}${first.time ? ` at ${first.time}` : ''}`.trim();
+        if (upcomingList.length === 1) {
+          aiResponseText = `You have 1 upcoming appointment: ${docLabel} scheduled for ${whenLabel}.`;
+        } else {
+          aiResponseText = `You have ${upcomingList.length} upcoming appointments. The next one is ${docLabel} on ${whenLabel}.`;
+        }
+      } else if (!aiResponseText) {
+        aiResponseText = "You currently have no upcoming doctor appointments scheduled.";
+      }
+
+      actions.push({
+        id: `act_${Date.now()}`,
+        toolType: 'retrieve_appointments',
+        title: 'Upcoming Appointments Retrieved',
+        description: aiResponseText,
+        parameters: { query: userPromptText, count: upcomingList.length },
+        status: 'completed',
+        timestamp: timestamp
+      });
     }
   } else if (lower.includes('memory') || lower.includes('goa') || lower.includes('photo')) {
     actions.push({

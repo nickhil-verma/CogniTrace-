@@ -70,7 +70,8 @@
     "suggestion1": "Comment va Maman aujourd'hui ?",
     "suggestion2": "Rappelle-moi son médicament.",
     "suggestion3": "Qu'est-ce qui a changé ce mois-ci ?",
-    "suggestion4": "Montre les souvenirs récents."
+    "suggestion4": "Montre les souvenirs récents.",
+    "suggestion5": "Afficher les prochains rendez-vous."
   },
   "patient": {
     "dailyCompanion": "Compagnon Quotidien du Patient",

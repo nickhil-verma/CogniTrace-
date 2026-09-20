@@ -1,6 +1,8 @@
 import os
+import re
 import json
 import logging
+from datetime import datetime
 from typing import Dict, Any, List, Optional
 import httpx
 from pydantic import BaseModel
@@ -14,7 +16,7 @@ GROK_MODEL = os.getenv("GROK_MODEL", "grok-beta")
 
 class AgentActionItem(BaseModel):
     id: str
-    toolType: str  # 'create_reminder', 'create_appointment', 'retrieve_memory', 'trigger_emergency'
+    toolType: str  # 'create_reminder', 'create_appointment', 'retrieve_appointments', 'retrieve_memory', 'trigger_emergency'
     title: str
     description: str
     parameters: Dict[str, Any] = {}
@@ -34,6 +36,37 @@ class GrokAgentResponse(BaseModel):
     ai_response: str
     actions: List[AgentActionItem] = []
     timeline: List[TimelineStep] = []
+
+
+def _is_upcoming_appointment(apt: Dict[str, Any]) -> bool:
+    """
+    Determines if an appointment is upcoming.
+    Excludes completed and cancelled appointments, as well as appointments whose date/time is in the past.
+    """
+    status = str(apt.get("status", "")).strip().lower()
+    # At minimum, completed and cancelled appointments must not be counted as upcoming
+    if status in ("cancelled", "canceled", "completed", "done", "missed"):
+        return False
+
+    date_val = str(apt.get("date", "")).strip().lower()
+    if not date_val:
+        return status in ("upcoming", "scheduled", "active", "pending")
+
+    # Check for past relative keywords (e.g. "last week", "yesterday", "last month", "ago")
+    if re.search(r"\b(last\s+week|last\s+month|yesterday|past|ago)\b", date_val):
+        return False
+
+    # Check for parseable ISO dates: YYYY-MM-DD
+    iso_match = re.search(r"\b(\d{4}-\d{2}-\d{2})\b", date_val)
+    if iso_match:
+        try:
+            apt_date = datetime.strptime(iso_match.group(1), "%Y-%m-%d").date()
+            if apt_date < datetime.utcnow().date():
+                return False
+        except Exception:
+            pass
+
+    return True
 
 
 class LangGraphVoiceAgent:
@@ -98,7 +131,7 @@ class LangGraphVoiceAgent:
                 logger.warning(f"[GrokAgent] Grok API query error: {str(e)}. Falling back to deterministic agent graph.")
 
         # Smart Deterministic Fallback DAG with RAG context
-        return self._fallback_agent_graph(prompt_text, timeline, rag_context=rag_context)
+        return self._fallback_agent_graph(prompt_text, timeline, rag_context=rag_context, patient_id=patient_id)
 
 
     async def _query_grok_api(self, prompt: str, rag_context: str = "") -> Optional[GrokAgentResponse]:
@@ -111,8 +144,11 @@ class LangGraphVoiceAgent:
             f"Use the following DynamoDB RAG vector memory context if relevant:\n{rag_context}\n"
             "Analyze the patient prompt and output JSON with keys: "
             "'response' (short friendly message for patient/caregiver), "
-            "'tool' ('create_reminder', 'create_appointment', 'retrieve_memory', or 'none'), "
-            "'title', 'time', 'date', 'details'."
+            "'tool' ('create_reminder', 'create_appointment', 'retrieve_appointments', 'retrieve_memory', or 'none'), "
+            "'title', 'time', 'date', 'details'. "
+            "Use 'retrieve_appointments' when the user asks to view, show, list, check, or inquire about upcoming appointments. "
+            "Use 'create_appointment' ONLY when the user explicitly requests to book, schedule, create, or add a new appointment. "
+            "If no tool action is appropriate, return 'none' for tool."
         )
         payload = {
             "model": self.model,
@@ -133,23 +169,28 @@ class LangGraphVoiceAgent:
                 try:
                     parsed = json.loads(content)
                     ai_text = parsed.get("response", content)
-                    tool_type = parsed.get("tool", "create_reminder")
+                    tool_type = parsed.get("tool", "none")
                     
-                    action = AgentActionItem(
-                        id=f"act_{int(httpx.__version__.replace('.',''))}",
-                        toolType=tool_type if tool_type != "none" else "create_reminder",
-                        title=parsed.get("title", "Care Schedule Updated"),
-                        description=ai_text,
-                        parameters={
-                            "time": parsed.get("time", "8:00 PM"),
-                            "date": parsed.get("date", "Today"),
-                            "details": parsed.get("details", prompt)
-                        }
-                    )
+                    if tool_type and tool_type != "none":
+                        action = AgentActionItem(
+                            id=f"act_{int(datetime.utcnow().timestamp() * 1000)}",
+                            toolType=tool_type,
+                            title=parsed.get("title", "Care Schedule Action"),
+                            description=ai_text,
+                            parameters={
+                                "time": parsed.get("time", "8:00 PM"),
+                                "date": parsed.get("date", "Today"),
+                                "details": parsed.get("details", prompt)
+                            }
+                        )
+                        actions = [action]
+                    else:
+                        actions = []
+
                     return GrokAgentResponse(
                         transcript=prompt,
                         ai_response=ai_text,
-                        actions=[action],
+                        actions=actions,
                         timeline=[]
                     )
                 except Exception:
@@ -161,40 +202,91 @@ class LangGraphVoiceAgent:
                     )
         return None
 
-    def _fallback_agent_graph(self, prompt: str, timeline: List[TimelineStep], rag_context: str = "") -> GrokAgentResponse:
+    def _fallback_agent_graph(self, prompt: str, timeline: List[TimelineStep], rag_context: str = "", patient_id: str = "patient_001") -> GrokAgentResponse:
+        from app.database.dynamodb import dynamodb_service
         lower = prompt.lower()
 
-        if "appointment" in lower or "doctor" in lower or "sharma" in lower:
-            tool_type = "create_appointment"
-            ai_response = "I checked Mom's care record in DynamoDB. Dr. Anita Sharma's consultation is scheduled for tomorrow at 10:30 AM."
-            title = "Doctor Consultation Retrieved"
-            params = {"doctorName": "Dr. Anita Sharma", "time": "10:30 AM", "date": "Tomorrow"}
+        # Check for appointment-related intent
+        is_apt_related = bool(re.search(r"\b(appointment|appointments|doctor|consultation|clinic|hospital)\b", lower))
+
+        if is_apt_related:
+            # Check for explicit booking/creation verbs (excluding reschedule per instructions)
+            is_create = bool(re.search(r"\b(book|schedule|create|make|set\s+up|add|new)\b", lower))
+
+            if is_create:
+                tool_type = "create_appointment"
+                doc_match = re.search(r"dr\.?\s+([a-zA-Z\s]+?)(?:\s+tomorrow|\s+at|\s+on|\s+next|$)", prompt, re.IGNORECASE)
+                doctor_name = f"Dr. {doc_match.group(1).strip()}" if doc_match else "Dr. Anita Sharma"
+                time_match = re.search(r"\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\b", prompt, re.IGNORECASE)
+                time_val = time_match.group(1).upper() if time_match else "10:30 AM"
+                date_val = "Tomorrow" if "tomorrow" in lower else ("Today" if "today" in lower else "Next Week")
+
+                ai_response = f"I have scheduled an appointment with {doctor_name} for {date_val} at {time_val}."
+                title = "Doctor Appointment Scheduled"
+                params = {
+                    "doctorName": doctor_name,
+                    "time": time_val,
+                    "date": date_val,
+                    "title": f"{doctor_name} Consultation"
+                }
+            else:
+                # Completely side-effect free retrieval: only read existing appointments
+                tool_type = "retrieve_appointments"
+                existing_apts = dynamodb_service.get_appointments(patient_id)
+                upcoming_apts = [a for a in existing_apts if _is_upcoming_appointment(a)]
+
+                if upcoming_apts:
+                    first = upcoming_apts[0]
+                    count = len(upcoming_apts)
+                    doc_label = first.get("doctorName") or first.get("title") or "Doctor Consultation"
+                    when_label = f"{first.get('date', 'soon')} at {first.get('time', '')}".strip()
+                    if count == 1:
+                        ai_response = f"You have 1 upcoming appointment: {doc_label} scheduled for {when_label}."
+                    else:
+                        ai_response = f"You have {count} upcoming appointments. The next one is {doc_label} on {when_label}."
+                    title = "Upcoming Appointments Retrieved"
+                    params = {
+                        "count": count,
+                        "appointments": [a.get("title") or a.get("doctorName") or "Appointment" for a in upcoming_apts]
+                    }
+                else:
+                    ai_response = "You currently have no upcoming doctor appointments scheduled."
+                    title = "Appointments Retrieved"
+                    params = {"count": 0, "appointments": []}
         elif "memory" in lower or "goa" in lower or "photo" in lower or "picture" in lower:
             tool_type = "retrieve_memory"
             ai_response = "Found Mom's Goa Beach family vacation memory from 1987 in vector database storage."
             title = "Memory Album Retrieved"
             params = {"memory": "Goa Beach 1987"}
-        else:
+        elif "remind" in lower or "medicine" in lower or "medication" in lower or "pill" in lower:
             tool_type = "create_reminder"
             ai_response = "I have logged the medicine reminder into Mom's care schedule in DynamoDB."
             title = "Medication Reminder Created"
             params = {"title": "Take evening medicine (Donepezil 5mg)", "time": "8:00 PM"}
+        else:
+            tool_type = "none"
+            ai_response = f"I understood: '{prompt}'. No care schedule mutations were needed."
+            title = "Voice Query Acknowledged"
+            params = {}
 
-        action = AgentActionItem(
-            id=f"act_{hash(prompt) % 1000000}",
-            toolType=tool_type,
-            title=title,
-            description=ai_response,
-            parameters=params,
-            status="completed"
-        )
-
+        if tool_type != "none":
+            action = AgentActionItem(
+                id=f"act_{abs(hash(prompt)) % 1000000}",
+                toolType=tool_type,
+                title=title,
+                description=ai_response,
+                parameters=params,
+                status="completed"
+            )
+            actions = [action]
+        else:
+            actions = []
 
         timeline.append(
             TimelineStep(
                 stepIndex=4,
-                title="State Mutation Execution",
-                description=f"Successfully dispatched {tool_type} action payload to frontend state.",
+                title="State Query Execution",
+                description=f"Successfully dispatched {tool_type} action payload to frontend state." if tool_type != "none" else "Query processed without state mutations.",
                 timestamp="180ms"
             )
         )
@@ -202,7 +294,7 @@ class LangGraphVoiceAgent:
         return GrokAgentResponse(
             transcript=prompt,
             ai_response=ai_response,
-            actions=[action],
+            actions=actions,
             timeline=timeline
         )
 

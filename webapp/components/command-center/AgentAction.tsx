@@ -21,6 +21,8 @@ export function AgentAction({ action }: AgentActionProps) {
         return <Bell className="w-5 h-5 text-[#17665B]" />;
       case 'create_appointment':
         return <Calendar className="w-5 h-5 text-[#3E9C87]" />;
+      case 'retrieve_appointments':
+        return <Calendar className="w-5 h-5 text-[#17665B]" />;
       case 'escalate_to_caretaker':
       case 'send_caretaker_alert':
         return <AlertCircle className="w-5 h-5 text-[#C85C82]" />;

@@ -5,6 +5,7 @@ export type AgentToolType =
   | 'complete_reminder'
   | 'toggle_reminder'
   | 'create_appointment'
+  | 'retrieve_appointments'
   | 'create_memory'
   | 'retrieve_memory'
   | 'escalate_to_caretaker'
@@ -26,6 +27,7 @@ export interface AgentActionItem {
   toolType: AgentToolType;
   title: string;
   description: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parameters: Record<string, any>;
   status: 'executing' | 'completed' | 'failed';
   timestamp: string;

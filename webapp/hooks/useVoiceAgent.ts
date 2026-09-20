@@ -1,7 +1,6 @@
 'use client';
-
 import { useState, useCallback } from 'react';
-import { VoiceState, TimelineStep, AgentActionItem } from '@/types/agent';
+import { VoiceState, TimelineStep, AgentActionItem, AgentToolType } from '@/types/agent';
 import { useAudioRecorder } from './useAudioRecorder';
 import { useReminders } from './useReminders';
 import { useAppointments } from './useAppointments';
@@ -31,7 +30,7 @@ export function useVoiceAgent() {
   } = useAudioRecorder();
 
   const { addReminder } = useReminders();
-  const { addAppointment } = useAppointments();
+  const { addAppointment, refreshAppointments } = useAppointments();
   const { addMemory } = useMemories();
 
   // Speak AI response using Polly audio or Web Speech API synthesis
@@ -96,8 +95,14 @@ export function useVoiceAgent() {
         recurring: 'Daily'
       });
     } 
-    // 3. Dynamic Appointment Creation
-    else if (action.toolType === 'create_appointment' || lower.includes('appointment') || lower.includes('doctor')) {
+    // 3. Dynamic Appointment Retrieval (Completely side-effect free: GET/read only)
+    if (action.toolType === 'retrieve_appointments') {
+      refreshAppointments();
+      return;
+    }
+
+    // 4. Dynamic Appointment Creation (STRICTLY when toolType is 'create_appointment')
+    if (action.toolType === 'create_appointment') {
       const docMatch = textInput.match(/dr\.?\s+([a-z\s]+)/i);
       const doctorName = action.parameters?.doctorName || (docMatch ? `Dr. ${docMatch[1].trim()}` : 'Dr. Anita Sharma');
       
@@ -111,8 +116,9 @@ export function useVoiceAgent() {
         notes: action.parameters?.notes || 'Scheduled via AI Voice Agent',
         status: 'Upcoming'
       });
+      return;
     } 
-    // 4. Dynamic Memory Retrieval / Album Creation
+    // 5. Dynamic Memory Retrieval / Album Creation
     else if (action.toolType === 'retrieve_memory' || action.toolType === 'create_memory' || lower.includes('memory') || lower.includes('photo')) {
       addMemory({
         title: action.parameters?.title || 'Family Memory Album',
@@ -125,7 +131,7 @@ export function useVoiceAgent() {
         reminiscencePrompt: `Mom, do you remember this special moment: ${textInput}?`
       });
     }
-  }, [addReminder, addAppointment, addMemory, reminders, toggleComplete]);
+  }, [addReminder, addAppointment, refreshAppointments, addMemory, reminders, toggleComplete]);
 
 
   // Submit prompt (either text or voice audio)
@@ -142,7 +148,7 @@ export function useVoiceAgent() {
       const response = await api.submitAudioTaskTurn(targetBlob || null, promptText);
       
       const finalTranscript = response.transcript || promptText;
-      const responseText = response.aiResponseText || (response as any).aiResponse || "Request processed and saved to schedule.";
+      const responseText = response.aiResponseText || (response as { aiResponse?: string }).aiResponse || "Request processed and saved to schedule.";
 
       setTranscript(finalTranscript);
       setAiResponse(responseText);
@@ -161,10 +167,34 @@ export function useVoiceAgent() {
         }
         await new Promise((res) => setTimeout(res, 600));
       } else {
+        const lower = promptText.toLowerCase();
+        const isApt = /(appointment|doctor|consultation)/i.test(lower);
+        // Explicit booking/creation verbs only (excluding reschedule per instructions)
+        const isAptCreate = isApt && /\b(book|schedule|create|make|set\s+up|add|new)\b/i.test(lower);
+        const isReminder = /remind|medicine|medication|pill/i.test(lower);
+        const isMemory = /memory|photo|picture|goa/i.test(lower);
+
+        let fallbackTool: AgentToolType = 'get_patient_summary';
+        let fallbackTitle = 'Action Executed';
+
+        if (isApt && !isAptCreate) {
+          fallbackTool = 'retrieve_appointments';
+          fallbackTitle = 'Upcoming Appointments Retrieved';
+        } else if (isAptCreate) {
+          fallbackTool = 'create_appointment';
+          fallbackTitle = 'Doctor Appointment Scheduled';
+        } else if (isReminder) {
+          fallbackTool = 'create_reminder';
+          fallbackTitle = 'Medication Reminder Created';
+        } else if (isMemory) {
+          fallbackTool = 'retrieve_memory';
+          fallbackTitle = 'Memory Loaded';
+        }
+
         const mockAction: AgentActionItem = {
           id: `act_${Date.now()}`,
-          toolType: promptText.toLowerCase().includes('appointment') ? 'create_appointment' : (promptText.toLowerCase().includes('remind') ? 'create_reminder' : 'retrieve_memory'),
-          title: 'Action Executed',
+          toolType: fallbackTool,
+          title: fallbackTitle,
           description: responseText,
           parameters: {},
           status: 'completed',
@@ -176,7 +206,7 @@ export function useVoiceAgent() {
 
       // Step 3: Speak AI Voice response
       playAudioResponse(responseText, response.audioUrl);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Voice agent turn error:', err);
       setVoiceState('ERROR');
       setErrorMessage('CogniTrace couldn’t reach the care service. Please try again.');
