@@ -173,7 +173,7 @@ class LangGraphVoiceAgent:
             rag_context=rag_context,
             memories=memories,
             past_chats=past_chats,
-            patient_id=patient_id
+            patient_id=resolved_patient_id
         )
 
 
