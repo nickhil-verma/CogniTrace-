@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useCallback, useRef } from 'react';
 import { VoiceState, TimelineStep, AgentActionItem } from '@/types/agent';
 import { useAudioRecorder } from './useAudioRecorder';
@@ -44,7 +43,7 @@ export function useVoiceAgent() {
   } = useAudioRecorder();
 
   const { addReminder, reminders, toggleComplete } = useReminders();
-  const { addAppointment } = useAppointments();
+  const { addAppointment, refreshAppointments } = useAppointments();
   const { addMemory } = useMemories();
 
   // Barge-In helper: immediately halt ongoing synthesis
@@ -110,8 +109,14 @@ export function useVoiceAgent() {
         recurring: 'Daily'
       });
     } 
-    // 3. Dynamic Appointment Creation
-    else if (action.toolType === 'create_appointment' || lower.includes('appointment') || lower.includes('doctor')) {
+    // 3. Dynamic Appointment Retrieval (Completely side-effect free: GET/read only)
+    if (action.toolType === 'retrieve_appointments') {
+      refreshAppointments();
+      return;
+    }
+
+    // 4. Dynamic Appointment Creation (STRICTLY when toolType is 'create_appointment')
+    if (action.toolType === 'create_appointment') {
       const docMatch = textInput.match(/dr\.?\s+([a-z\s]+)/i);
       const doctorName = action.parameters?.doctorName || (docMatch ? `Dr. ${docMatch[1].trim()}` : 'Dr. Anita Sharma');
       
@@ -125,8 +130,9 @@ export function useVoiceAgent() {
         notes: action.parameters?.notes || 'Scheduled via AI Voice Agent',
         status: 'Upcoming'
       });
+      return;
     } 
-    // 4. Dynamic Memory Retrieval / Album Creation
+    // 5. Dynamic Memory Retrieval / Album Creation
     else if (action.toolType === 'retrieve_memory' || action.toolType === 'create_memory' || lower.includes('memory') || lower.includes('photo')) {
       addMemory({
         title: action.parameters?.title || 'Family Memory Album',
@@ -139,7 +145,7 @@ export function useVoiceAgent() {
         reminiscencePrompt: `Mom, do you remember this special moment: ${textInput}?`
       });
     }
-  }, [addReminder, addAppointment, addMemory, reminders, toggleComplete]);
+  }, [addReminder, addAppointment, refreshAppointments, addMemory, reminders, toggleComplete]);
 
   // Handle start listening with immediate barge-in cancellation
   const handleStartListening = useCallback(() => {
@@ -194,26 +200,58 @@ export function useVoiceAgent() {
       setAiResponse(responseText);
 
       // Step 2: Trigger dynamic verification modal if UI action specified
+      const lower = promptText.toLowerCase();
+      const isApt = /(appointment|appointments|doctor|consultation|clinic|hospital)/i.test(lower);
+      // Explicit booking/creation verbs only (excluding reschedule per instructions)
+      const isAptCreate = isApt && /\b(book|schedule|create|make|set\s+up|add|new)\b/i.test(lower);
+
+      let modalType = uiAction.modal_type || 'VERIFY_ACTION';
+      let targetRoute = uiAction.target_route || (modalType === 'MEMORIES_PREVIEW' ? '/memories' : null);
+      let toolType: string;
+      let title: string;
+
+      if (isApt && !isAptCreate) {
+        toolType = 'retrieve_appointments';
+        title = 'Upcoming Appointments Retrieved';
+        modalType = 'VERIFY_ACTION';
+        targetRoute = '/appointments';
+      } else if (isAptCreate) {
+        toolType = 'create_appointment';
+        title = 'Doctor Appointment Scheduled';
+        modalType = 'VERIFY_ACTION';
+        targetRoute = '/appointments';
+      } else if (modalType === 'VERIFY_COMPLETE' || lower.includes('done') || lower.includes('complete') || lower.includes('finish') || lower.includes('took')) {
+        toolType = 'complete_reminder';
+        title = 'Task Marked as Completed';
+        modalType = 'VERIFY_COMPLETE';
+      } else if (modalType === 'MEMORIES_PREVIEW' || lower.includes('memory') || lower.includes('photo')) {
+        toolType = 'retrieve_memory';
+        title = 'Family Memory Album';
+        modalType = 'MEMORIES_PREVIEW';
+        targetRoute = '/memories';
+      } else {
+        toolType = 'create_reminder';
+        title = 'New Reminder Scheduled';
+        modalType = 'VERIFY_ADD';
+      }
+
+      const modalItem: AgentActionItem = {
+        id: `act_${Date.now()}`,
+        toolType,
+        title,
+        description: responseText,
+        parameters: uiAction.data || {},
+        status: 'completed',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        ...( { modalType, targetRoute } as any)
+      };
+
       if (uiAction.modal_type && uiAction.modal_type !== 'NONE') {
-        const modalType = uiAction.modal_type;
-        const targetRoute = uiAction.target_route || (modalType === 'MEMORIES_PREVIEW' ? '/memories' : null);
-
-        const modalItem: AgentActionItem = {
-          id: `act_${Date.now()}`,
-          toolType: modalType === 'VERIFY_COMPLETE' ? 'complete_reminder' : (modalType === 'MEMORIES_PREVIEW' ? 'retrieve_memory' : 'create_reminder'),
-          title: modalType === 'VERIFY_COMPLETE' ? 'Task Marked as Completed' : (modalType === 'MEMORIES_PREVIEW' ? 'Family Memory Album' : 'New Reminder Scheduled'),
-          description: responseText,
-          parameters: uiAction.data || {},
-          status: 'completed',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          ...( { modalType, targetRoute } as any)
-        };
-
         setActiveModalAction(modalItem);
         setIsModalOpen(true);
-        setActions((prev) => [modalItem, ...prev]);
-        executeRealToolAction(modalItem, promptText);
       }
+      setActions((prev) => [modalItem, ...prev]);
+      executeRealToolAction(modalItem, promptText);
 
       setTimeline((prev) => [
         ...prev,
@@ -281,4 +319,3 @@ export function useVoiceAgent() {
     setVoiceState
   };
 }
-

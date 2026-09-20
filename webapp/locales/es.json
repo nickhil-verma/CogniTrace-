@@ -70,7 +70,8 @@
     "suggestion1": "¿Cómo ha estado Mamá?",
     "suggestion2": "Recuérdame su medicina.",
     "suggestion3": "¿Qué cambió este mes?",
-    "suggestion4": "Mostrar recuerdos recientes."
+    "suggestion4": "Mostrar recuerdos recientes.",
+    "suggestion5": "Mostrar próximas citas."
   },
   "patient": {
     "dailyCompanion": "Compañero Diario del Paciente",

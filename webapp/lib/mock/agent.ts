@@ -102,7 +102,22 @@ Output a short, warm, supportive 1-2 sentence response directly to Sunita in fir
   }
 
   // 4. Construct tool action payload and fallback text if API didn't return text
-  if (lower.includes('remind') || lower.includes('medicine') || lower.includes('medication')) {
+  if (lower.includes('complete') || lower.includes('done') || lower.includes('finish') || lower.includes('took')) {
+    actions.push({
+      id: `act_${Date.now()}`,
+      toolType: 'complete_reminder',
+      title: 'Task Marked Completed',
+      description: 'Marked evening medication as done',
+      parameters: { reminderTitle: 'Evening Medication (Donepezil 5mg)', completed: true, time: '8:00 PM' },
+      status: 'completed',
+      timestamp: timestamp,
+      ...({ modalType: 'VERIFY_COMPLETE', openModal: true } as any)
+    });
+
+    if (!aiResponseText) {
+      aiResponseText = "Great job! I have marked your task as completed. By the way, Sunita, do you remember what cardamom sweets you prepared for Diwali in 2019?";
+    }
+  } else if (lower.includes('remind') || lower.includes('medicine') || lower.includes('medication')) {
     actions.push({
       id: `act_${Date.now()}`,
       toolType: 'create_reminder',
@@ -115,39 +130,93 @@ Output a short, warm, supportive 1-2 sentence response directly to Sunita in fir
         patientName: 'Sunita'
       },
       status: 'completed',
-      timestamp: timestamp
+      timestamp: timestamp,
+      ...({ modalType: 'VERIFY_ADD', openModal: true } as any)
     });
 
     if (!aiResponseText) {
-      aiResponseText = "I have updated your task to take your evening medicine (Donepezil 5mg) at 8:00 PM tonight.";
+      aiResponseText = "I have updated your task to take your evening medicine (Donepezil 5mg) at 8:00 PM tonight. Do you remember what color roses bloomed in your home garden in March 2015?";
     }
-  } else if (lower.includes('appointment') || lower.includes('doctor') || lower.includes('sharma')) {
-    actions.push({
-      id: `act_${Date.now()}`,
-      toolType: 'create_appointment',
-      title: 'Doctor Appointment Confirmed',
-      description: 'Dr. Anita Sharma - Consultation tomorrow at 10:30 AM.',
-      parameters: { doctorName: 'Dr. Anita Sharma', date: 'Tomorrow', time: '10:30 AM' },
-      status: 'completed',
-      timestamp: timestamp
-    });
+  } else if (/(appointment|appointments|doctor|consultation|clinic|hospital|sharma|अपॉइंटमेंट|cita|rendez-vous|termin)/i.test(lower)) {
+    const isCreate = /\b(book|schedule|create|make|set\s+up|add|new|बुक|reservar|créer|buchen)\b/i.test(lower);
+    if (isCreate) {
+      const docMatch = userPromptText.match(/dr\.?\s+([a-z\s]+)/i);
+      const docName = docMatch ? `Dr. ${docMatch[1].trim()}` : 'Dr. Anita Sharma';
+      actions.push({
+        id: `act_${Date.now()}`,
+        toolType: 'create_appointment',
+        title: 'Doctor Appointment Scheduled',
+        description: `Scheduled consultation with ${docName}`,
+        parameters: { doctorName: docName, date: 'Tomorrow', time: '10:30 AM' },
+        status: 'completed',
+        timestamp: timestamp,
+        ...({ modalType: 'VERIFY_ACTION', openModal: true, targetRoute: '/appointments' } as any)
+      });
 
-    if (!aiResponseText) {
-      aiResponseText = "I've checked your schedule. Dr. Anita Sharma's consultation is confirmed for tomorrow at 10:30 AM.";
+      if (!aiResponseText) {
+        aiResponseText = `I have scheduled an appointment with ${docName} for tomorrow at 10:30 AM.`;
+      }
+    } else {
+      // Side-effect free retrieval: fetch actual appointments from localStorage or mock
+      let upcomingList: { doctorName?: string; title?: string; date?: string; time?: string; status?: string }[] = [];
+      if (typeof window !== 'undefined') {
+        try {
+          const saved = localStorage.getItem('cognitrace_appointments_v1');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) {
+              upcomingList = parsed.filter((a: { status?: string; date?: string }) => {
+                const s = String(a.status || '').toLowerCase();
+                if (s === 'completed' || s === 'cancelled' || s === 'canceled') return false;
+                const d = String(a.date || '').toLowerCase();
+                if (/\b(last\s+week|yesterday|ago|past)\b/.test(d)) return false;
+                return true;
+              });
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      if (upcomingList.length > 0) {
+        const first = upcomingList[0];
+        const docLabel = first.doctorName || first.title || 'Doctor Consultation';
+        const whenLabel = `${first.date || 'soon'}${first.time ? ` at ${first.time}` : ''}`.trim();
+        if (upcomingList.length === 1) {
+          aiResponseText = `You have 1 upcoming appointment: ${docLabel} scheduled for ${whenLabel}.`;
+        } else {
+          aiResponseText = `You have ${upcomingList.length} upcoming appointments. The next one is ${docLabel} on ${whenLabel}.`;
+        }
+      } else if (!aiResponseText) {
+        aiResponseText = "You currently have no upcoming doctor appointments scheduled.";
+      }
+
+      actions.push({
+        id: `act_${Date.now()}`,
+        toolType: 'retrieve_appointments',
+        title: 'Upcoming Appointments Retrieved',
+        description: aiResponseText,
+        parameters: { query: userPromptText, count: upcomingList.length },
+        status: 'completed',
+        timestamp: timestamp,
+        ...({ modalType: 'VERIFY_ACTION', openModal: true, targetRoute: '/appointments' } as any)
+      });
     }
-  } else if (lower.includes('memory') || lower.includes('goa') || lower.includes('photo')) {
+  } else if (lower.includes('memory') || lower.includes('goa') || lower.includes('photo') || lower.includes('picture')) {
     actions.push({
       id: `act_${Date.now()}`,
       toolType: 'retrieve_memory',
-      title: 'Memory Card Loaded',
+      title: 'Family Memory Album',
       description: 'Goa Vacation 1987 - "Watching the sunset by the waves with family."',
-      parameters: { memoryId: 'mem_1' },
+      parameters: { memoryId: 'mem_1', memory: 'Goa Family Vacation 1987' },
       status: 'completed',
-      timestamp: timestamp
+      timestamp: timestamp,
+      ...({ modalType: 'MEMORIES_PREVIEW', openModal: true, targetRoute: '/memories' } as any)
     });
 
     if (!aiResponseText) {
-      aiResponseText = "Loaded your cherished Goa Beach family vacation photo memory from 1987!";
+      aiResponseText = "Found your Goa family vacation memory from 1987! Sunita, do you remember which beach that photo was taken from in Goa?";
     }
   } else {
     actions.push({

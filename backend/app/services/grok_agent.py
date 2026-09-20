@@ -1,6 +1,8 @@
 import os
+import re
 import json
 import logging
+from datetime import datetime
 from typing import Dict, Any, List, Optional
 import httpx
 from pydantic import BaseModel
@@ -19,7 +21,7 @@ GEMINI_MODELS = [
 
 class AgentActionItem(BaseModel):
     id: str
-    toolType: str  # 'create_reminder', 'complete_reminder', 'create_appointment', 'retrieve_memory', 'trigger_emergency'
+    toolType: str  # 'create_reminder', 'complete_reminder', 'create_appointment', 'retrieve_appointments', 'retrieve_memory', 'trigger_emergency'
     title: str
     description: str
     parameters: Dict[str, Any] = {}
@@ -42,6 +44,37 @@ class GrokAgentResponse(BaseModel):
     ai_response: str
     actions: List[AgentActionItem] = []
     timeline: List[TimelineStep] = []
+
+
+def _is_upcoming_appointment(apt: Dict[str, Any]) -> bool:
+    """
+    Determines if an appointment is upcoming.
+    Excludes completed and cancelled appointments, as well as appointments whose date/time is in the past.
+    """
+    status = str(apt.get("status", "")).strip().lower()
+    # At minimum, completed and cancelled appointments must not be counted as upcoming
+    if status in ("cancelled", "canceled", "completed", "done", "missed"):
+        return False
+
+    date_val = str(apt.get("date", "")).strip().lower()
+    if not date_val:
+        return status in ("upcoming", "scheduled", "active", "pending")
+
+    # Check for past relative keywords (e.g. "last week", "yesterday", "last month", "ago")
+    if re.search(r"\b(last\s+week|last\s+month|yesterday|past|ago)\b", date_val):
+        return False
+
+    # Check for parseable ISO dates: YYYY-MM-DD
+    iso_match = re.search(r"\b(\d{4}-\d{2}-\d{2})\b", date_val)
+    if iso_match:
+        try:
+            apt_date = datetime.strptime(iso_match.group(1), "%Y-%m-%d").date()
+            if apt_date < datetime.utcnow().date():
+                return False
+        except Exception:
+            pass
+
+    return True
 
 
 class LangGraphVoiceAgent:
@@ -133,8 +166,15 @@ class LangGraphVoiceAgent:
             except Exception as e:
                 logger.warning(f"[GeminiAgent] Gemini API query error: {str(e)}. Falling back to deterministic agent graph.")
 
-        # Smart Deterministic Fallback DAG with stored memory reference context
-        return self._fallback_agent_graph(prompt_text, timeline, rag_context=rag_context, memories=memories, past_chats=past_chats)
+        # Smart Deterministic Fallback DAG with stored memory reference context and patient_id
+        return self._fallback_agent_graph(
+            prompt_text,
+            timeline,
+            rag_context=rag_context,
+            memories=memories,
+            past_chats=past_chats,
+            patient_id=patient_id
+        )
 
 
     async def _query_gemini_api(self, prompt: str, rag_context: str = "", memory_context: str = "") -> Optional[GrokAgentResponse]:
@@ -150,11 +190,14 @@ class LangGraphVoiceAgent:
             "2. Memory Questioning: Based on the stored photo memories or past voice chats, ALWAYS include a gentle memory recall question asking Sunita if she remembers a specific detail from her past memories or past chats (e.g. 'Sunita, do you remember our family beach vacation in Goa back in 1987? Where was that beach located?' or 'You mentioned your home garden earlier—do you remember what color roses bloomed there?').\n"
             "3. Output ONLY a valid JSON object with keys:\n"
             "   - 'response': (string) your friendly response + memory recall question\n"
-            "   - 'tool': (string: 'create_reminder', 'complete_reminder', 'create_appointment', 'retrieve_memory', or 'none')\n"
+            "   - 'tool': (string: 'create_reminder', 'complete_reminder', 'create_appointment', 'retrieve_appointments', 'retrieve_memory', or 'none')\n"
             "   - 'title': (string)\n"
             "   - 'time': (string)\n"
             "   - 'date': (string)\n"
-            "   - 'details': (string)"
+            "   - 'details': (string)\n"
+            "   Use 'retrieve_appointments' when the user asks to view, show, list, check, or inquire about upcoming appointments.\n"
+            "   Use 'create_appointment' ONLY when the user explicitly requests to book, schedule, create, or add a new appointment.\n"
+            "   If no tool action is appropriate, return 'none' for tool."
         )
         full_prompt = f"{system_instruction}\n\nPatient/Caregiver Prompt: {prompt}"
 
@@ -181,8 +224,21 @@ class LangGraphVoiceAgent:
                                     parsed = json.loads(clean_json)
                                     ai_text = parsed.get("response", raw_text)
                                     tool_type = parsed.get("tool", "create_reminder")
-                                    modal_type = "VERIFY_COMPLETE" if tool_type == "complete_reminder" else ("MEMORIES_PREVIEW" if tool_type == "retrieve_memory" else "VERIFY_ADD")
-                                    target_route = "/memories" if tool_type == "retrieve_memory" else None
+                                    if tool_type == "complete_reminder":
+                                        modal_type = "VERIFY_COMPLETE"
+                                        target_route = None
+                                    elif tool_type == "retrieve_memory":
+                                        modal_type = "MEMORIES_PREVIEW"
+                                        target_route = "/memories"
+                                    elif tool_type in ("create_appointment", "retrieve_appointments"):
+                                        modal_type = "VERIFY_ACTION"
+                                        target_route = "/appointments"
+                                    elif tool_type == "none":
+                                        modal_type = "VERIFY_ACTION"
+                                        target_route = None
+                                    else:
+                                        modal_type = "VERIFY_ADD"
+                                        target_route = None
 
                                     action = AgentActionItem(
                                         id=f"act_{abs(hash(prompt)) % 1000000}",
@@ -194,14 +250,14 @@ class LangGraphVoiceAgent:
                                             "date": parsed.get("date", "Today"),
                                             "details": parsed.get("details", prompt)
                                         },
-                                        openModal=True,
+                                        openModal=True if tool_type != "none" else False,
                                         modalType=modal_type,
                                         targetRoute=target_route
                                     )
                                     return GrokAgentResponse(
                                         transcript=prompt,
                                         ai_response=ai_text,
-                                        actions=[action],
+                                        actions=[action] if tool_type != "none" else [],
                                         timeline=[]
                                     )
                                 except Exception:
@@ -224,8 +280,10 @@ class LangGraphVoiceAgent:
         timeline: List[TimelineStep],
         rag_context: str = "",
         memories: List[Dict[str, Any]] = None,
-        past_chats: List[Dict[str, Any]] = None
+        past_chats: List[Dict[str, Any]] = None,
+        patient_id: str = "patient_001"
     ) -> GrokAgentResponse:
+        from app.database.dynamodb import dynamodb_service
         lower = prompt.lower()
         memories = memories or []
         past_chats = past_chats or []
@@ -235,7 +293,10 @@ class LangGraphVoiceAgent:
         garden_mem = next((m for m in memories if "garden" in m.get("title", "").lower() or "rose" in m.get("description", "").lower()), None)
         diwali_mem = next((m for m in memories if "diwali" in m.get("title", "").lower() or "sweets" in m.get("tags", [])), None)
 
-        if "complete" in lower or "done" in lower or "finished" in lower or "took" in lower or "take" in lower:
+        # Check for appointment-related intent
+        is_apt_related = bool(re.search(r"\b(appointment|appointments|doctor|consultation|clinic|hospital)\b", lower))
+
+        if ("complete" in lower or "done" in lower or "finished" in lower or "took" in lower or ("take" in lower and not ("remind" in lower or "book" in lower or "schedule" in lower))) and not is_apt_related:
             tool_type = "complete_reminder"
             q = " By the way, Sunita, do you remember what cardamom sweets you prepared for Diwali in 2019?" if diwali_mem else ""
             ai_response = f"Great job! I have marked your task as completed.{q}"
@@ -243,13 +304,57 @@ class LangGraphVoiceAgent:
             modal_type = "VERIFY_COMPLETE"
             target_route = None
             params = {"reminderTitle": "Evening Medication (Donepezil 5mg)", "completed": True, "time": "8:00 PM"}
-        elif "appointment" in lower or "doctor" in lower or "sharma" in lower:
-            tool_type = "create_appointment"
-            ai_response = "I checked your care record! Dr. Anita Sharma's consultation is scheduled for tomorrow at 10:30 AM."
-            title = "Doctor Consultation"
-            modal_type = "VERIFY_ACTION"
-            target_route = "/appointments"
-            params = {"doctorName": "Dr. Anita Sharma", "time": "10:30 AM", "date": "Tomorrow"}
+            open_modal = True
+        elif is_apt_related:
+            # Check for explicit booking/creation verbs (excluding reschedule per instructions)
+            is_create = bool(re.search(r"\b(book|schedule|create|make|set\s+up|add|new)\b", lower))
+
+            if is_create:
+                tool_type = "create_appointment"
+                doc_match = re.search(r"dr\.?\s+([a-zA-Z\s]+?)(?:\s+tomorrow|\s+at|\s+on|\s+next|$)", prompt, re.IGNORECASE)
+                doctor_name = f"Dr. {doc_match.group(1).strip()}" if doc_match else "Dr. Anita Sharma"
+                time_match = re.search(r"\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\b", prompt, re.IGNORECASE)
+                time_val = time_match.group(1).upper() if time_match else "10:30 AM"
+                date_val = "Tomorrow" if "tomorrow" in lower else ("Today" if "today" in lower else "Next Week")
+
+                ai_response = f"I have scheduled an appointment with {doctor_name} for {date_val} at {time_val}."
+                title = "Doctor Appointment Scheduled"
+                modal_type = "VERIFY_ACTION"
+                target_route = "/appointments"
+                params = {
+                    "doctorName": doctor_name,
+                    "time": time_val,
+                    "date": date_val,
+                    "title": f"{doctor_name} Consultation"
+                }
+                open_modal = True
+            else:
+                # Completely side-effect free retrieval: only read existing appointments
+                tool_type = "retrieve_appointments"
+                existing_apts = dynamodb_service.get_appointments(patient_id)
+                upcoming_apts = [a for a in existing_apts if _is_upcoming_appointment(a)]
+
+                if upcoming_apts:
+                    first = upcoming_apts[0]
+                    count = len(upcoming_apts)
+                    doc_label = first.get("doctorName") or first.get("title") or "Doctor Consultation"
+                    when_label = f"{first.get('date', 'soon')} at {first.get('time', '')}".strip()
+                    if count == 1:
+                        ai_response = f"You have 1 upcoming appointment: {doc_label} scheduled for {when_label}."
+                    else:
+                        ai_response = f"You have {count} upcoming appointments. The next one is {doc_label} on {when_label}."
+                    title = "Upcoming Appointments Retrieved"
+                    params = {
+                        "count": count,
+                        "appointments": [a.get("title") or a.get("doctorName") or "Appointment" for a in upcoming_apts]
+                    }
+                else:
+                    ai_response = "You currently have no upcoming doctor appointments scheduled."
+                    title = "Appointments Retrieved"
+                    params = {"count": 0, "appointments": []}
+                modal_type = "VERIFY_ACTION"
+                target_route = "/appointments"
+                open_modal = True
         elif "memory" in lower or "goa" in lower or "photo" in lower or "picture" in lower or "family" in lower:
             tool_type = "retrieve_memory"
             beach_loc = goa_mem.get("location", "Calangute Beach") if goa_mem else "Calangute Beach"
@@ -258,6 +363,7 @@ class LangGraphVoiceAgent:
             modal_type = "MEMORIES_PREVIEW"
             target_route = "/memories"
             params = {"memory": "Goa Family Vacation 1987", "album": "Family Memories"}
+            open_modal = True
         else:
             tool_type = "create_reminder"
             if garden_mem:
@@ -272,6 +378,7 @@ class LangGraphVoiceAgent:
             modal_type = "VERIFY_ADD"
             target_route = None
             params = {"title": prompt, "time": "8:00 PM", "recurring": "Daily"}
+            open_modal = True
 
         action = AgentActionItem(
             id=f"act_{abs(hash(prompt)) % 1000000}",
@@ -279,17 +386,18 @@ class LangGraphVoiceAgent:
             title=title,
             description=ai_response,
             parameters=params,
-            openModal=True,
+            openModal=open_modal,
             modalType=modal_type,
             targetRoute=target_route,
             status="completed"
         )
+        actions = [action]
 
         timeline.append(
             TimelineStep(
                 stepIndex=4,
-                title="State Mutation Execution",
-                description=f"Dispatched {tool_type} action payload with stored memory recall question.",
+                title="State Query Execution" if tool_type in ("retrieve_appointments", "retrieve_memory") else "State Mutation Execution",
+                description=f"Dispatched {tool_type} action payload with stored memory recall question." if memories else f"Successfully dispatched {tool_type} action payload to frontend state.",
                 timestamp="180ms"
             )
         )
@@ -297,7 +405,7 @@ class LangGraphVoiceAgent:
         return GrokAgentResponse(
             transcript=prompt,
             ai_response=ai_response,
-            actions=[action],
+            actions=actions,
             timeline=timeline
         )
 

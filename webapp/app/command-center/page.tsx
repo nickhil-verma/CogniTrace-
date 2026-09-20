@@ -49,7 +49,8 @@ function CommandCenterContent() {
     t('dashboard.suggestion2') || 'What should I do next?',
     t('dashboard.suggestion3') || 'I completed my evening medicine.',
     t('dashboard.suggestion4') || 'What medicine should I take now?',
-    t('dashboard.suggestion1') || 'Show me my family photos.'
+    t('dashboard.suggestion1') || 'Show me my family photos.',
+    t('dashboard.suggestion5') || 'Show upcoming appointments.'
   ];
 
   return (

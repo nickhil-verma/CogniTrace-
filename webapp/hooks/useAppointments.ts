@@ -17,13 +17,13 @@ export function useAppointments() {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             setAppointments(parsed);
           }
         }
 
         const apiData = await api.getAppointments('patient_001');
-        if (Array.isArray(apiData) && apiData.length > 0) {
+        if (Array.isArray(apiData)) {
           setAppointments(apiData);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(apiData));
         }
@@ -34,6 +34,28 @@ export function useAppointments() {
       }
     }
     loadAppointments();
+
+    const handleSync = () => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            setAppointments(parsed);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('cognitrace_appointments_change', handleSync);
+
+    return () => {
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('cognitrace_appointments_change', handleSync);
+    };
   }, []);
 
   useEffect(() => {
@@ -42,12 +64,51 @@ export function useAppointments() {
     }
   }, [appointments, isLoaded]);
 
+  const refreshAppointments = useCallback(async (): Promise<Appointment[]> => {
+    try {
+      const apiData = await api.getAppointments('patient_001');
+      if (Array.isArray(apiData)) {
+        setAppointments(apiData);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(apiData));
+          window.dispatchEvent(new Event('cognitrace_appointments_change'));
+        }
+        return apiData;
+      }
+    } catch (e) {
+      console.warn('Backend appointments fetch warning:', e);
+      if (typeof window !== 'undefined') {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) {
+              setAppointments(parsed);
+              return parsed;
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    return appointments;
+  }, [appointments]);
+
   const addAppointment = useCallback(async (newApt: Omit<Appointment, 'id'>) => {
     const item: Appointment = {
       ...newApt,
       id: `apt_${Date.now()}`
     };
-    setAppointments((prev) => [item, ...prev]);
+    setAppointments((prev) => {
+      const updated = [item, ...prev];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        window.dispatchEvent(new Event('cognitrace_appointments_change'));
+      }
+      return updated;
+    });
 
     try {
       await api.createAppointment(item);
@@ -57,13 +118,25 @@ export function useAppointments() {
   }, []);
 
   const cancelAppointment = useCallback((id: string) => {
-    setAppointments((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status: 'Cancelled' } : a))
-    );
+    setAppointments((prev) => {
+      const updated = prev.map((a) => (a.id === id ? { ...a, status: 'Cancelled' as const } : a));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        window.dispatchEvent(new Event('cognitrace_appointments_change'));
+      }
+      return updated;
+    });
   }, []);
 
   const deleteAppointment = useCallback((id: string) => {
-    setAppointments((prev) => prev.filter((a) => a.id !== id));
+    setAppointments((prev) => {
+      const updated = prev.filter((a) => a.id !== id);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        window.dispatchEvent(new Event('cognitrace_appointments_change'));
+      }
+      return updated;
+    });
   }, []);
 
   return {
@@ -71,6 +144,7 @@ export function useAppointments() {
     isLoaded,
     addAppointment,
     cancelAppointment,
-    deleteAppointment
+    deleteAppointment,
+    refreshAppointments
   };
 }
