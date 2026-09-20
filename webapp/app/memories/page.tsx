@@ -80,12 +80,13 @@ export default function MemoriesPage() {
       </div>
 
       {/* Reminiscence Feature Banner */}
-      {reminisceActiveMemory && (
+      {!isCaregiver && reminisceActiveMemory && (
         <ReminiscenceCard
           memory={reminisceActiveMemory}
           onStartVoiceSession={(promptText) => {
             router.push(`/command-center?q=${encodeURIComponent(promptText)}`);
           }}
+          showTalkButton={!isCaregiver}
         />
       )}
 
@@ -110,6 +111,7 @@ export default function MemoriesPage() {
                 onSelect={(m) => setSelectedMemory(m)}
                 onReminisce={(m) => setReminisceActiveMemory(m)}
                 onDelete={isCaregiver ? (id) => deleteMemory(id) : undefined}
+                showTalkAboutIt={!isCaregiver}
               />
             ))}
           </div>
