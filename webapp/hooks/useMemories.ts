@@ -7,6 +7,16 @@ import { api } from '@/lib/api';
 
 const STORAGE_KEY = 'cognitrace_memories_v1';
 
+function mergeMemories(...sources: Memory[][]): Memory[] {
+  const merged = new Map<string, Memory>();
+  for (const source of sources) {
+    for (const memory of source) {
+      merged.set(memory.id, memory);
+    }
+  }
+  return Array.from(merged.values());
+}
+
 export function useMemories() {
   const [memories, setMemories] = useState<Memory[]>(initialMockMemories);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
@@ -16,20 +26,21 @@ export function useMemories() {
     async function loadMemories() {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
+        let savedMemories: Memory[] = [];
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            setMemories(parsed);
+            savedMemories = parsed;
           }
         }
 
         const apiData = await api.getMemories('patient_001');
-        if (Array.isArray(apiData) && apiData.length > 0) {
-          setMemories(apiData);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(apiData));
-        }
-      } catch (e) {
-        console.warn('Backend memories fetch warning:', e);
+        const backendMemories = Array.isArray(apiData) ? apiData : [];
+        const mergedMemories = mergeMemories(initialMockMemories, savedMemories, backendMemories);
+        setMemories(mergedMemories);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedMemories));
+      } catch {
+        console.warn('Backend memories fetch warning.');
       } finally {
         setIsLoaded(true);
       }
@@ -73,7 +84,7 @@ export function useMemories() {
     try {
       const res = await api.getReminiscencePrompt(memoryId, description);
       return res.prompt;
-    } catch (err) {
+    } catch {
       return `Mom, do you remember this special moment from "${description}"? Tell me what you remember about that day.`;
     }
   }, []);
