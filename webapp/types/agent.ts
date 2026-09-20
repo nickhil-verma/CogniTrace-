@@ -2,10 +2,13 @@ export type VoiceState = 'IDLE' | 'LISTENING' | 'PROCESSING' | 'EXECUTING' | 'SP
 
 export type AgentToolType = 
   | 'create_reminder'
+  | 'complete_reminder'
+  | 'toggle_reminder'
   | 'create_appointment'
+  | 'create_memory'
+  | 'retrieve_memory'
   | 'escalate_to_caretaker'
   | 'mark_task_completed'
-  | 'retrieve_memory'
   | 'get_patient_summary'
   | 'send_caretaker_alert';
 

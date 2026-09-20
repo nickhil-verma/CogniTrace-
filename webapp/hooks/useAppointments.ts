@@ -12,16 +12,28 @@ export function useAppointments() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        setAppointments(JSON.parse(saved));
+    async function loadAppointments() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setAppointments(parsed);
+          }
+        }
+
+        const apiData = await api.getAppointments('patient_001');
+        if (Array.isArray(apiData) && apiData.length > 0) {
+          setAppointments(apiData);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(apiData));
+        }
+      } catch (e) {
+        console.warn('Backend appointments fetch warning:', e);
+      } finally {
+        setIsLoaded(true);
       }
-    } catch (e) {
-      console.warn('Failed to parse saved appointments', e);
-    } finally {
-      setIsLoaded(true);
     }
+    loadAppointments();
   }, []);
 
   useEffect(() => {
@@ -38,7 +50,7 @@ export function useAppointments() {
     setAppointments((prev) => [item, ...prev]);
 
     try {
-      await api.post('/v1/caretaker/appointments', item);
+      await api.createAppointment(item);
     } catch (err) {
       console.warn('API sync appointment warning:', err);
     }

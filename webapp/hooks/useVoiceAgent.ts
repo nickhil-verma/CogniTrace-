@@ -62,45 +62,71 @@ export function useVoiceAgent() {
     }
   }, [speakWithWebSpeech]);
 
-  // Dispatch tool actions to real React state and persistent storage
+  const { reminders, toggleComplete } = useReminders();
+
+  // Dispatch tool actions dynamically to real React state and persistent storage
   const executeRealToolAction = useCallback((action: AgentActionItem, textInput: string) => {
     const lower = textInput.toLowerCase();
 
+    // 1. Mark Job Done / Toggle Reminder Complete
+    if (action.toolType === 'complete_reminder' || lower.includes('done') || lower.includes('mark completed') || lower.includes('finish')) {
+      const match = reminders.find((r) => lower.includes(r.title.toLowerCase().slice(0, 8)));
+      if (match) {
+        toggleComplete(match.id);
+      } else if (reminders.length > 0) {
+        toggleComplete(reminders[0].id);
+      }
+      return;
+    }
+
+    // 2. Dynamic Reminder Creation
     if (action.toolType === 'create_reminder' || lower.includes('remind') || lower.includes('medicine') || lower.includes('medication')) {
+      const parsedTitle = action.parameters?.title || textInput.replace(/remind (mom|me) to/i, '').trim();
+      const timeMatch = textInput.match(/at (\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i);
+      
       addReminder({
-        title: action.parameters?.title || 'Take evening medicine (Donepezil)',
-        time: action.parameters?.time || '8:00 PM',
-        date: 'Today',
-        category: 'Medication',
+        title: parsedTitle && parsedTitle.length > 3 ? parsedTitle : 'Take evening medicine',
+        time: action.parameters?.time || (timeMatch ? timeMatch[1].toUpperCase() : '8:00 PM'),
+        date: action.parameters?.date || 'Today',
+        category: lower.includes('medicine') || lower.includes('medication') ? 'Medication' : 'Daily Routine',
+
         status: 'Upcoming',
         patientName: 'Mom',
-        dosageOrDetails: 'Take 1 tablet with water after dinner',
+        dosageOrDetails: action.parameters?.details || 'Scheduled via Voice AI Assistant',
         recurring: 'Daily'
       });
-    } else if (action.toolType === 'create_appointment' || lower.includes('appointment') || lower.includes('doctor') || lower.includes('sharma')) {
+    } 
+    // 3. Dynamic Appointment Creation
+    else if (action.toolType === 'create_appointment' || lower.includes('appointment') || lower.includes('doctor')) {
+      const docMatch = textInput.match(/dr\.?\s+([a-z\s]+)/i);
+      const doctorName = action.parameters?.doctorName || (docMatch ? `Dr. ${docMatch[1].trim()}` : 'Dr. Anita Sharma');
+      
       addAppointment({
-        title: 'Dr. Anita Sharma Consultation',
-        doctorName: action.parameters?.doctorName || 'Dr. Anita Sharma',
-        specialty: 'Cognitive Neurology',
+        title: action.parameters?.title || `${doctorName} Consultation`,
+        doctorName: doctorName,
+        specialty: action.parameters?.specialty || 'Cognitive Care',
         date: action.parameters?.date || 'Tomorrow',
         time: action.parameters?.time || '10:30 AM',
-        location: 'City Care Hospital, Suite 402',
-        notes: 'Bring recent observation log & current prescriptions',
+        location: action.parameters?.location || 'City Care Clinic',
+        notes: action.parameters?.notes || 'Scheduled via AI Voice Agent',
         status: 'Upcoming'
       });
-    } else if (action.toolType === 'retrieve_memory' || lower.includes('memory') || lower.includes('goa') || lower.includes('photo')) {
+    } 
+    // 4. Dynamic Memory Retrieval / Album Creation
+    else if (action.toolType === 'retrieve_memory' || action.toolType === 'create_memory' || lower.includes('memory') || lower.includes('photo')) {
       addMemory({
-        title: 'Goa Family Vacation Memory',
-        date: 'Summer 1987',
-        location: 'Goa Beach',
-        imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
-        description: 'Mom watching the sunset by the ocean waves with family.',
+        title: action.parameters?.title || 'Family Memory Album',
+        date: action.parameters?.date || 'Summer 1987',
+        location: action.parameters?.location || 'Family Home',
+        imageUrl: action.parameters?.imageUrl || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+        description: action.parameters?.description || textInput,
         people: ['Mom', 'Caregiver'],
-        tags: ['Vacation', 'Goa'],
-        reminiscencePrompt: 'Mom, do you remember watching the sunset by the ocean in Goa?'
+        tags: ['Vacation', 'Memory'],
+        reminiscencePrompt: `Mom, do you remember this special moment: ${textInput}?`
       });
     }
-  }, [addReminder, addAppointment, addMemory]);
+  }, [addReminder, addAppointment, addMemory, reminders, toggleComplete]);
+
 
   // Submit prompt (either text or voice audio)
   const submitVoiceTurn = useCallback(async (textInput?: string, inputBlob?: Blob | null) => {

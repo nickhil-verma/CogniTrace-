@@ -273,6 +273,38 @@ export class ApiClient {
     }
   }
 
+  // ------------------------------------------------------------------
+  // Reminders & Schedule APIs
+  // ------------------------------------------------------------------
+
+  async getReminders(patientId: string = 'patient_001') {
+    return this.get(`/v1/caretaker/reminders?patient_id=${patientId}`, []);
+  }
+
+  async createReminder(reminder: any) {
+    return this.post('/v1/caretaker/reminders', reminder);
+  }
+
+  async toggleReminder(remId: string, patientId: string = 'patient_001') {
+    return this.post(`/v1/caretaker/reminders/${remId}/toggle?patient_id=${patientId}`, {});
+  }
+
+  async getAppointments(patientId: string = 'patient_001') {
+    return this.get(`/v1/caretaker/appointments?patient_id=${patientId}`, []);
+  }
+
+  async createAppointment(appointment: any) {
+    return this.post('/v1/caretaker/appointments', appointment);
+  }
+
+  async getMemories(patientId: string = 'patient_001') {
+    return this.get(`/v1/caretaker/memories?patient_id=${patientId}`, []);
+  }
+
+  async createMemory(memory: any) {
+    return this.post('/v1/caretaker/memories', memory);
+  }
+
   // Get patient summary (GET /v1/caretaker/patient/{patient_id}/summary)
   async getPatientSummary(patientId: string = 'patient_001') {
     return this.get(`/v1/caretaker/patient/${patientId}/summary`, mockPatientSummary);
@@ -300,3 +332,4 @@ export class ApiClient {
 }
 
 export const api = new ApiClient();
+
