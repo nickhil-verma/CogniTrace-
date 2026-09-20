@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { MemoryCard } from '@/components/memories/MemoryCard';
 import { ReminiscenceCard } from '@/components/memories/ReminiscenceCard';
 import { useMemories } from '@/hooks/useMemories';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,9 +16,20 @@ import { useLanguage } from '@/hooks/useLanguage';
 export default function MemoriesPage() {
   const router = useRouter();
   const { memories, setSelectedMemory, addMemory, deleteMemory } = useMemories();
+  const { isCaregiver } = useUserRole();
   const { t } = useLanguage();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [reminisceActiveMemory, setReminisceActiveMemory] = useState<Memory>(memories[0] || null);
+  const [reminisceActiveMemory, setReminisceActiveMemory] = useState<Memory | null>(null);
+
+  React.useEffect(() => {
+    if (memories.length > 0) {
+      if (!reminisceActiveMemory || !memories.some((m) => m.id === reminisceActiveMemory.id)) {
+        setReminisceActiveMemory(memories[0]);
+      }
+    } else {
+      setReminisceActiveMemory(null);
+    }
+  }, [memories, reminisceActiveMemory]);
 
   // Form states
   const [title, setTitle] = useState('');
@@ -68,12 +80,13 @@ export default function MemoriesPage() {
       </div>
 
       {/* Reminiscence Feature Banner */}
-      {reminisceActiveMemory && (
+      {!isCaregiver && reminisceActiveMemory && (
         <ReminiscenceCard
           memory={reminisceActiveMemory}
           onStartVoiceSession={(promptText) => {
             router.push(`/command-center?q=${encodeURIComponent(promptText)}`);
           }}
+          showTalkButton={!isCaregiver}
         />
       )}
 
@@ -84,17 +97,25 @@ export default function MemoriesPage() {
           <span className="text-xs text-[#66736F]">{t('memories.memoriesPreservedCount', { count: memories.length })}</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {memories.map((mem) => (
-            <MemoryCard
-              key={mem.id}
-              memory={mem}
-              onSelect={(m) => setSelectedMemory(m)}
-              onReminisce={(m) => setReminisceActiveMemory(m)}
-              onDelete={(id) => deleteMemory(id)}
-            />
-          ))}
-        </div>
+        {memories.length === 0 ? (
+          <div className="p-12 text-center border-2 border-dashed border-[#DDE7E3] rounded-3xl bg-white space-y-3">
+            <p className="text-base font-bold text-[#123B35]">No photo memories preserved yet.</p>
+            <p className="text-xs text-[#66736F]">Click "Add New Memory" above to upload your first family photo memory!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {memories.map((mem) => (
+              <MemoryCard
+                key={mem.id}
+                memory={mem}
+                onSelect={(m) => setSelectedMemory(m)}
+                onReminisce={(m) => setReminisceActiveMemory(m)}
+                onDelete={isCaregiver ? (id) => deleteMemory(id) : undefined}
+                showTalkAboutIt={!isCaregiver}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Upload Memory Modal */}

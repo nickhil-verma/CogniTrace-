@@ -10,9 +10,10 @@ import { useLanguage } from '@/hooks/useLanguage';
 interface ReminiscenceCardProps {
   memory: Memory;
   onStartVoiceSession?: (prompt: string) => void;
+  showTalkButton?: boolean;
 }
 
-export function ReminiscenceCard({ memory, onStartVoiceSession }: ReminiscenceCardProps) {
+export function ReminiscenceCard({ memory, onStartVoiceSession, showTalkButton = true }: ReminiscenceCardProps) {
   const { t } = useLanguage();
   const [promptText, setPromptText] = useState(
     memory.reminiscencePrompt || `Mom, do you remember our trip to ${memory.location}?`
@@ -73,15 +74,17 @@ export function ReminiscenceCard({ memory, onStartVoiceSession }: ReminiscenceCa
           &ldquo;{promptText}&rdquo;
         </p>
 
-        <Button
-          variant="teal"
-          size="lg"
-          className="w-full shadow-md py-3 text-sm font-bold flex items-center justify-center space-x-2 cursor-pointer"
-          onClick={() => onStartVoiceSession?.(promptText)}
-        >
-          <Mic className="w-5 h-5 text-white" />
-          <span>{t('memories.talkWithMom')}</span>
-        </Button>
+        {showTalkButton && (
+          <Button
+            variant="teal"
+            size="lg"
+            className="w-full shadow-md py-3 text-sm font-bold flex items-center justify-center space-x-2 cursor-pointer"
+            onClick={() => onStartVoiceSession?.(promptText)}
+          >
+            <Mic className="w-5 h-5 text-white" />
+            <span>Talk about it</span>
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -147,9 +147,9 @@
   },
   "commandCenter": {
     "badge": "PNL de Voz y RAG Activo",
-    "badgeDetail": "Google Gemini 1.5 Flash API + DynamoDB RAG",
-    "title": "Agente de Voz y Chat CogniTrace Gemini",
-    "subtitle": "Reconocimiento de voz con extracción de características que alimenta a Google Gemini AI.",
+    "badgeDetail": "Cognitive Assistant + Secure Health Record RAG",
+    "title": "Agente de Voz y Chat CogniTrace Cognitive Assistant",
+    "subtitle": "Reconocimiento de voz con extracción de características que alimenta a Google Cognitive Assistant AI.",
     "orbListening": "Escuchando...",
     "orbListeningSub": "Habla con naturalidad a CogniTrace",
     "orbReasoning": "Razonando...",
@@ -163,7 +163,7 @@
     "orbIdle": "Toca para hablar",
     "orbIdleSub": "\"Recuérdale a Mamá tomar su medicina a las 8 hoy\"",
     "userTranscriptTitle": "Transcripción de Voz del Usuario",
-    "geminiResponseTitle": "Respuesta del Agente Gemini AI",
+    "geminiResponseTitle": "Respuesta del Agente Cognitive Assistant AI",
     "inputPlaceholder": "O escribe un comando (ej., 'Recuérdale a Mamá su medicina a las 8')",
     "suggestedCommandsTitle": "Comandos de voz sugeridos:",
     "executedActionsTitle": "Acciones Ejecutadas",
@@ -173,7 +173,9 @@
     "editReminder": "Editar recordatorio",
     "done": "Listo",
     "completedBadge": "✓ Completado",
-    "executingBadge": "Ejecutando"
+    "executingBadge": "Ejecutando",
+    "greeting": "Welcome back, {caregiverName}",
+    "relationTag": "Care Partner: {relation}"
   },
   "tracking": {
     "badge": "Seguimiento Observacional",
@@ -248,7 +250,16 @@
     "dailyNeedsTitle": "Necesidades de Apoyo Diario",
     "guidedEveningRoutine": "Rutina Vespertina Guiada",
     "dailyNeedsDesc": "El aviso de medicación a las 8:00 PM garantiza constancia. Los paseos vespertinos favorecen un sueño reparador.",
-    "trendGuidedConsistent": "✓ Tendencia observada: Guiada y consistente"
+    "trendGuidedConsistent": "✓ Tendencia observada: Guiada y consistente",
+    "cohortBenchmark": "Comparative Health Cohort Baseline",
+    "cohortMatchedNote": "Matched with {count} participants in similar age and cognitive assessment bands",
+    "cognitiveStabilityIndex": "Cognitive Stability Index",
+    "routineAdherence": "Routine Consistency Index",
+    "percentileNote": "Performing in the top {percentile}% of matching care profiles",
+    "memoryLatency": "Memory Recall Response Latency",
+    "latencyValue": "{seconds}s (Optimal Range)",
+    "peerMedianDelta": "+{delta}% above peer median",
+    "researchSubtext": "Normalized against peer participants evaluated within the last 30 days"
   },
   "journal": {
     "badge": "Diario del Cuidador",
@@ -295,7 +306,7 @@
     "activeLangTitle": "Idioma Activo de Diálogo",
     "activeLangDesc": "Soporta 10 idiomas incluyendo Español, Hindi, Francés",
     "apiEndpointTitle": "Configuración del Endpoint de la API",
-    "apiEndpointDesc": "URL Base de CogniTrace API (FastAPI, PyTorch, Librosa)",
+    "apiEndpointDesc": "URL Base de CogniTrace API (Care Portal, Cognitive Engine, Librosa)",
     "saveUrl": "Guardar URL",
     "urlSaved": "¡Guardado!",
     "telemetryTitle": "Sincronización de Observaciones",
@@ -333,5 +344,11 @@
     "stageAdvanced": "Etapa Avanzada (Cuidado Total)",
     "completeSetup": "Completar Configuración e Iniciar Panel",
     "settingUp": "Configurando..."
+  },
+  "modals": {
+    "taskCompleted": "Activity recorded successfully",
+    "memoriesTitle": "Visual Memory Archive",
+    "verifyAddTitle": "New Schedule Entry Scheduled",
+    "verifyCompleteTitle": "Care Activity Completed"
   }
 }

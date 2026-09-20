@@ -222,6 +222,16 @@ def test_auth_login_signup_endpoints():
     assert "access_token" in login_data
 
 
+def test_auth_rejects_invalid_password():
+    payload = {
+        "email": "priya.caregiver@example.com",
+        "password": "wrong-password"
+    }
+    response = client.post("/v1/auth/login", json=payload)
+    assert response.status_code == 401
+    assert "Invalid email or password" in response.json()["detail"]
+
+
 def test_dynamodb_rag_vector_storage():
     rag_payload = {
         "user_id": "usr_test_rag_001",

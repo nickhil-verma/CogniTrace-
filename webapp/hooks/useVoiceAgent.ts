@@ -1,6 +1,6 @@
 'use client';
-import { useState, useCallback } from 'react';
-import { VoiceState, TimelineStep, AgentActionItem, AgentToolType } from '@/types/agent';
+import { useState, useCallback, useRef } from 'react';
+import { VoiceState, TimelineStep, AgentActionItem } from '@/types/agent';
 import { useAudioRecorder } from './useAudioRecorder';
 import { useReminders } from './useReminders';
 import { useAppointments } from './useAppointments';
@@ -15,8 +15,21 @@ export function useVoiceAgent() {
   const [timeline, setTimeline] = useState<TimelineStep[]>([]);
   const [actions, setActions] = useState<AgentActionItem[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [activeModalAction, setActiveModalAction] = useState<AgentActionItem | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  // Multi-turn slot filling & conversation history tracking
+  const [pendingState, setPendingState] = useState<Record<string, any> | null>(null);
+  const [conversationHistory, setConversationHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+
+  const pendingStateRef = useRef<Record<string, any> | null>(null);
+  const conversationHistoryRef = useRef<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
 
   const { currentLangObj } = useLanguage();
+
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
 
   const {
     isRecording,
@@ -29,39 +42,41 @@ export function useVoiceAgent() {
     stopRecording
   } = useAudioRecorder();
 
-  const { addReminder } = useReminders();
+  const { addReminder, reminders, toggleComplete } = useReminders();
   const { addAppointment, refreshAppointments } = useAppointments();
   const { addMemory } = useMemories();
 
-  // Speak AI response using Polly audio or Web Speech API synthesis
-  const speakWithWebSpeech = useCallback((text: string) => {
+  // Barge-In helper: immediately halt ongoing synthesis
+  const cancelSynthesis = useCallback(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
+
+  // Speak AI response using Web Speech API synthesis
+  const speakWithWebSpeech = useCallback((text: string, onEnded?: () => void) => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.95;
       utterance.pitch = 1.0;
       utterance.lang = currentLangObj?.speechLang || 'en-US';
-      utterance.onend = () => setVoiceState('IDLE');
-      utterance.onerror = () => setVoiceState('IDLE');
+      utterance.onend = () => {
+        setVoiceState('IDLE');
+        if (onEnded) onEnded();
+      };
+      utterance.onerror = () => {
+        setVoiceState('IDLE');
+        if (onEnded) onEnded();
+      };
       window.speechSynthesis.speak(utterance);
     } else {
-      setTimeout(() => setVoiceState('IDLE'), 2500);
+      setTimeout(() => {
+        setVoiceState('IDLE');
+        if (onEnded) onEnded();
+      }, 2500);
     }
   }, [currentLangObj]);
-
-  const playAudioResponse = useCallback((text: string, audioUrl?: string) => {
-    setVoiceState('SPEAKING');
-    if (audioUrl) {
-      const audio = new Audio(audioUrl);
-      audio.onended = () => setVoiceState('IDLE');
-      audio.onerror = () => speakWithWebSpeech(text);
-      audio.play().catch(() => speakWithWebSpeech(text));
-    } else {
-      speakWithWebSpeech(text);
-    }
-  }, [speakWithWebSpeech]);
-
-  const { reminders, toggleComplete } = useReminders();
 
   // Dispatch tool actions dynamically to real React state and persistent storage
   const executeRealToolAction = useCallback((action: AgentActionItem, textInput: string) => {
@@ -88,7 +103,6 @@ export function useVoiceAgent() {
         time: action.parameters?.time || (timeMatch ? timeMatch[1].toUpperCase() : '8:00 PM'),
         date: action.parameters?.date || 'Today',
         category: lower.includes('medicine') || lower.includes('medication') ? 'Medication' : 'Daily Routine',
-
         status: 'Upcoming',
         patientName: 'Mom',
         dosageOrDetails: action.parameters?.details || 'Scheduled via Voice AI Assistant',
@@ -133,91 +147,141 @@ export function useVoiceAgent() {
     }
   }, [addReminder, addAppointment, refreshAppointments, addMemory, reminders, toggleComplete]);
 
+  // Handle start listening with immediate barge-in cancellation
+  const handleStartListening = useCallback(() => {
+    cancelSynthesis();
+    setVoiceState('LISTENING');
+    startRecording();
+  }, [cancelSynthesis, startRecording]);
 
-  // Submit prompt (either text or voice audio)
+  // Submit prompt (either text or voice audio) to backend conversational chat endpoint
   const submitVoiceTurn = useCallback(async (textInput?: string, inputBlob?: Blob | null) => {
-    const promptText = textInput || speechTranscriptRef.current || speechTranscript || 'Remind Mom to take her medicine at 8:00 PM tonight.';
-    const targetBlob = inputBlob !== undefined ? inputBlob : audioBlob;
+    cancelSynthesis();
+
+    const promptText = textInput || speechTranscriptRef.current || speechTranscript || 'What should I do next?';
 
     setErrorMessage(null);
     setVoiceState('PROCESSING');
     setTranscript(promptText);
 
+    // Determine current user role
+    let userRole: 'PATIENT' | 'CAREGIVER' = 'CAREGIVER';
+    if (typeof window !== 'undefined') {
+      const storedRole = localStorage.getItem('cognitrace_user_role');
+      if (storedRole === 'patient') userRole = 'PATIENT';
+    }
+
     try {
-      // Step 1: Processing prompt via backend API
-      const response = await api.submitAudioTaskTurn(targetBlob || null, promptText);
-      
-      const finalTranscript = response.transcript || promptText;
-      const responseText = response.aiResponseText || (response as { aiResponse?: string }).aiResponse || "Request processed and saved to schedule.";
+      // Step 1: Execute stateful chat turn via FastAPI endpoint
+      const turnResponse = await api.executeVoiceChatTurn({
+        transcript: promptText,
+        user_role: userRole,
+        conversation_history: conversationHistoryRef.current,
+        pending_state: pendingStateRef.current,
+      });
 
-      setTranscript(finalTranscript);
+      const responseText = turnResponse.speech_response;
+      const updatedState = turnResponse.updated_state;
+      const uiAction = turnResponse.ui_action || {};
+
+      // Update slot state & dialogue memory
+      pendingStateRef.current = updatedState;
+      setPendingState(updatedState);
+
+      const updatedHistory = [
+        ...conversationHistoryRef.current,
+        { role: 'user' as const, content: promptText },
+        { role: 'assistant' as const, content: responseText },
+      ];
+      conversationHistoryRef.current = updatedHistory;
+      setConversationHistory(updatedHistory);
+
+      setTranscript(promptText);
       setAiResponse(responseText);
-      
-      if (response.executionTimeline) {
-        setTimeline(response.executionTimeline);
-      }
 
-      // Step 2: Execute tool actions on app state
-      if (response.actions && response.actions.length > 0) {
-        setVoiceState('EXECUTING');
-        setActions((prev) => [...response.actions, ...prev]);
+      // Step 2: Trigger dynamic verification modal if UI action specified
+      const lower = promptText.toLowerCase();
+      const isApt = /(appointment|appointments|doctor|consultation|clinic|hospital)/i.test(lower);
+      // Explicit booking/creation verbs only (excluding reschedule per instructions)
+      const isAptCreate = isApt && /\b(book|schedule|create|make|set\s+up|add|new)\b/i.test(lower);
 
-        for (const act of response.actions) {
-          executeRealToolAction(act, finalTranscript);
-        }
-        await new Promise((res) => setTimeout(res, 600));
+      let modalType = uiAction.modal_type || 'VERIFY_ACTION';
+      let targetRoute = uiAction.target_route || (modalType === 'MEMORIES_PREVIEW' ? '/memories' : null);
+      let toolType: string;
+      let title: string;
+
+      if (isApt && !isAptCreate) {
+        toolType = 'retrieve_appointments';
+        title = 'Upcoming Appointments Retrieved';
+        modalType = 'VERIFY_ACTION';
+        targetRoute = '/appointments';
+      } else if (isAptCreate) {
+        toolType = 'create_appointment';
+        title = 'Doctor Appointment Scheduled';
+        modalType = 'VERIFY_ACTION';
+        targetRoute = '/appointments';
+      } else if (modalType === 'VERIFY_COMPLETE' || lower.includes('done') || lower.includes('complete') || lower.includes('finish') || lower.includes('took')) {
+        toolType = 'complete_reminder';
+        title = 'Task Marked as Completed';
+        modalType = 'VERIFY_COMPLETE';
+      } else if (modalType === 'MEMORIES_PREVIEW' || lower.includes('memory') || lower.includes('photo')) {
+        toolType = 'retrieve_memory';
+        title = 'Family Memory Album';
+        modalType = 'MEMORIES_PREVIEW';
+        targetRoute = '/memories';
       } else {
-        const lower = promptText.toLowerCase();
-        const isApt = /(appointment|doctor|consultation)/i.test(lower);
-        // Explicit booking/creation verbs only (excluding reschedule per instructions)
-        const isAptCreate = isApt && /\b(book|schedule|create|make|set\s+up|add|new)\b/i.test(lower);
-        const isReminder = /remind|medicine|medication|pill/i.test(lower);
-        const isMemory = /memory|photo|picture|goa/i.test(lower);
-
-        let fallbackTool: AgentToolType = 'get_patient_summary';
-        let fallbackTitle = 'Action Executed';
-
-        if (isApt && !isAptCreate) {
-          fallbackTool = 'retrieve_appointments';
-          fallbackTitle = 'Upcoming Appointments Retrieved';
-        } else if (isAptCreate) {
-          fallbackTool = 'create_appointment';
-          fallbackTitle = 'Doctor Appointment Scheduled';
-        } else if (isReminder) {
-          fallbackTool = 'create_reminder';
-          fallbackTitle = 'Medication Reminder Created';
-        } else if (isMemory) {
-          fallbackTool = 'retrieve_memory';
-          fallbackTitle = 'Memory Loaded';
-        }
-
-        const mockAction: AgentActionItem = {
-          id: `act_${Date.now()}`,
-          toolType: fallbackTool,
-          title: fallbackTitle,
-          description: responseText,
-          parameters: {},
-          status: 'completed',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        executeRealToolAction(mockAction, finalTranscript);
-        setActions((prev) => [mockAction, ...prev]);
+        toolType = 'create_reminder';
+        title = 'New Reminder Scheduled';
+        modalType = 'VERIFY_ADD';
       }
 
-      // Step 3: Speak AI Voice response
-      playAudioResponse(responseText, response.audioUrl);
-    } catch (err: unknown) {
+      const modalItem: AgentActionItem = {
+        id: `act_${Date.now()}`,
+        toolType,
+        title,
+        description: responseText,
+        parameters: uiAction.data || {},
+        status: 'completed',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        ...( { modalType, targetRoute } as any)
+      };
+
+      if (uiAction.modal_type && uiAction.modal_type !== 'NONE') {
+        setActiveModalAction(modalItem);
+        setIsModalOpen(true);
+      }
+      setActions((prev) => [modalItem, ...prev]);
+      executeRealToolAction(modalItem, promptText);
+
+      setTimeline((prev) => [
+        ...prev,
+        {
+          id: `step_${Date.now()}`,
+          stepName: updatedState?.step ? `Slot Filling: ${updatedState.step}` : 'Conversational Turn',
+          status: 'completed',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          details: responseText,
+        }
+      ]);
+
+      // Step 3: Speak AI Voice response & handle auto-followup listening if needed
+      setVoiceState('SPEAKING');
+      speakWithWebSpeech(responseText, () => {
+        if (turnResponse.requires_followup) {
+          // Auto-re-engage microphone for next turn in slot filling
+          setTimeout(() => {
+            handleStartListening();
+          }, 350);
+        } else {
+          setVoiceState('IDLE');
+        }
+      });
+    } catch (err: any) {
       console.error('Voice agent turn error:', err);
       setVoiceState('ERROR');
       setErrorMessage('CogniTrace couldn’t reach the care service. Please try again.');
     }
-  }, [audioBlob, speechTranscript, speechTranscriptRef, playAudioResponse, executeRealToolAction]);
-
-  // Handle start listening
-  const handleStartListening = useCallback(() => {
-    setVoiceState('LISTENING');
-    startRecording();
-  }, [startRecording]);
+  }, [cancelSynthesis, speechTranscript, speechTranscriptRef, speakWithWebSpeech, executeRealToolAction, handleStartListening]);
 
   // Handle stop listening & process audio asynchronously
   const handleStopListeningAndSubmit = useCallback(async () => {
@@ -242,7 +306,12 @@ export function useVoiceAgent() {
     aiResponse,
     timeline,
     actions,
+    activeModalAction,
+    isModalOpen,
+    closeModal,
     errorMessage,
+    pendingState,
+    conversationHistory,
     handleStartListening,
     handleStopListeningAndSubmit,
     submitVoiceTurn,

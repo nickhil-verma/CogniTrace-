@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useReminders } from '@/hooks/useReminders';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -12,6 +13,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 
 export default function RemindersPage() {
   const { reminders, addReminder, toggleComplete, deleteReminder } = useReminders();
+  const { isCaregiver } = useUserRole();
   const { t } = useLanguage();
   const [isAddOpen, setIsAddOpen] = useState(false);
 
@@ -50,7 +52,7 @@ export default function RemindersPage() {
             {t('reminders.title')}
           </h1>
           <p className="text-sm text-[#66736F]">
-            Backend Contract: POST /v1/caretaker/reminders
+            Manage daily medications and routine care tasks.
           </p>
         </div>
         <Button variant="default" onClick={() => setIsAddOpen(true)} className="shadow-md">
@@ -143,15 +145,17 @@ export default function RemindersPage() {
                   <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
                   {rem.status === 'Completed' ? t('reminders.markPending') : t('reminders.markComplete')}
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deleteReminder(rem.id)}
-                  className="text-red-400 hover:text-red-600 hover:bg-red-50"
-                  title={t('reminders.deleteReminder')}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                {isCaregiver && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => deleteReminder(rem.id)}
+                    className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                    title={t('reminders.deleteReminder')}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             </div>
           ))

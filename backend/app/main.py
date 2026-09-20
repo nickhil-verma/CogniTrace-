@@ -86,7 +86,7 @@ async def health_ready():
     redis_ok = await redis_service.check_health()
     ddb_ok = dynamodb_service.check_health()
 
-    is_ready = True
+    is_ready = pg_ok and redis_ok and ddb_ok
     return {
         "status": "ready" if is_ready else "not_ready",
         "postgres": "connected" if pg_ok else "offline_or_degraded",

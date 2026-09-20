@@ -1,12 +1,36 @@
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+}
+
+/* Lenis Smooth Scroll CSS Overrides */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
 :root {
-  --bg-main: #F5F8F6;
+  --bg-main: #F8FAF9;
   --card-bg: #FFFFFF;
   --text-primary: #123B35;
   --text-secondary: #66736F;
   --mint: #BFDCD6;
   --deep-teal: #17665B;
+  --forest-teal: #164E48;
+  --soft-mint: #E8F4F1;
+  --mint-border: #D2ECE6;
   --accent-green: #3E9C87;
   --soft-pink: #F7DDE5;
   --pink-accent: #C85C82;
@@ -21,13 +45,16 @@
   --color-secondary: var(--text-secondary);
   --color-mint: var(--mint);
   --color-deep-teal: var(--deep-teal);
+  --color-forest-teal: var(--forest-teal);
+  --color-soft-mint: var(--soft-mint);
+  --color-mint-border: var(--mint-border);
   --color-accent-green: var(--accent-green);
   --color-soft-pink: var(--soft-pink);
   --color-pink-accent: var(--pink-accent);
   --color-warning: var(--warning);
   --color-border-subtle: var(--border-subtle);
   
-  --font-sans: var(--font-geist-sans), Inter, system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-dm-sans), 'DM Sans', var(--font-geist-sans), Inter, system-ui, -apple-system, sans-serif;
 }
 
 body {
@@ -38,6 +65,10 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.font-cursive {
+  font-family: var(--font-caveat), 'Caveat', cursive, sans-serif;
 }
 
 /* Custom Healthcare SaaS Utility Classes */

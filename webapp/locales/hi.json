@@ -173,7 +173,9 @@
     "editReminder": "रिमाइंडर संपादित करें",
     "done": "पूर्ण",
     "completedBadge": "✓ पूर्ण हुआ",
-    "executingBadge": "प्रक्रिया में"
+    "executingBadge": "प्रक्रिया में",
+    "greeting": "Welcome back, {caregiverName}",
+    "relationTag": "Care Partner: {relation}"
   },
   "tracking": {
     "badge": "अवलोकन ट्रैकिंग",
@@ -248,7 +250,16 @@
     "dailyNeedsTitle": "दैनिक सहायता की आवश्यकताएं",
     "guidedEveningRoutine": "निर्देशित शाम की दिनचर्या",
     "dailyNeedsDesc": "रात 8:00 बजे दवा का संकेत नियमितता बनाए रखता है। शाम की सैर से नींद अच्छी आती है।",
-    "trendGuidedConsistent": "✓ देखा गया रुझान: निर्देशित और सुसंगत"
+    "trendGuidedConsistent": "✓ देखा गया रुझान: निर्देशित और सुसंगत",
+    "cohortBenchmark": "Comparative Health Cohort Baseline",
+    "cohortMatchedNote": "Matched with {count} participants in similar age and cognitive assessment bands",
+    "cognitiveStabilityIndex": "Cognitive Stability Index",
+    "routineAdherence": "Routine Consistency Index",
+    "percentileNote": "Performing in the top {percentile}% of matching care profiles",
+    "memoryLatency": "Memory Recall Response Latency",
+    "latencyValue": "{seconds}s (Optimal Range)",
+    "peerMedianDelta": "+{delta}% above peer median",
+    "researchSubtext": "Normalized against peer participants evaluated within the last 30 days"
   },
   "journal": {
     "badge": "दैनिक देखभालकर्ता डायरी",
@@ -295,7 +306,7 @@
     "activeLangTitle": "सक्रिय संवाद भाषा",
     "activeLangDesc": "हिन्दी, तमिल, तेलुगु, स्पैनिश सहित 10 भाषाओं का समर्थन",
     "apiEndpointTitle": "बैकएंड एपीआई एंडपॉइंट विन्यास",
-    "apiEndpointDesc": "CogniTrace API Base URL (FastAPI, PyTorch, Librosa)",
+    "apiEndpointDesc": "CogniTrace Care Portal Server Address (Care Portal, Cognitive Engine, Librosa)",
     "saveUrl": "यूआरएल सहेजें",
     "urlSaved": "सहेजा गया!",
     "telemetryTitle": "सिंक और ऑफलाइन टेलीमेट्री",
@@ -333,5 +344,11 @@
     "stageAdvanced": "अंतिम चरण (पूर्ण देखभाल)",
     "completeSetup": "सेटअप पूरा करें और डैशबोर्ड खोलें",
     "settingUp": "सेटअप हो रहा है..."
+  },
+  "modals": {
+    "taskCompleted": "Activity recorded successfully",
+    "memoriesTitle": "Visual Memory Archive",
+    "verifyAddTitle": "New Schedule Entry Scheduled",
+    "verifyCompleteTitle": "Care Activity Completed"
   }
 }

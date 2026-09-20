@@ -45,24 +45,10 @@ async def login(payload: LoginRequest):
     role_requested = payload.role or "caregiver"
 
     user_data = dynamodb_service.get_user_by_email(email_clean)
+    password_matches = bool(user_data) and user_data.get("password") == payload.password
 
-    if not user_data:
-        if len(payload.password) < 4:
-            raise HTTPException(status_code=401, detail="Invalid email or password")
-
-        user_id = f"usr_{uuid.uuid4().hex[:8]}"
-        name = email_clean.split("@")[0].replace(".", " ").title()
-        user_data = {
-            "id": user_id,
-            "name": name if name else ("Sunita Sharma" if role_requested == "patient" else "Caregiver User"),
-            "email": email_clean,
-            "password": payload.password,
-            "role": role_requested,
-            "patient_name": "Mom (Sunita)",
-            "relationship": "Self" if role_requested == "patient" else "Mother",
-            "stage": "Middle Stage"
-        }
-        dynamodb_service.save_user(user_data)
+    if not user_data or not password_matches:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     user_profile = UserProfile(
         id=user_data["id"],
@@ -186,4 +172,61 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
         relationship="Mother",
         stage="Middle Stage"
     )
+
+
+async def get_current_user_from_token(authorization: Optional[str] = Header(None)) -> UserProfile:
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    token = authorization.replace("Bearer ", "").strip()
+    user_id = token.replace("cognitrace_jwt_", "")
+    user_data = dynamodb_service.get_user_by_id(user_id)
+    if user_data:
+        return UserProfile(
+            id=user_data["id"],
+            name=user_data["name"],
+            email=user_data["email"],
+            role=user_data.get("role", "caregiver"),
+            patient_name=user_data.get("patient_name", "Mom"),
+            relationship=user_data.get("relationship", "Mother"),
+            stage=user_data.get("stage", "Middle Stage")
+        )
+    if "patient" in user_id.lower() or "patient" in token.lower():
+        return UserProfile(
+            id="usr_patient_001",
+            name="Sunita Sharma",
+            email="sunita.patient@example.com",
+            role="patient",
+            patient_name="Sunita (Mom)",
+            relationship="Self",
+            stage="Middle Stage"
+        )
+    return UserProfile(
+        id="usr_demo_001",
+        name="Priya Sharma",
+        email="priya.caregiver@example.com",
+        role="caregiver",
+        patient_name="Mom (Sunita)",
+        relationship="Mother",
+        stage="Middle Stage"
+    )
+
+
+def require_role(allowed_roles: list[str]):
+    async def role_checker(authorization: Optional[str] = Header(None)):
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        user = await get_current_user_from_token(authorization)
+        if user.role.lower() not in [r.lower() for r in allowed_roles]:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Forbidden: Access denied for role '{user.role}'"
+            )
+        return user
+    return role_checker
+
+
+require_caregiver = require_role(["caregiver", "admin"])
+require_patient_or_caregiver = require_role(["patient", "caregiver", "admin"])
+
+
 

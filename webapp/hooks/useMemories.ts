@@ -18,7 +18,7 @@ export function useMemories() {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             setMemories(parsed);
           }
         }
@@ -57,10 +57,15 @@ export function useMemories() {
     }
   }, []);
 
-  const deleteMemory = useCallback((id: string) => {
+  const deleteMemory = useCallback(async (id: string) => {
     setMemories((prev) => prev.filter((m) => m.id !== id));
     if (selectedMemory?.id === id) {
       setSelectedMemory(null);
+    }
+    try {
+      await api.deleteMemory(id);
+    } catch (e) {
+      console.warn('API delete memory warning:', e);
     }
   }, [selectedMemory]);
 

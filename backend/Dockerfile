@@ -36,12 +36,15 @@ ENV PYTHONUNBUFFERED=1 \
     WHISPER_MODEL_DIR=/opt/models/whisper \
     HF_HUB_OFFLINE=1
 
-# Install only essential runtime C libraries
+# Install runtime C libraries and audio codecs (ffmpeg)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libsndfile1 \
     curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Security: Create non-root system user (appuser)
+RUN useradd -m -u 1000 -s /bin/bash appuser
 
 WORKDIR /app
 
@@ -52,10 +55,16 @@ COPY --from=builder /opt/models/whisper /opt/models/whisper
 # Copy backend application code
 COPY app ./app
 
+# Set non-root user permissions
+RUN chown -R appuser:appuser /app /opt/models/whisper
+
+USER appuser
+
 EXPOSE 8000
 
-# Healthcheck command checking /health/live
+# Production Healthcheck Probe
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:8000/health/live || exit 1
+  CMD curl -f http://localhost:8000/health || exit 1
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Production Uvicorn Execution Command with workers and proxy headers
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--proxy-headers", "--forwarded-allow-ips=*"]

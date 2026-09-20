@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useId } from 'react';
 import { Globe, ChevronDown, Check } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface LanguageSelectorProps {
   className?: string;
@@ -11,6 +12,8 @@ interface LanguageSelectorProps {
 
 export function LanguageSelector({ className = '', direction = 'auto' }: LanguageSelectorProps) {
   const { selectedLanguage, languages, changeLanguage, currentLangObj } = useLanguage();
+  const { isPatient } = useUserRole();
+
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -89,6 +92,10 @@ export function LanguageSelector({ className = '', direction = 'auto' }: Languag
 
   // Determine popover orientation: if direction is auto, detect distance from window bottom
   const [openUpward, setOpenUpward] = useState(direction === 'up');
+
+  if (isPatient) {
+    return null;
+  }
 
   return (
     <div

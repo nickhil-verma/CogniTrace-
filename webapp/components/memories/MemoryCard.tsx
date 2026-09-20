@@ -12,9 +12,10 @@ interface MemoryCardProps {
   onSelect?: (memory: Memory) => void;
   onReminisce?: (memory: Memory) => void;
   onDelete?: (id: string) => void;
+  showTalkAboutIt?: boolean;
 }
 
-export function MemoryCard({ memory, onReminisce, onDelete }: MemoryCardProps) {
+export function MemoryCard({ memory, onReminisce, onDelete, showTalkAboutIt = true }: MemoryCardProps) {
   const { t } = useLanguage();
 
   return (
@@ -80,15 +81,17 @@ export function MemoryCard({ memory, onReminisce, onDelete }: MemoryCardProps) {
             </Badge>
           ))}
         </div>
-        <Button
-          variant="mint"
-          size="sm"
-          onClick={() => onReminisce?.(memory)}
-          className="text-xs shadow-2xs font-semibold cursor-pointer"
-        >
-          <Mic className="w-3.5 h-3.5 mr-1 text-[#17665B]" />
-          {t('memories.talkAboutIt')}
-        </Button>
+        {showTalkAboutIt && (
+          <Button
+            variant="mint"
+            size="sm"
+            onClick={() => onReminisce?.(memory)}
+            className="text-xs shadow-2xs font-semibold cursor-pointer"
+          >
+            <Mic className="w-3.5 h-3.5 mr-1 text-[#17665B]" />
+            {t('memories.talkAboutIt')}
+          </Button>
+        )}
       </div>
     </div>
   );

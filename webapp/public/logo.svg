@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Transparent Canvas / 512x512 Square Format -->
+  <defs>
+    <!-- Soft premium shadow matching modern consumer apps -->
+    <filter id="districtGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#164E48" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Base Badge -->
+  <rect x="36" y="36" width="440" height="440" rx="112" fill="#164E48" filter="url(#districtGlow)"/>
+
+  <!-- Subtle Mint Border Accent -->
+  <rect x="36" y="36" width="440" height="440" rx="112" fill="none" stroke="#E8F4F1" stroke-width="4" stroke-opacity="0.2"/>
+
+  <!-- Monogram: 'c' + 't' Linked Trace -->
+  <g transform="translate(100, 110)">
+    <!-- Lowercase 'c' curving smoothly -->
+    <path 
+      d="M130 110
+         C110 85, 75 75, 45 95
+         C10 118, 0 165, 0 205
+         C0 250, 15 295, 55 315
+         C90 332, 130 315, 148 290" 
+      fill="none" 
+      stroke="#FFFFFF" 
+      stroke-width="38" 
+      stroke-linecap="round"
+    />
+
+    <!-- Lowercase 't' extending from the trace with crossbar -->
+    <path 
+      d="M210 50
+         V260
+         C210 295, 230 315, 270 315
+         C285 315, 300 310, 310 300" 
+      fill="none" 
+      stroke="#FFFFFF" 
+      stroke-width="38" 
+      stroke-linecap="round"
+    />
+
+    <!-- 't' Crossbar -->
+    <path 
+      d="M165 125 H265" 
+      fill="none" 
+      stroke="#FFFFFF" 
+      stroke-width="36" 
+      stroke-linecap="round"
+    />
+
+    <!-- Mint Sensory/Memory Node (Cognitive Pulse) -->
+    <circle cx="210" cy="50" r="19" fill="#E8F4F1"/>
+  </g>
+</svg>
