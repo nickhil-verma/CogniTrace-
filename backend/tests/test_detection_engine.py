@@ -232,6 +232,28 @@ def test_auth_rejects_invalid_password():
     assert "Invalid email or password" in response.json()["detail"]
 
 
+def test_patient_login_requires_valid_pin_and_session():
+    bad_pin = client.post(
+        "/v1/auth/patient-login",
+        json={"email": "sunita.patient@example.com", "password": "wrong-pin"},
+    )
+    assert bad_pin.status_code == 401
+
+    valid_login = client.post(
+        "/v1/auth/patient-login",
+        json={"email": "sunita.patient@example.com", "password": "1234"},
+    )
+    assert valid_login.status_code == 200
+    token = valid_login.json()["access_token"]
+
+    me = client.get("/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert me.status_code == 200
+    assert me.json()["email"] == "sunita.patient@example.com"
+
+    missing_session = client.get("/v1/auth/me")
+    assert missing_session.status_code == 401
+
+
 def test_dynamodb_rag_vector_storage():
     rag_payload = {
         "user_id": "usr_test_rag_001",
