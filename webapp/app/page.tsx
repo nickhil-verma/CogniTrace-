@@ -29,6 +29,7 @@ import {
 import { motion } from 'framer-motion';
 import { FloatingNavbar } from '@/components/landing/FloatingNavbar';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+import { SmoothScroll } from '@/components/landing/SmoothScroll';
 
 export default function LandingPage() {
   const [macWindowExpanded, setMacWindowExpanded] = useState(false);
@@ -51,126 +52,131 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] text-[#123B35] font-sans antialiased selection:bg-[#E8F4F1] selection:text-[#164E48]">
-      {/* ================= FLOATING ISLAND NAVBAR ================= */}
-      <FloatingNavbar />
+    <SmoothScroll>
+      <div className="min-h-screen bg-[#F8FAF9] text-[#123B35] font-sans antialiased selection:bg-[#E8F4F1] selection:text-[#164E48]">
+        {/* ================= FLOATING ISLAND NAVBAR ================= */}
+        <FloatingNavbar />
 
-      {/* ================= HERO SECTION (SVG GRID MESH ONLY HERE) ================= */}
-      <section className="relative pt-32 pb-20 px-6 overflow-hidden">
-        {/* SVG Grid Mesh Background Canvas - STRICTLY FIRST LAYOUT COMPONENT ONLY */}
-        <div className="absolute inset-0 pointer-events-none -z-10 flex items-center justify-center opacity-70">
-          <svg
-            className="w-full h-full"
-            xmlns="http://www.w3.org/2000/svg"
-            width="100%"
-            height="100%"
-          >
-            <defs>
-              <pattern
-                id="hero-grid-mesh-only"
-                width="48"
-                height="48"
-                patternUnits="userSpaceOnUse"
-              >
-                <path
-                  d="M 48 0 L 0 0 0 48"
-                  fill="none"
-                  stroke="rgba(22, 78, 72, 0.06)"
-                  strokeWidth="1"
-                />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#hero-grid-mesh-only)" />
-          </svg>
-        </div>
+        {/* ================= HERO SECTION (SVG GRID MESH ONLY HERE) ================= */}
+        <section className="relative pt-32 pb-20 px-6 overflow-hidden">
+          {/* SVG Grid Mesh Background Canvas - STRICTLY FIRST LAYOUT COMPONENT ONLY */}
+          <div className="absolute inset-0 pointer-events-none -z-10 flex items-center justify-center opacity-70">
+            <svg
+              className="w-full h-full"
+              xmlns="http://www.w3.org/2000/svg"
+              width="100%"
+              height="100%"
+            >
+              <defs>
+                <pattern
+                  id="hero-grid-mesh-only"
+                  width="48"
+                  height="48"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <path
+                    d="M 48 0 L 0 0 0 48"
+                    fill="none"
+                    stroke="rgba(22, 78, 72, 0.06)"
+                    strokeWidth="1"
+                  />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#hero-grid-mesh-only)" />
+            </svg>
+          </div>
 
-        {/* Ambient Radial Depth Glow / Aura */}
-        <div
-          className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[550px] rounded-full blur-3xl pointer-events-none -z-10"
-          style={{
-            background:
-              'radial-gradient(circle, rgba(232, 244, 241, 0.95) 0%, rgba(22, 78, 72, 0.08) 55%, transparent 75%)'
-          }}
-        />
+          {/* Ambient Radial Depth Glow / Aura */}
+          <div
+            className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[550px] rounded-full blur-3xl pointer-events-none -z-10"
+            style={{
+              background:
+                'radial-gradient(circle, rgba(232, 244, 241, 0.95) 0%, rgba(22, 78, 72, 0.08) 55%, transparent 75%)'
+            }}
+          />
 
-        <div className="max-w-5xl mx-auto text-center space-y-8">
-          {/* Eyebrow Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-white border border-[#164E48]/12 shadow-[0_2px_10px_rgba(22,78,72,0.04)]"
-          >
-            <Sparkles className="w-4 h-4 text-[#164E48]" />
-            <span className="text-xs font-bold tracking-wide text-[#164E48]">
-              AI Voice Command & Longitudinal Care Companion
-            </span>
-          </motion.div>
+          <div className="max-w-5xl mx-auto text-center space-y-8">
+            {/* Eyebrow Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-white border border-[#164E48]/12 shadow-[0_2px_10px_rgba(22,78,72,0.04)]"
+            >
+              <Sparkles className="w-4 h-4 text-[#164E48]" />
+              <span className="text-xs font-bold tracking-wide text-[#164E48]">
+                AI Voice Command & Longitudinal Care Companion
+              </span>
+            </motion.div>
 
-          {/* Hero Titles */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="space-y-4"
-          >
-            <h1 className="text-5xl sm:text-7xl md:text-8xl font-extrabold tracking-tight text-[#164E48] leading-[1.05]">
-              CogniTrace
-            </h1>
-            <div className="space-y-1">
-              <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#164E48]/90 tracking-tight max-w-3xl mx-auto">
-                Understand the journey. Act with confidence.
-              </p>
-              {/* CURSIVE FONT ACCENT */}
-              <p className="font-cursive text-[#3E9C87] text-2xl sm:text-3xl font-semibold -rotate-1 transform">
-                crafted with empathy for caregivers & patients
-              </p>
-            </div>
-          </motion.div>
+            {/* Hero Titles */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="space-y-4"
+            >
+              <h1 className="text-5xl sm:text-7xl md:text-8xl font-extrabold tracking-tight text-[#164E48] leading-[1.05]">
+                CogniTrace
+              </h1>
+              <div className="space-y-1">
+                <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#164E48]/90 tracking-tight max-w-3xl mx-auto">
+                  Understand the journey. Act with confidence.
+                </p>
+                {/* CURSIVE FONT ACCENT */}
+                <p className="font-cursive text-[#3E9C87] text-2xl sm:text-3xl font-semibold -rotate-1 transform">
+                  crafted with empathy for caregivers & patients
+                </p>
+              </div>
+            </motion.div>
 
-          {/* Subtitle Body */}
-          <motion.p
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="max-w-2xl mx-auto text-base sm:text-lg text-[#66736F] leading-relaxed font-medium"
-          >
-            An AI companion built for dementia and cognitive care. Translate voice commands into live clinical actions, track daily care trends, and engage patients with personalized memory reminiscence.
-          </motion.p>
+            {/* Subtitle Body */}
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="max-w-2xl mx-auto text-base sm:text-lg text-[#66736F] leading-relaxed font-medium"
+            >
+              An AI companion built for dementia and cognitive care. Translate voice commands into live clinical actions, track daily care trends, and engage patients with personalized memory reminiscence.
+            </motion.p>
 
-          {/* Hero Action CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2"
-          >
-            <Link href="/dashboard">
-              <Button
-                variant="default"
-                size="lg"
-                className="w-full sm:w-auto bg-[#164E48] text-white hover:bg-[#113e39] rounded-full px-8 py-3 text-base font-bold shadow-xl transition-all flex items-center justify-center group"
-              >
-                <span>Start Caregiver Journey</span>
-                <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </Link>
-            <Link href="/command-center">
-              <Button
-                variant="mint"
-                size="lg"
-                className="w-full sm:w-auto bg-[#E8F4F1] text-[#164E48] hover:bg-[#D2ECE6] border border-[#164E48]/15 rounded-full px-7 py-3 text-base font-bold transition-all flex items-center justify-center"
-              >
-                <Mic className="w-5 h-5 mr-2 text-[#164E48]" />
-                <span>Try Voice Command Center</span>
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
-      </section>
+            {/* Hero Action CTAs */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2"
+            >
+              <Link href="/dashboard">
+                <Button
+                  variant="default"
+                  size="lg"
+                  className="w-full sm:w-auto bg-[#164E48] text-white hover:bg-[#113e39] rounded-full px-8 py-3 text-base font-bold shadow-xl transition-all flex items-center justify-center group"
+                >
+                  <span>Start Caregiver Journey</span>
+                  <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+              <Link href="/command-center">
+                <Button
+                  variant="mint"
+                  size="lg"
+                  className="w-full sm:w-auto bg-[#E8F4F1] text-[#164E48] hover:bg-[#D2ECE6] border border-[#164E48]/15 rounded-full px-7 py-3 text-base font-bold transition-all flex items-center justify-center"
+                >
+                  <Mic className="w-5 h-5 mr-2 text-[#164E48]" />
+                  <span>Try Voice Command Center</span>
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
+        </section>
 
-      {/* ================= macOS WINDOW SHOWCASE SECTION (SCROLL TRIGGER EXPANSION) ================= */}
-      <section className="py-12 px-4 sm:px-6 transition-colors duration-700">
+        {/* ================= macOS WINDOW SHOWCASE SECTION (SCROLL TRIGGER EXPANSION) ================= */}
+        <section
+          className={`py-20 px-4 sm:px-6 transition-colors duration-700 ease-in-out relative overflow-hidden ${
+            macWindowExpanded ? 'bg-[#060A08]' : 'bg-[#F8FAF9]'
+          }`}
+        >
         <div
           id="mac-showcase-window"
           className={`mx-auto transition-all duration-700 ease-in-out ${
@@ -635,5 +641,6 @@ export default function LandingPage() {
       {/* ================= LANDING FOOTER ================= */}
       <LandingFooter />
     </div>
+    </SmoothScroll>
   );
 }
