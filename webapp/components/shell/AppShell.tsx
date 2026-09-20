@@ -14,12 +14,14 @@ import {
   BookOpen,
   FileEdit,
   Settings,
-  PhoneCall
+  PhoneCall,
+  Home
 } from 'lucide-react';
 import { LanguageSelector } from './LanguageSelector';
 import { RoleSwitcher } from './RoleSwitcher';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useLanguage } from '@/hooks/useLanguage';
+import { usePatientSettings } from '@/hooks/usePatientSettings';
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -27,6 +29,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isPatient, mounted } = useUserRole();
   const { t } = useLanguage();
+  const { settings } = usePatientSettings();
+
+  const emergencyDial = settings?.emergencyContact || '911';
 
   const caregiverOnlyRoutes = ['/tracking', '/insights', '/journal', '/resources', '/appointments'];
 
@@ -59,6 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   ];
 
   const patientNav = [
+    { label: 'Return Home', href: '/dashboard', icon: Home },
     { label: t('nav.talkWithVoiceAI'), href: '/command-center', icon: Mic, highlight: true },
     { label: t('nav.myPhotoAlbum'), href: '/memories', icon: ImageIcon },
     { label: t('nav.memoryTrivia') || 'Memory Trivia Game', href: '/patient/memory-trivia', icon: Sparkles },
@@ -149,11 +155,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <LanguageSelector direction="up" className="w-full" />
           {isPatient ? (
             <a
-              href="tel:911"
+              href={`tel:${emergencyDial}`}
               className="flex items-center justify-center space-x-2 w-full p-2.5 rounded-2xl bg-red-500 text-white font-bold text-xs shadow-md hover:bg-red-600 transition-colors"
+              title={`Emergency Dial: ${emergencyDial}`}
             >
-              <PhoneCall className="w-4 h-4 animate-bounce" />
-              <span>{t('common.callEmergency')}</span>
+              <PhoneCall className="w-4 h-4 animate-bounce shrink-0" />
+              <span className="truncate">Emergency ({emergencyDial})</span>
             </a>
           ) : (
             <div className="flex items-center space-x-3 p-2.5 rounded-2xl bg-[#F5F8F6] border border-[#DDE7E3]">
