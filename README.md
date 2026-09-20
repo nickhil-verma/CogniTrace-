@@ -178,21 +178,20 @@ CogniTrace uses AWS DynamoDB (`CogniTrace` table) formatted with single-table de
 
 ```mermaid
 erDiagram
-    AWS_DYNAMODB_COGNITRACE_TABLE {
-        string PK "Partition Key (USER# / CAREGIVER_CHAT# / PATIENT_CHAT#)"
-        string SK "Sort Key (MSG# / REMINDER# / APPOINTMENT# / VEC#)"
-        string id "Unique Item UUID"
-        string caregiver_id "Caregiver ID (usr_demo_001)"
-        string patient_id "Patient ID (patient_001)"
-        string role "user | model | assistant"
-        string message_text "Spoken Dialogue / Transcript"
+    COGNITRACE_TABLE {
+        string partition_key PK "USER or CAREGIVER_CHAT or PATIENT_CHAT"
+        string sort_key SK "MSG or REMINDER or APPOINTMENT or VEC"
+        string item_id "Unique Item UUID"
+        string caregiver_id "Caregiver ID"
+        string patient_id "Patient ID"
+        string speaker_role "user or model"
+        string message_text "Spoken Dialogue Transcript"
         string created_at "ISO 8601 Timestamp"
-        list tool_invocations "Executed tools payload"
-        string sentiment_flag "CALM | ANXIOUS | CONFUSED"
-        string grounding_cue_used "Retrieved RAG vector title"
-        string title "Reminder / Appointment Title"
-        string time "Scheduled Time"
-        string status "Upcoming | Completed | Missed"
+        string sentiment_flag "CALM or ANXIOUS or CONFUSED"
+        string grounding_cue "Retrieved RAG vector title"
+        string title "Reminder or Appointment Title"
+        string scheduled_time "Scheduled Time"
+        string status "Upcoming or Completed or Missed"
     }
 ```
 
