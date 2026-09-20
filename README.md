@@ -337,7 +337,8 @@ npm run build
 
 | Caregiver Executive Command Center | Patient Gentle Companion Dashboard |
 | :---: | :---: |
-| <img width="1855" height="1012" alt="Caregiver Executive Command Center" src="https://github.com/user-attachments/assets/b356201f-7d04-4011-8a87-965246ebbbe8" /> | <img width="1855" height="1012" alt="Patient Gentle Companion Dashboard" src="https://github.com/user-attachments/assets/9a22920b-9c66-4a11-a0bd-48eb28b0bb26" /> |
+| <img width="1855" height="1012" alt="Caregiver Executive Command Center" src="https://github.com/user-attachments/assets/b356201f-7d04-4011-8a87-965246ebbbe8" /> | <img width="366" height="719" alt="image" src="https://github.com/user-attachments/assets/eac4ebfb-cd77-4532-8f96-e521fe88077f" />
+|
 | *Executive compliance stats, specialist scheduling, and longitudinal risk drift tracking.* | *1-tap mood check-ins, top speech progress bar, pause/resume, and photo reminiscence.* |
 
 ---
