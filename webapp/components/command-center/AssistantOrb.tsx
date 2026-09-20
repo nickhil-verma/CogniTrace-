@@ -37,40 +37,40 @@ export function AssistantOrb({
           label: t('commandCenter.orbListening') || 'Listening to your voice...',
           sublabel: t('commandCenter.orbListeningSub') || 'Speak your command naturally',
           icon: <Mic className="w-8 h-8 text-white animate-pulse" />,
-          meshGradient: 'from-cyan-400 via-blue-500 via-purple-600 to-pink-500',
-          glowColor: 'bg-cyan-500/40',
+          meshGradient: 'from-[#164E48] via-[#0D6E63] to-[#10B981]',
+          glowColor: 'bg-[#E8F4F1]',
         };
       case 'PROCESSING':
         return {
           label: t('commandCenter.orbReasoning') || 'Reasoning & Slot Filling...',
           sublabel: t('commandCenter.orbReasoningSub') || 'Analyzing intent and patient schedule',
           icon: <Cpu className="w-8 h-8 text-white animate-spin" />,
-          meshGradient: 'from-amber-400 via-[#E36C59] via-purple-600 to-indigo-600',
-          glowColor: 'bg-amber-500/40',
+          meshGradient: 'from-[#0D6E63] via-[#164E48] to-[#C8ECE4]',
+          glowColor: 'bg-[#10B981]/40',
         };
       case 'EXECUTING':
         return {
           label: t('commandCenter.orbExecuting') || 'Executing Care Action...',
           sublabel: t('commandCenter.orbExecutingSub') || 'Updating care schedule and state',
           icon: <CheckCircle2 className="w-8 h-8 text-white" />,
-          meshGradient: 'from-emerald-400 via-teal-500 to-cyan-500',
-          glowColor: 'bg-emerald-500/40',
+          meshGradient: 'from-[#10B981] via-[#0D6E63] to-[#164E48]',
+          glowColor: 'bg-[#E8F4F1]',
         };
       case 'SPEAKING':
         return {
           label: t('commandCenter.orbSpeaking') || 'AI Assistant Speaking...',
           sublabel: t('commandCenter.orbSpeakingSub') || 'Tap orb anytime to interrupt (Barge-In)',
           icon: <Volume2 className="w-8 h-8 text-white" />,
-          meshGradient: 'from-pink-500 via-purple-600 via-indigo-500 to-cyan-400',
-          glowColor: 'bg-purple-500/40',
+          meshGradient: 'from-[#10B981] via-[#0D6E63] to-[#C8ECE4]',
+          glowColor: 'bg-[#C8ECE4]/50',
         };
       case 'ERROR':
         return {
           label: t('commandCenter.orbError') || 'Connection Interrupted',
           sublabel: t('commandCenter.orbErrorSub') || 'Tap orb to try again',
           icon: <AlertCircle className="w-8 h-8 text-white" />,
-          meshGradient: 'from-rose-500 via-amber-500 to-red-600',
-          glowColor: 'bg-rose-500/40',
+          meshGradient: 'from-[#164E48] via-amber-600 to-[#10B981]',
+          glowColor: 'bg-amber-500/40',
         };
       case 'IDLE':
       default:
@@ -78,8 +78,8 @@ export function AssistantOrb({
           label: t('commandCenter.orbIdle') || 'Tap Assistant Orb to Speak',
           sublabel: t('commandCenter.orbIdleSub') || '"Remind me..." or "Show my family photos"',
           icon: <Mic className="w-8 h-8 text-white" />,
-          meshGradient: 'from-blue-600 via-indigo-600 via-purple-600 to-pink-500',
-          glowColor: 'bg-indigo-500/30',
+          meshGradient: 'from-[#164E48] via-[#0D6E63] to-[#10B981]',
+          glowColor: 'bg-[#E8F4F1]/40',
         };
     }
   };
