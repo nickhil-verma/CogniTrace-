@@ -8,9 +8,11 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [name, setName] = useState('Priya Sharma');
   const [email, setEmail] = useState('priya.caregiver@example.com');
   const [password, setPassword] = useState('••••••••••••');
@@ -46,9 +48,9 @@ export default function OnboardingPage() {
     <div className="min-h-screen flex items-center justify-center p-6 bg-[#F5F8F6]">
       <Card className="w-full max-w-lg p-8 space-y-6 shadow-xl border-[#DDE7E3] bg-white">
         <div className="text-center space-y-2">
-          <Badge variant="teal">Caregiver Setup</Badge>
-          <h1 className="text-2xl font-extrabold text-[#123B35]">Welcome to CogniTrace Care</h1>
-          <p className="text-xs text-[#66736F]">Let’s personalize your care journey</p>
+          <Badge variant="teal">{t('onboarding.badge')}</Badge>
+          <h1 className="text-2xl font-extrabold text-[#123B35]">{t('onboarding.title')}</h1>
+          <p className="text-xs text-[#66736F]">{t('onboarding.subtitle')}</p>
         </div>
 
         {error && (
@@ -60,7 +62,7 @@ export default function OnboardingPage() {
 
         <form onSubmit={handleFinish} className="space-y-4">
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[#123B35]">Your Name (Caregiver)</label>
+            <label className="text-xs font-bold text-[#123B35]">{t('onboarding.caregiverName')}</label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -70,7 +72,7 @@ export default function OnboardingPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[#123B35]">Email Address</label>
+            <label className="text-xs font-bold text-[#123B35]">{t('onboarding.emailLabel')}</label>
             <Input
               type="email"
               value={email}
@@ -81,7 +83,7 @@ export default function OnboardingPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[#123B35]">Password</label>
+            <label className="text-xs font-bold text-[#123B35]">{t('onboarding.passwordLabel')}</label>
             <Input
               type="password"
               value={password}
@@ -91,7 +93,7 @@ export default function OnboardingPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[#123B35]">Loved One’s Name</label>
+            <label className="text-xs font-bold text-[#123B35]">{t('onboarding.lovedOneName')}</label>
             <Input
               value={patientName}
               onChange={(e) => setPatientName(e.target.value)}
@@ -101,7 +103,7 @@ export default function OnboardingPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[#123B35]">Relationship</label>
+            <label className="text-xs font-bold text-[#123B35]">{t('onboarding.relationship')}</label>
             <Input
               value={relationship}
               onChange={(e) => setRelationship(e.target.value)}
@@ -111,15 +113,15 @@ export default function OnboardingPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[#123B35]">Current Care Assessment Stage</label>
+            <label className="text-xs font-bold text-[#123B35]">{t('onboarding.currentStage')}</label>
             <select
               value={stage}
               onChange={(e) => setStage(e.target.value)}
               className="w-full h-11 rounded-2xl border border-[#DDE7E3] px-3 text-sm text-[#123B35]"
             >
-              <option value="Early Stage">Early Stage</option>
-              <option value="Middle Stage">Middle Stage</option>
-              <option value="Late Stage">Late Stage</option>
+              <option value="Early Stage">{t('onboarding.stageEarly')}</option>
+              <option value="Middle Stage">{t('onboarding.stageMiddle')}</option>
+              <option value="Late Stage">{t('onboarding.stageAdvanced')}</option>
             </select>
           </div>
 
@@ -127,11 +129,11 @@ export default function OnboardingPage() {
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Registering Account...
+                {t('onboarding.settingUp')}
               </>
             ) : (
               <>
-                Complete Onboarding & Launch Dashboard
+                {t('onboarding.completeSetup')}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </>
             )}

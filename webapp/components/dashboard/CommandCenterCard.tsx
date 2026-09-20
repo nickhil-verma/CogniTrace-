@@ -7,16 +7,18 @@ import { useVoiceAgent } from '@/hooks/useVoiceAgent';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Sparkles, ArrowRight } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export function CommandCenterCard() {
   const router = useRouter();
-  const { voiceState, handleStartListening, handleStopListeningAndSubmit, triggerSuggestedCommand } = useVoiceAgent();
+  const { voiceState, handleStartListening, handleStopListeningAndSubmit } = useVoiceAgent();
+  const { t } = useLanguage();
 
   const suggestions = [
-    'How has Mom been doing?',
-    'Remind me about her medicine.',
-    'What changed this month?',
-    'Show recent memories.'
+    t('dashboard.suggestion1'),
+    t('dashboard.suggestion2'),
+    t('dashboard.suggestion3'),
+    t('dashboard.suggestion4')
   ];
 
   return (
@@ -27,8 +29,8 @@ export function CommandCenterCard() {
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-[#123B35]">Ask CogniTrace Anything</h3>
-            <p className="text-xs text-[#66736F]">AI Voice Command Center active</p>
+            <h3 className="text-xl font-bold text-[#123B35]">{t('dashboard.askCogniTraceTitle')}</h3>
+            <p className="text-xs text-[#66736F]">{t('dashboard.aiVoiceCenterActive')}</p>
           </div>
         </div>
         <Button
@@ -37,7 +39,7 @@ export function CommandCenterCard() {
           onClick={() => router.push('/command-center')}
           className="text-xs text-[#17665B] font-semibold"
         >
-          Full Command Center
+          {t('dashboard.fullCommandCenter')}
           <ArrowRight className="w-3.5 h-3.5 ml-1" />
         </Button>
       </div>

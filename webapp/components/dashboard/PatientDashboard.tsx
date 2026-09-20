@@ -22,6 +22,7 @@ import {
 import { useReminders } from '@/hooks/useReminders';
 import { useMemories } from '@/hooks/useMemories';
 import { useVoiceAgent } from '@/hooks/useVoiceAgent';
+import { useLanguage } from '@/hooks/useLanguage';
 import { VoiceOrb } from '@/components/command-center/VoiceOrb';
 import { VoiceRecorder } from '@/components/command-center/VoiceRecorder';
 import { ActionConfirmation } from '@/components/command-center/ActionConfirmation';
@@ -29,6 +30,7 @@ import { ActionConfirmation } from '@/components/command-center/ActionConfirmati
 export function PatientDashboard() {
   const { reminders, toggleComplete } = useReminders();
   const { memories } = useMemories();
+  const { t } = useLanguage();
 
   // Voice Agent Hook (Embedded in Dashboard)
   const {
@@ -96,13 +98,13 @@ export function PatientDashboard() {
           <div className="space-y-2">
             <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold">
               <Heart className="w-4 h-4 fill-current text-white animate-pulse" />
-              <span>My Daily Companion</span>
+              <span>{t('patient.dailyCompanion') || 'My Daily Companion'}</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-              Good day, Sunita! 🌸
+              {t('patient.greeting') || 'Good day, Sunita! 🌸'}
             </h1>
             <p className="text-sm md:text-base text-white/90 font-medium max-w-md">
-              Here is your daily checklist, photo memories, and personal Voice AI Companion.
+              {t('patient.description') || 'Here is your daily checklist, photo memories, and personal Voice AI Companion.'}
             </p>
           </div>
 
@@ -127,12 +129,12 @@ export function PatientDashboard() {
       {/* ================= 2. EMBEDDED IN-DASHBOARD VOICE AI COMPANION ================= */}
       <Card className="p-8 text-center bg-gradient-to-b from-white to-[#F5F8F6] border-2 border-[#BFDCD6] rounded-3xl shadow-lg space-y-6">
         <div className="space-y-2">
-          <Badge variant="teal">My Voice Companion</Badge>
+          <Badge variant="teal">{t('patient.voiceCompanion') || 'My Voice Companion'}</Badge>
           <h2 className="text-2xl md:text-3xl font-extrabold text-[#123B35]">
-            Talk with My Voice AI Companion
+            {t('patient.talkWithVoiceAI') || 'Talk with My Voice AI Companion'}
           </h2>
           <p className="text-sm text-[#66736F] max-w-md mx-auto">
-            Tap the button to speak, report a completed task, or ask what you should do next.
+            {t('patient.tapBelowAndSpeak') || 'Tap the button to speak, report a completed task, or ask what you should do next.'}
           </p>
         </div>
 
@@ -156,7 +158,7 @@ export function PatientDashboard() {
               <span className="font-semibold text-[#17665B]">Speech Transcript</span>
               <Mic className="w-3.5 h-3.5 text-[#17665B]" />
             </div>
-            <p className="text-sm font-semibold text-[#123B35]">"{transcript}"</p>
+            <p className="text-sm font-semibold text-[#123B35]">&ldquo;{transcript}&rdquo;</p>
           </div>
         )}
 
@@ -210,7 +212,7 @@ export function PatientDashboard() {
                 className="px-3.5 py-2.5 rounded-xl bg-white border border-[#DDE7E3] text-xs font-bold text-[#123B35] hover:border-[#17665B] hover:bg-[#BFDCD6]/20 transition-all flex items-center space-x-1.5 shadow-2xs active:scale-95"
               >
                 <span>{chip.icon}</span>
-                <span>"{chip.prompt}"</span>
+                <span>&ldquo;{chip.prompt}&rdquo;</span>
               </button>
             ))}
           </div>
@@ -267,17 +269,17 @@ export function PatientDashboard() {
             <div className="flex items-center justify-between border-b border-[#DDE7E3] pb-3">
               <div className="flex items-center space-x-2">
                 <Bell className="w-5 h-5 text-[#17665B]" />
-                <h3 className="text-lg font-bold text-[#123B35]">My Daily Goals & Tasks</h3>
+                <h3 className="text-lg font-bold text-[#123B35]">{t('patient.checklistTitle') || 'My Daily Goals & Tasks'}</h3>
               </div>
               <Link href="/reminders" className="text-xs font-bold text-[#17665B] hover:underline">
-                View All ({reminders.length})
+                {t('common.viewAll') || `View All (${reminders.length})`}
               </Link>
             </div>
 
             <div className="space-y-3">
               {reminders.length === 0 ? (
                 <div className="p-6 text-center text-xs text-[#66736F] border border-dashed border-[#DDE7E3] rounded-2xl">
-                  No active tasks right now. Great job!
+                  {t('patient.noActiveTasks') || 'No active tasks right now. Great job!'}
                 </div>
               ) : (
                 reminders.slice(0, 4).map((rem) => (
@@ -313,7 +315,7 @@ export function PatientDashboard() {
             className="w-full py-2.5 rounded-2xl bg-[#BFDCD6]/30 text-[#17665B] font-bold text-xs flex items-center justify-center space-x-2 border border-[#BFDCD6] hover:bg-[#BFDCD6]/60 transition-colors shadow-2xs mt-2 active:scale-95"
           >
             <HelpCircle className="w-4 h-4" />
-            <span>Ask AI: "What should I do next?"</span>
+            <span>Ask AI: &ldquo;What should I do next?&rdquo;</span>
           </button>
         </Card>
 
@@ -323,10 +325,10 @@ export function PatientDashboard() {
             <div className="flex items-center justify-between border-b border-[#DDE7E3] pb-3">
               <div className="flex items-center space-x-2">
                 <ImageIcon className="w-5 h-5 text-[#C85C82]" />
-                <h3 className="text-lg font-bold text-[#123B35]">My Cherished Memories</h3>
+                <h3 className="text-lg font-bold text-[#123B35]">{t('patient.photoAlbumTitle') || 'My Cherished Memories'}</h3>
               </div>
               <Link href="/memories" className="text-xs font-bold text-[#C85C82] hover:underline">
-                Open Album
+                {t('patient.openAlbum') || 'Open Album'}
               </Link>
             </div>
 
@@ -349,12 +351,12 @@ export function PatientDashboard() {
                   className="w-full py-2.5 rounded-2xl bg-[#F7DDE5] text-[#C85C82] font-bold text-xs flex items-center justify-center space-x-2 hover:bg-[#f3cbd7] transition-colors shadow-2xs active:scale-95"
                 >
                   <Sparkles className="w-4 h-4" />
-                  <span>Talk about this photo with Voice AI</span>
+                  <span>{t('patient.talkAboutPhoto') || 'Talk about this photo with Voice AI'}</span>
                 </button>
               </div>
             ) : (
               <div className="p-6 text-center text-xs text-[#66736F]">
-                No photo memories in album yet.
+                {t('patient.noPhotosYet') || 'No photo memories in album yet.'}
               </div>
             )}
           </div>
@@ -399,7 +401,7 @@ export function PatientDashboard() {
             className="flex-1 sm:flex-initial px-5 py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md transition-colors flex items-center justify-center space-x-2 shrink-0"
           >
             <PhoneCall className="w-4 h-4" />
-            <span>Call Priya Now</span>
+            <span>{t('patient.callCaregiverNow') || 'Call Priya Now'}</span>
           </a>
         </div>
       </Card>

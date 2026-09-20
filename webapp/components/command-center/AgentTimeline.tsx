@@ -4,19 +4,21 @@ import React from 'react';
 import { TimelineStep } from '@/types/agent';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Circle, Sparkles, AlertCircle } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface AgentTimelineProps {
   timeline: TimelineStep[];
 }
 
 export function AgentTimeline({ timeline }: AgentTimelineProps) {
+  const { t } = useLanguage();
   if (!timeline || timeline.length === 0) return null;
 
   return (
     <div className="rounded-3xl border border-[#DDE7E3] bg-white p-6 shadow-xs space-y-4">
       <div className="flex items-center space-x-2 pb-2 border-b border-[#DDE7E3]">
         <Sparkles className="w-5 h-5 text-[#17665B]" />
-        <h4 className="text-base font-bold text-[#123B35]">CogniTrace Agent Reasoning</h4>
+        <h4 className="text-base font-bold text-[#123B35]">{t('commandCenter.agentReasoningTitle')}</h4>
       </div>
 
       <div className="relative pl-6 space-y-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#DDE7E3]">

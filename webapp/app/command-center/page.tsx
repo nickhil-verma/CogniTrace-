@@ -12,10 +12,12 @@ import { useVoiceAgent } from '@/hooks/useVoiceAgent';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Mic, Volume2, Cpu, Database } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 function CommandCenterContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q');
+  const { t } = useLanguage();
 
   const {
     voiceState,
@@ -40,11 +42,10 @@ function CommandCenterContent() {
   }, [initialQuery, submitVoiceTurn]);
 
   const suggestions = [
-    'What should I do next?',
-    'I completed my evening medicine.',
-    'What medicine should I take now?',
-    'Show me my family photos.',
-    'Call my daughter Priya.'
+    t('dashboard.suggestion2') || 'What should I do next?',
+    t('dashboard.suggestion3') || 'I completed my evening medicine.',
+    t('dashboard.suggestion4') || 'What medicine should I take now?',
+    t('dashboard.suggestion1') || 'Show me my family photos.'
   ];
 
   return (
@@ -53,17 +54,17 @@ function CommandCenterContent() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#DDE7E3] pb-6">
         <div>
           <div className="flex items-center space-x-2">
-            <Badge variant="teal">Voice AI Companion</Badge>
+            <Badge variant="teal">{t('commandCenter.badge') || 'Voice AI Companion'}</Badge>
             <span className="text-xs font-semibold text-[#3E9C87] flex items-center">
               <Sparkles className="w-3.5 h-3.5 mr-1" />
               Multimodal Assistant Active
             </span>
           </div>
           <h1 className="text-3xl font-extrabold text-[#123B35] tracking-tight mt-1">
-            Voice AI Companion & Assistant
+            {t('commandCenter.title') || 'Voice AI Companion & Assistant'}
           </h1>
           <p className="text-sm text-[#66736F]">
-            Talk naturally or type commands to manage your daily tasks, view photo memories, or ask questions.
+            {t('commandCenter.subtitle') || 'Talk naturally or type commands to manage your daily tasks, view photo memories, or ask questions.'}
           </p>
         </div>
       </div>
@@ -87,10 +88,10 @@ function CommandCenterContent() {
         {transcript && (
           <div className="max-w-xl mx-auto bg-white p-4 rounded-2xl border border-[#DDE7E3] shadow-2xs text-left space-y-3">
             <div className="flex items-center justify-between text-xs text-[#66736F]">
-              <span className="font-semibold text-[#17665B]">Speech Transcript</span>
+              <span className="font-semibold text-[#17665B]">{t('commandCenter.userTranscriptTitle') || 'Speech Transcript'}</span>
               <Mic className="w-3.5 h-3.5 text-[#17665B]" />
             </div>
-            <p className="text-sm font-semibold text-[#123B35]">"{transcript}"</p>
+            <p className="text-sm font-semibold text-[#123B35]">&ldquo;{transcript}&rdquo;</p>
             
             {/* Feature indicators */}
             <div className="flex flex-wrap gap-1.5 pt-1 border-t border-slate-100">
@@ -114,7 +115,7 @@ function CommandCenterContent() {
             <div className="flex items-center justify-between text-xs text-[#17665B]">
               <span className="font-bold flex items-center">
                 <Sparkles className="w-3.5 h-3.5 mr-1" />
-                AI Assistant Response
+                {t('commandCenter.geminiResponseTitle') || 'AI Assistant Response'}
               </span>
               <Volume2 className="w-4 h-4 text-[#17665B]" />
             </div>
@@ -157,13 +158,13 @@ function CommandCenterContent() {
         {/* Dynamic Executed Actions list */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-base font-bold text-[#123B35]">Executed Tool Actions</h4>
-            <span className="text-xs text-[#66736F]">{actions.length} tools executed</span>
+            <h4 className="text-base font-bold text-[#123B35]">{t('commandCenter.executedActionsTitle') || 'Executed Tool Actions'}</h4>
+            <span className="text-xs text-[#66736F]">{t('commandCenter.toolsExecutedCount', { count: actions.length }) || `${actions.length} tools executed`}</span>
           </div>
 
           {actions.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-[#DDE7E3] p-8 text-center text-xs text-[#66736F]">
-              No tool actions executed yet. Try asking: "What should I do next?"
+              {t('commandCenter.noToolActions') || 'No tool actions executed yet. Try asking: "What should I do next?"'}
             </div>
           ) : (
             <div className="space-y-3">

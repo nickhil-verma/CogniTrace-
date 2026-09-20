@@ -20,44 +20,46 @@ import {
 import { LanguageSelector } from './LanguageSelector';
 import { RoleSwitcher } from './RoleSwitcher';
 import { useUserRole } from '@/hooks/useUserRole';
-
-const CAREGIVER_NAV = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Voice Command', href: '/command-center', icon: Mic, highlight: true },
-  { label: 'Care Tracking', href: '/tracking', icon: LineChart },
-  { label: 'Memories', href: '/memories', icon: ImageIcon },
-  { label: 'Appointments', href: '/appointments', icon: Calendar },
-  { label: 'Reminders', href: '/reminders', icon: Bell },
-  { label: 'Insights', href: '/insights', icon: Sparkles },
-  { label: 'Journal', href: '/journal', icon: FileEdit },
-  { label: 'Resources', href: '/resources', icon: BookOpen },
-  { label: 'Settings', href: '/settings', icon: Settings },
-];
-
-const PATIENT_NAV: { label: string; href: string; icon: any; highlight?: boolean }[] = [
-  { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'My Photo Album', href: '/memories', icon: ImageIcon },
-  { label: 'My Daily Goals', href: '/reminders', icon: Bell },
-];
-
-const MOBILE_BOTTOM_NAV = [
-  { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Voice', href: '/command-center', icon: Mic, isVoiceOrb: true },
-  { label: 'Memories', href: '/memories', icon: ImageIcon },
-  { label: 'Reminders', href: '/reminders', icon: Bell },
-  { label: 'Settings', href: '/settings', icon: Settings },
-];
+import { useLanguage } from '@/hooks/useLanguage';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isPatient } = useUserRole();
+  const { t } = useLanguage();
 
   if (pathname === '/' || pathname === '/login' || pathname === '/onboarding') {
     return <>{children}</>;
   }
 
+  const caregiverNav = [
+    { label: t('nav.dashboard'), href: '/dashboard', icon: LayoutDashboard },
+    { label: t('nav.voiceCommand'), href: '/command-center', icon: Mic, highlight: true },
+    { label: t('nav.careTracking'), href: '/tracking', icon: LineChart },
+    { label: t('nav.memories'), href: '/memories', icon: ImageIcon },
+    { label: t('nav.appointments'), href: '/appointments', icon: Calendar },
+    { label: t('nav.reminders'), href: '/reminders', icon: Bell },
+    { label: t('nav.insights'), href: '/insights', icon: Sparkles },
+    { label: t('nav.journal'), href: '/journal', icon: FileEdit },
+    { label: t('nav.resources'), href: '/resources', icon: BookOpen },
+    { label: t('nav.settings'), href: '/settings', icon: Settings },
+  ];
 
-  const navItems = isPatient ? PATIENT_NAV : CAREGIVER_NAV;
+  const patientNav = [
+    { label: t('nav.talkWithVoiceAI'), href: '/command-center', icon: Mic, highlight: true },
+    { label: t('nav.myPhotoAlbum'), href: '/memories', icon: ImageIcon },
+    { label: t('nav.todaysReminders'), href: '/reminders', icon: Bell },
+    { label: t('nav.dailyTapGame'), href: '/tracking', icon: LineChart },
+  ];
+
+  const mobileBottomNav = [
+    { label: t('nav.home'), href: '/dashboard', icon: LayoutDashboard },
+    { label: t('nav.voice'), href: '/command-center', icon: Mic, isVoiceOrb: true },
+    { label: t('nav.memories'), href: '/memories', icon: ImageIcon },
+    { label: t('nav.reminders'), href: '/reminders', icon: Bell },
+    { label: t('nav.settings'), href: '/settings', icon: Settings },
+  ];
+
+  const navItems = isPatient ? patientNav : caregiverNav;
 
   return (
     <div className={`min-h-screen flex flex-col md:flex-row font-sans antialiased ${
@@ -77,13 +79,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-[#123B35]">CogniTrace</h1>
                 <span className="text-[10px] font-semibold text-[#3E9C87] tracking-widest uppercase">
-                  {isPatient ? 'Patient Portal' : 'Cognitive Care'}
+                  {isPatient ? t('common.patientPortal') : t('common.cognitiveCare')}
                 </span>
               </div>
             </Link>
           </div>
 
-          {/* Role Status Badge (No mode switching, logout to change) */}
+          {/* Role Status Badge */}
           <div className="pt-1 pb-1">
             <RoleSwitcher className="w-full" />
           </div>
@@ -130,14 +132,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Footer Language & Profile */}
         <div className="pt-4 border-t border-[#DDE7E3] space-y-3">
-          <LanguageSelector />
+          <LanguageSelector direction="up" className="w-full" />
           {isPatient ? (
             <a
               href="tel:911"
               className="flex items-center justify-center space-x-2 w-full p-2.5 rounded-2xl bg-red-500 text-white font-bold text-xs shadow-md hover:bg-red-600 transition-colors"
             >
               <PhoneCall className="w-4 h-4 animate-bounce" />
-              <span>Call Caregiver Emergency</span>
+              <span>{t('common.callEmergency')}</span>
             </a>
           ) : (
             <div className="flex items-center space-x-3 p-2.5 rounded-2xl bg-[#F5F8F6] border border-[#DDE7E3]">
@@ -145,8 +147,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 P
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-[#123B35] truncate">Priya (Caregiver)</p>
-                <p className="text-[10px] text-[#66736F] truncate">Mom’s Care Team</p>
+                <p className="text-xs font-bold text-[#123B35] truncate">{t('nav.caregiverTitle')}</p>
+                <p className="text-[10px] text-[#66736F] truncate">{t('nav.caregiverTeam')}</p>
               </div>
             </div>
           )}
@@ -164,7 +166,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span className="text-lg font-bold text-[#123B35]">CogniTrace</span>
         </Link>
         <div className="flex items-center space-x-2">
-          <LanguageSelector />
+          <LanguageSelector direction="down" />
           <RoleSwitcher />
         </div>
       </header>
@@ -176,7 +178,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* ================= MOBILE BOTTOM NAVIGATION ================= */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-[#DDE7E3] px-3 py-2 flex items-center justify-around shadow-lg">
-        {MOBILE_BOTTOM_NAV.map((item) => {
+        {mobileBottomNav.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
 
@@ -192,7 +194,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 }`}>
                   <Mic className="w-6 h-6 text-white animate-pulse" />
                 </div>
-                <span className="text-[10px] font-bold text-[#17665B] mt-0.5">Voice AI</span>
+                <span className="text-[10px] font-bold text-[#17665B] mt-0.5">{t('nav.voiceAi')}</span>
               </Link>
             );
           }

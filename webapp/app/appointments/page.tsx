@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Calendar, Plus, MapPin, User, Clock, Trash2 } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export default function AppointmentsPage() {
   const { appointments, addAppointment, cancelAppointment, deleteAppointment } = useAppointments();
+  const { t } = useLanguage();
   const [isAddOpen, setIsAddOpen] = useState(false);
 
   // Form states
@@ -45,9 +47,9 @@ export default function AppointmentsPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#DDE7E3] pb-6">
         <div>
-          <Badge variant="accent">Medical Care Team</Badge>
+          <Badge variant="accent">{t('appointments.badge')}</Badge>
           <h1 className="text-3xl font-extrabold text-[#123B35] tracking-tight mt-1">
-            Doctor Appointments
+            {t('appointments.title')}
           </h1>
           <p className="text-sm text-[#66736F]">
             Schedule and track upcoming medical consultations.
@@ -55,7 +57,7 @@ export default function AppointmentsPage() {
         </div>
         <Button variant="default" onClick={() => setIsAddOpen(true)} className="shadow-md">
           <Plus className="w-4 h-4 mr-2 text-white" />
-          Schedule Appointment
+          {t('appointments.scheduleButton')}
         </Button>
       </div>
 
@@ -71,7 +73,7 @@ export default function AppointmentsPage() {
             <CardHeader className="flex flex-row items-start justify-between pb-2">
               <div className="space-y-1">
                 <Badge variant={apt.status === 'Upcoming' ? 'teal' : 'outline'}>
-                  {apt.status}
+                  {apt.status === 'Upcoming' ? t('common.upcoming') : (apt.status === 'Cancelled' ? t('common.cancelled') : apt.status)}
                 </Badge>
                 <CardTitle className="text-xl font-bold text-[#123B35]">
                   {apt.title}
@@ -83,7 +85,7 @@ export default function AppointmentsPage() {
                   size="icon"
                   onClick={() => deleteAppointment(apt.id)}
                   className="text-red-400 hover:text-red-600 hover:bg-red-50"
-                  title="Delete Appointment"
+                  title={t('appointments.deleteAppointment')}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -111,7 +113,7 @@ export default function AppointmentsPage() {
 
               {apt.notes && (
                 <p className="p-3 rounded-xl bg-[#F5F8F6] border border-[#DDE7E3] text-[#123B35] leading-relaxed">
-                  Note: {apt.notes}
+                  {t('appointments.noteLabel', { notes: apt.notes })}
                 </p>
               )}
 
@@ -123,7 +125,7 @@ export default function AppointmentsPage() {
                     onClick={() => cancelAppointment(apt.id)}
                     className="text-xs text-red-500 hover:bg-red-50"
                   >
-                    Cancel Appointment
+                    {t('appointments.cancelAppointment')}
                   </Button>
                 </div>
               )}
@@ -136,78 +138,78 @@ export default function AppointmentsPage() {
       <Dialog
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
-        title="Schedule Doctor Appointment"
+        title={t('appointments.modalTitle')}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[#123B35]">Appointment Title</label>
+            <label className="text-xs font-bold text-[#123B35]">{t('appointments.formTitle')}</label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Neurology Cognitive Consultation"
+              placeholder={t('appointments.formTitlePlaceholder')}
               required
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-[#123B35]">Doctor Name</label>
+              <label className="text-xs font-bold text-[#123B35]">{t('appointments.formDoctor')}</label>
               <Input
                 value={doctorName}
                 onChange={(e) => setDoctorName(e.target.value)}
-                placeholder="Dr. Anita Sharma"
+                placeholder={t('appointments.formDoctorPlaceholder')}
                 required
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-[#123B35]">Specialty</label>
+              <label className="text-xs font-bold text-[#123B35]">{t('appointments.formSpecialty')}</label>
               <Input
                 value={specialty}
                 onChange={(e) => setSpecialty(e.target.value)}
-                placeholder="Cognitive Neurology"
+                placeholder={t('appointments.formSpecialtyPlaceholder')}
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-[#123B35]">Date</label>
+              <label className="text-xs font-bold text-[#123B35]">{t('appointments.formDate')}</label>
               <Input
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                placeholder="Tomorrow, Sept 19"
+                placeholder={t('appointments.formDatePlaceholder')}
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-[#123B35]">Time</label>
+              <label className="text-xs font-bold text-[#123B35]">{t('appointments.formTime')}</label>
               <Input
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                placeholder="10:30 AM"
+                placeholder={t('appointments.formTimePlaceholder')}
               />
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[#123B35]">Clinic / Hospital Location</label>
+            <label className="text-xs font-bold text-[#123B35]">{t('appointments.formLocation')}</label>
             <Input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="City Care Hospital, Suite 402"
+              placeholder={t('appointments.formLocationPlaceholder')}
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[#123B35]">Caregiver Notes</label>
+            <label className="text-xs font-bold text-[#123B35]">{t('appointments.formNotes')}</label>
             <Input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Bring recent observation log & current prescriptions"
+              placeholder={t('appointments.formNotesPlaceholder')}
             />
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-[#DDE7E3]">
             <Button variant="outline" type="button" onClick={() => setIsAddOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button variant="default" type="submit">
-              Save Appointment
+              {t('appointments.saveAppointment')}
             </Button>
           </div>
         </form>

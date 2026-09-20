@@ -3,7 +3,8 @@
 import React from 'react';
 import { AgentActionItem } from '@/types/agent';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Calendar, UserCheck, CheckCircle, Image, FileText, AlertCircle } from 'lucide-react';
+import { Bell, Calendar, CheckCircle, Image, FileText, AlertCircle } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface AgentActionProps {
   action: AgentActionItem;
@@ -11,7 +12,9 @@ interface AgentActionProps {
   onEdit?: () => void;
 }
 
-export function AgentAction({ action, onConfirm, onEdit }: AgentActionProps) {
+export function AgentAction({ action }: AgentActionProps) {
+  const { t } = useLanguage();
+
   const getToolIcon = () => {
     switch (action.toolType) {
       case 'create_reminder':
@@ -44,7 +47,7 @@ export function AgentAction({ action, onConfirm, onEdit }: AgentActionProps) {
           </div>
         </div>
         <Badge variant={action.status === 'completed' ? 'accent' : 'warning'}>
-          {action.status === 'completed' ? '✓ Completed' : 'Executing'}
+          {action.status === 'completed' ? t('commandCenter.completedBadge') : t('commandCenter.executingBadge')}
         </Badge>
       </div>
 

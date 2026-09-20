@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Plus, Sparkles, Clock, Trash2, Search } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface JournalEntry {
   id: string;
@@ -51,6 +52,7 @@ const initialEntries: JournalEntry[] = [
 ];
 
 export default function JournalPage() {
+  const { t } = useLanguage();
   const [entries, setEntries] = useState<JournalEntry[]>(initialEntries);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -102,17 +104,15 @@ export default function JournalPage() {
   };
 
   const handleDelete = (id: string) => {
-    setEntries(entries.filter((e) => e.id !== id));
+    setEntries(entries.filter((item) => item.id !== id));
   };
 
   const handleSummarizeWeek = () => {
     setIsSummarizing(true);
     setTimeout(() => {
-      setAiSummary(
-        `AI Weekly Summary: Caregiver logged ${entries.length} observations. Mom exhibited positive mood during park walks and photo reminiscence sessions. Cognitive vitals remain stable following medical check-in.`
-      );
+      setAiSummary(t('journal.aiSummaryGenerated'));
       setIsSummarizing(false);
-    }, 700);
+    }, 1200);
   };
 
   const filteredEntries = entries.filter((e) =>
@@ -125,12 +125,12 @@ export default function JournalPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#DDE7E3] pb-6">
         <div>
-          <Badge variant="pink">Caregiver Journal</Badge>
+          <Badge variant="pink">{t('journal.badge')}</Badge>
           <h1 className="text-3xl font-extrabold text-[#123B35] tracking-tight mt-1">
-            Reflective Care Journal
+            {t('journal.title')}
           </h1>
           <p className="text-sm text-[#66736F]">
-            Record daily thoughts, emotional moments, and caregiver notes with persistence.
+            {t('journal.subtitle')}
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -141,11 +141,11 @@ export default function JournalPage() {
             className="shadow-xs font-semibold text-xs"
           >
             <Sparkles className="w-4 h-4 mr-1.5 text-[#17665B]" />
-            {isSummarizing ? 'Analyzing...' : 'Summarize my week'}
+            {isSummarizing ? t('journal.summarizing') : t('journal.summarizeAi')}
           </Button>
           <Button variant="default" onClick={() => setIsAddOpen(true)} className="shadow-md">
             <Plus className="w-4 h-4 mr-2 text-white" />
-            New Entry
+            {t('journal.newEntry')}
           </Button>
         </div>
       </div>
@@ -156,7 +156,7 @@ export default function JournalPage() {
         <Input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search journal entries..."
+          placeholder={t('journal.searchPlaceholder')}
           className="pl-10"
         />
       </div>
@@ -166,7 +166,7 @@ export default function JournalPage() {
         <Card className="bg-[#BFDCD6]/30 border-[#BFDCD6] p-5 space-y-2">
           <div className="flex items-center space-x-2 text-[#17665B] font-bold text-sm">
             <Sparkles className="w-5 h-5" />
-            <span>CogniTrace AI Weekly Digest</span>
+            <span>{t('journal.aiSummaryTitle')}</span>
           </div>
           <p className="text-sm text-[#123B35] leading-relaxed">{aiSummary}</p>
         </Card>
@@ -203,7 +203,7 @@ export default function JournalPage() {
             </div>
 
             <p className="text-sm text-[#123B35] leading-relaxed bg-[#F5F8F6] p-4 rounded-2xl border border-[#DDE7E3]">
-              "{entry.content}"
+              &ldquo;{entry.content}&rdquo;
             </p>
           </Card>
         ))}
@@ -213,21 +213,21 @@ export default function JournalPage() {
       <Dialog
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
-        title="New Journal Entry"
+        title={t('journal.modalTitle')}
       >
         <form onSubmit={handleAddSubmit} className="space-y-4">
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[#123B35]">Title / Event</label>
+            <label className="text-xs font-bold text-[#123B35]">{t('journal.formTitle')}</label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Afternoon garden walk"
+              placeholder={t('journal.formTitlePlaceholder')}
               required
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-[#123B35]">Mood</label>
+              <label className="text-xs font-bold text-[#123B35]">{t('journal.formMood')}</label>
               <select
                 value={mood}
                 onChange={(e) => setMood(e.target.value)}
@@ -241,36 +241,36 @@ export default function JournalPage() {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-[#123B35]">Category</label>
+              <label className="text-xs font-bold text-[#123B35]">{t('journal.formCategory')}</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full h-11 rounded-2xl border border-[#DDE7E3] px-3 text-sm text-[#123B35]"
               >
-                <option value="Mood & Activity">Mood & Activity</option>
-                <option value="Medical">Medical</option>
-                <option value="Memory & Speech">Memory & Speech</option>
-                <option value="Motor Telemetry">Motor Telemetry</option>
+                <option value="Mood & Activity">{t('journal.catMoodActivity')}</option>
+                <option value="Medical">{t('journal.catMedical')}</option>
+                <option value="Memory & Speech">{t('journal.catMemorySpeech')}</option>
+                <option value="Daily Routine">{t('journal.catRoutine')}</option>
               </select>
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[#123B35]">Reflective Notes</label>
+            <label className="text-xs font-bold text-[#123B35]">{t('journal.formContent')}</label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Describe Mom’s mood, recognized memories, or care thoughts..."
-              className="w-full h-28 rounded-2xl border border-[#DDE7E3] p-3 text-xs text-[#123B35] focus:border-[#17665B] focus:outline-none"
+              placeholder={t('journal.formContentPlaceholder')}
+              className="w-full h-28 rounded-2xl border border-[#DDE7E3] p-3 text-xs text-[#123B35] focus:border-[#17665B] focus:outline-hidden"
               required
             />
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-[#DDE7E3]">
             <Button variant="outline" type="button" onClick={() => setIsAddOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button variant="default" type="submit">
-              Save Entry
+              {t('journal.saveEntry')}
             </Button>
           </div>
         </form>

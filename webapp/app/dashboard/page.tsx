@@ -8,10 +8,12 @@ import { CommandCenterCard } from '@/components/dashboard/CommandCenterCard';
 import { PatientDashboard } from '@/components/dashboard/PatientDashboard';
 import { usePatientSummary } from '@/hooks/usePatientSummary';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useLanguage } from '@/hooks/useLanguage';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
   const { isPatient } = useUserRole();
+  const { t } = useLanguage();
   const { data: summary, isLoading, error } = usePatientSummary();
 
   if (isPatient) {
@@ -23,10 +25,10 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="space-y-1">
         <h1 className="text-3xl font-extrabold tracking-tight text-[#123B35]">
-          Good morning, Priya
+          {t('dashboard.greeting', { name: 'Priya' })}
         </h1>
         <p className="text-sm font-medium text-[#66736F]">
-          Here's how things are going with Mom today.
+          {t('dashboard.subtitle')}
         </p>
       </div>
 
