@@ -254,6 +254,50 @@ def test_patient_login_requires_valid_pin_and_session():
     assert missing_session.status_code == 401
 
 
+def test_caregiver_voice_reminder_understands_tablet_command():
+    login = client.post(
+        "/v1/auth/login",
+        json={"email": "priya.caregiver@example.com", "password": "password", "role": "caregiver"},
+    )
+    token = login.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    command = "Add a reminder to take the evening tablet at 9:30 PM"
+
+    chat_response = client.post(
+        "/api/voice/chat-turn",
+        json={
+            "transcript": command,
+            "user_role": "CAREGIVER",
+            "patient_id": "patient_001",
+        },
+        headers=headers,
+    )
+    assert chat_response.status_code == 200
+    chat_data = chat_response.json()
+    assert chat_data["intent"] == "CREATE_REMINDER"
+    assert chat_data["action_executed"] is True
+    assert chat_data["ui_action"]["data"]["title"] == "Take the evening tablet"
+    assert chat_data["ui_action"]["data"]["time"] == "9:30 PM"
+
+    command_response = client.post(
+        "/api/voice/command",
+        data={"transcript": command, "patient_id": "patient_001"},
+        headers=headers,
+    )
+    assert command_response.status_code == 200
+    command_data = command_response.json()
+    assert command_data["intent"] == "CREATE_REMINDER"
+    assert command_data["ui_action"]["data"]["title"] == "Take the evening tablet"
+    assert command_data["ui_action"]["data"]["category"] == "Medication"
+
+    invalid_session = client.post(
+        "/api/voice/chat-turn",
+        json={"transcript": command, "user_role": "CAREGIVER"},
+        headers={"Authorization": "Bearer cognitrace_jwt_unknown"},
+    )
+    assert invalid_session.status_code == 401
+
+
 def test_dynamodb_rag_vector_storage():
     rag_payload = {
         "user_id": "usr_test_rag_001",

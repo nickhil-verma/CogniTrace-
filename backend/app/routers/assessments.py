@@ -28,6 +28,56 @@ from app.guardrails.manager import guardrail_manager
 from app.routers.auth import get_current_user_from_token
 
 
+def _parse_reminder_request(prompt: str) -> tuple[str, str]:
+    normalized = re.sub(r"\s+", " ", prompt).strip()
+    title = normalized
+    prefixes = (
+        "set a reminder for me to",
+        "set a reminder to",
+        "set a reminder for",
+        "set reminder to",
+        "set reminder for",
+        "add a reminder for me to",
+        "add a reminder to",
+        "add a reminder for",
+        "add reminder to",
+        "add reminder for",
+        "remind me to",
+        "remind me for",
+        "schedule a reminder to",
+        "schedule reminder to",
+        "schedule reminder for",
+        "don't let me forget to",
+        "dont let me forget to",
+    )
+    for prefix in prefixes:
+        if title.lower().startswith(prefix):
+            title = title[len(prefix):].strip()
+            break
+
+    title = re.sub(
+        r"\s+at\s+\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)?\s*$",
+        "",
+        title,
+        flags=re.IGNORECASE,
+    ).strip()
+    title = re.sub(r"^to\s+", "", title, flags=re.IGNORECASE).strip()
+    title = title.capitalize() if title else "Medication check"
+
+    time_match = re.search(
+        r"\bat\s+(\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)?)\b",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    scheduled_time = time_match.group(1).replace(".", "").upper() if time_match else "8:00 PM"
+    return title, scheduled_time
+
+
+def _reminder_category(title: str) -> str:
+    medication_terms = ("medicine", "medication", "pill", "tablet", "capsule", "dose")
+    return "Medication" if any(term in title.lower() for term in medication_terms) else "Daily Routine"
+
+
 async def _resolve_session_context(request: Request, fallback_patient_id: str = "patient_001"):
     patient_id = fallback_patient_id
     user_context = {
@@ -56,7 +106,7 @@ async def _resolve_session_context(request: Request, fallback_patient_id: str = 
             patient_id = current_user.patient_name and fallback_patient_id or fallback_patient_id
             user_context["patient_id"] = fallback_patient_id
     except HTTPException:
-        return patient_id, user_context
+        raise
 
     return patient_id, user_context
 
@@ -330,21 +380,13 @@ async def process_voice_command(
     elif any(phrase in lower for phrase in ["remind", "add reminder", "don't let me forget", "schedule reminder", "set reminder"]):
         intent = "CREATE_REMINDER"
         modal_type = "VERIFY_ADD"
-        parsed_title = prompt_text
-        for kw in ["remind me to", "add a reminder for", "add reminder for", "don't let me forget to", "schedule reminder to", "set reminder for"]:
-            parsed_title = re.sub(kw, "", parsed_title, flags=re.IGNORECASE)
-        parsed_title = parsed_title.strip()
-        if not parsed_title or len(parsed_title) < 2:
-            parsed_title = "Water break & medication check"
-
-        time_match = re.search(r'at (\d{1,2}(?::\d{2})?\s*(?:am|pm)?)', lower)
-        parsed_time = time_match.group(1).upper() if time_match else "8:00 PM"
+        parsed_title, parsed_time = _parse_reminder_request(prompt_text)
 
         new_rem = {
-            "title": parsed_title.capitalize(),
+            "title": parsed_title,
             "time": parsed_time,
             "date": "Today",
-            "category": "Medication" if "medicine" in lower or "pill" in lower else "Daily Routine",
+            "category": _reminder_category(parsed_title),
             "status": "Upcoming",
             "patientName": "Mom",
             "dosageOrDetails": f"Scheduled via Voice Command",
@@ -494,7 +536,7 @@ async def process_voice_chat_turn(
                     "title": task_title.capitalize(),
                     "time": scheduled_time,
                     "date": "Today",
-                    "category": "Medication" if any(k in task_title.lower() for k in ["medicine", "pill", "medication"]) else "Daily Routine",
+                    "category": _reminder_category(task_title),
                     "status": "Upcoming",
                     "patientName": "Mom",
                     "dosageOrDetails": "Scheduled via Conversational Voice Agent",
@@ -533,7 +575,7 @@ async def process_voice_chat_turn(
                 "title": task_title.capitalize(),
                 "time": scheduled_time,
                 "date": "Today",
-                "category": "Medication" if any(k in task_title.lower() for k in ["medicine", "pill", "medication"]) else "Daily Routine",
+                "category": _reminder_category(task_title),
                 "status": "Upcoming",
                 "patientName": "Mom",
                 "dosageOrDetails": "Scheduled via Conversational Voice Agent",
@@ -550,20 +592,16 @@ async def process_voice_chat_turn(
 
     # Case A2: Initial turn for CREATE_REMINDER
     elif any(phrase in lower for phrase in ["remind", "reminder", "don't let me forget", "dont let me forget", "schedule"]):
-        parsed_title = lower
-        for kw in ["set a reminder for me", "set a reminder", "set reminder for me", "set reminder", "add a reminder for me", "add a reminder", "add reminder for me", "add reminder", "remind me to", "remind me for", "remind me", "don't let me forget to", "don't let me forget", "schedule reminder to", "schedule reminder", "for me"]:
-            parsed_title = parsed_title.replace(kw, "")
-        parsed_title = parsed_title.strip()
-
-        time_match = re.search(r'at (\d{1,2}(?::\d{2})?\s*(?:am|pm)?)', lower)
+        parsed_title, parsed_time = _parse_reminder_request(transcript)
+        time_match = re.search(r"\bat\s+\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)?\b", lower)
         if time_match and len(parsed_title) > 2:
-            scheduled_time = time_match.group(1).upper()
-            clean_title = re.sub(r'at \d{1,2}(?::\d{2})?\s*(?:am|pm)?', '', parsed_title).strip().capitalize()
+            scheduled_time = parsed_time
+            clean_title = parsed_title
             new_rem = {
-                "title": clean_title if len(clean_title) > 2 else "Water break",
+                "title": clean_title if len(clean_title) > 2 else "Medication check",
                 "time": scheduled_time,
                 "date": "Today",
-                "category": "Medication" if any(k in clean_title.lower() for k in ["medicine", "pill", "medication"]) else "Daily Routine",
+                "category": _reminder_category(clean_title),
                 "status": "Upcoming",
                 "patientName": "Mom",
                 "dosageOrDetails": "Scheduled via Conversational Voice Agent",
