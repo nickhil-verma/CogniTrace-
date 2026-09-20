@@ -45,24 +45,10 @@ async def login(payload: LoginRequest):
     role_requested = payload.role or "caregiver"
 
     user_data = dynamodb_service.get_user_by_email(email_clean)
+    password_matches = bool(user_data) and user_data.get("password") == payload.password
 
-    if not user_data:
-        if len(payload.password) < 4:
-            raise HTTPException(status_code=401, detail="Invalid email or password")
-
-        user_id = f"usr_{uuid.uuid4().hex[:8]}"
-        name = email_clean.split("@")[0].replace(".", " ").title()
-        user_data = {
-            "id": user_id,
-            "name": name if name else ("Sunita Sharma" if role_requested == "patient" else "Caregiver User"),
-            "email": email_clean,
-            "password": payload.password,
-            "role": role_requested,
-            "patient_name": "Mom (Sunita)",
-            "relationship": "Self" if role_requested == "patient" else "Mother",
-            "stage": "Middle Stage"
-        }
-        dynamodb_service.save_user(user_data)
+    if not user_data or not password_matches:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     user_profile = UserProfile(
         id=user_data["id"],
