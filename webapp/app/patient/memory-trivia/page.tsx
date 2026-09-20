@@ -142,11 +142,11 @@ export default function MemoryTriviaGamePage() {
       {/* Top Header Badge */}
       <div className="flex items-center justify-between border-b border-[#DDE7E3] pb-4">
         <div className="flex items-center space-x-2">
-          <div className="p-2 rounded-2xl bg-[#E36C59] text-white shadow-sm">
-            <Heart className="w-5 h-5 fill-current" />
+          <div className="p-2 rounded-2xl bg-[#164E48] text-white shadow-sm">
+            <Heart className="w-5 h-5 fill-current text-white" />
           </div>
           <div>
-            <span className="text-xs font-bold text-[#E36C59] uppercase tracking-wider">Patient Memory Companion</span>
+            <span className="text-xs font-bold text-[#164E48] uppercase tracking-wider">Patient Memory Companion</span>
             <h1 className="text-2xl font-extrabold text-[#123B35] tracking-tight">Family Memory Journeys</h1>
           </div>
         </div>

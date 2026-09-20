@@ -102,11 +102,11 @@ export default function LoginPage() {
             onClick={() => { setActiveTab('patient'); setError(null); }}
             className={`py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
               activeTab === 'patient'
-                ? 'bg-[#E36C59] text-white shadow-md'
+                ? 'bg-[#164E48] text-white shadow-md'
                 : 'text-[#66736F] hover:text-[#123B35]'
             }`}
           >
-            <Heart className="w-4 h-4 fill-current" />
+            <Heart className="w-4 h-4 fill-current text-white" />
             <span>{t('login.patientTab')}</span>
           </button>
         </div>
@@ -168,8 +168,8 @@ export default function LoginPage() {
         {activeTab === 'patient' && (
           <div className="space-y-6 text-center animate-in fade-in duration-200">
             {/* Patient Greeting & Avatar */}
-            <div className="p-6 bg-gradient-to-r from-[#FFF0ED] to-[#FFF5F2] rounded-3xl border-2 border-[#F7DDE5] space-y-3">
-              <div className="w-20 h-20 rounded-full bg-[#E36C59] text-white flex items-center justify-center mx-auto text-3xl font-extrabold shadow-md border-4 border-white">
+            <div className="p-6 bg-gradient-to-r from-[#E8F4F1] to-[#F5F8F6] rounded-3xl border-2 border-[#BFDCD6] space-y-3">
+              <div className="w-20 h-20 rounded-full bg-[#164E48] text-white flex items-center justify-center mx-auto text-3xl font-extrabold shadow-md border-4 border-white">
                 S
               </div>
               <div>
@@ -183,7 +183,7 @@ export default function LoginPage() {
               type="button"
               onClick={handlePatientQuickLogin}
               disabled={loading}
-              className="w-full py-4 text-base font-extrabold bg-[#E36C59] hover:bg-[#c85544] text-white shadow-xl rounded-2xl flex items-center justify-center space-x-2 cursor-pointer"
+              className="w-full py-4 text-base font-extrabold bg-[#164E48] hover:bg-[#113e39] text-white shadow-xl rounded-2xl flex items-center justify-center space-x-2 cursor-pointer"
             >
               {loading ? (
                 <>
@@ -202,7 +202,7 @@ export default function LoginPage() {
             <div className="space-y-3 pt-2 border-t border-[#DDE7E3]">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#123B35]">{t('login.patientSubheading')}</span>
-                <button onClick={handlePinClear} className="text-[11px] font-bold text-[#C85C82] hover:underline cursor-pointer">
+                <button onClick={handlePinClear} className="text-[11px] font-bold text-[#17665B] hover:underline cursor-pointer">
                   {t('login.clearPin')}
                 </button>
               </div>
@@ -214,7 +214,7 @@ export default function LoginPage() {
                     key={idx}
                     className={`w-10 h-10 rounded-2xl border-2 flex items-center justify-center font-extrabold text-lg ${
                       pin.length > idx
-                        ? 'border-[#E36C59] bg-[#E36C59] text-white shadow-sm'
+                        ? 'border-[#164E48] bg-[#164E48] text-white shadow-sm'
                         : 'border-[#DDE7E3] bg-[#F5F8F6] text-transparent'
                     }`}
                   >

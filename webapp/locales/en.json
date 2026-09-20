@@ -40,6 +40,9 @@
     "myPhotoAlbum": "My Photo Album",
     "todaysReminders": "Today’s Reminders",
     "dailyTapGame": "Daily Tap Game",
+    "memoryTrivia": "Memory Games",
+    "memoryGames": "Memory Games",
+    "returnHome": "Return Home",
     "home": "Home",
     "voice": "Voice",
     "voiceAi": "Voice AI",
@@ -74,6 +77,7 @@
   },
   "patient": {
     "dailyCompanion": "Patient Daily Companion",
+    "voiceCompanion": "Voice Companion",
     "greeting": "Good day! How are you feeling today?",
     "description": "I am here to help you remember your daily tasks, talk through cherished memories, or answer any questions.",
     "talkWithVoiceAI": "Talk with your Voice AI Assistant",

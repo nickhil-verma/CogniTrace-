@@ -27,6 +27,7 @@ import { VoiceOrb } from '@/components/command-center/VoiceOrb';
 import { VoiceRecorder } from '@/components/command-center/VoiceRecorder';
 import { ActionConfirmation } from '@/components/command-center/ActionConfirmation';
 import { VoiceActionModal } from '@/components/command-center/VoiceActionModal';
+import { speakText } from '@/lib/speech';
 
 export function PatientDashboard() {
   const { reminders, toggleComplete } = useReminders();
@@ -93,10 +94,15 @@ export function PatientDashboard() {
     }
   };
 
+  const speakGreeting = () => {
+    const msg = `Good day! Today is ${dateStr || 'a wonderful day'}. How are you feeling right now?`;
+    speakText(msg);
+  };
+
   return (
     <div className="space-y-8 max-w-4xl mx-auto animate-in fade-in duration-300">
       {/* ================= 1. LIVE TIME, DATE & WARM WEATHER BANNER ================= */}
-      <Card className="p-8 bg-gradient-to-r from-[#E36C59] via-[#C85C82] to-[#17665B] text-white rounded-3xl shadow-xl relative overflow-hidden border-0">
+      <Card className="p-8 bg-gradient-to-r from-[#164E48] via-[#17665B] to-[#25756C] text-white rounded-3xl shadow-xl relative overflow-hidden border-0">
         <div className="absolute -right-8 -bottom-8 w-56 h-56 rounded-full bg-white/10 blur-2xl pointer-events-none" />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2">
@@ -104,11 +110,21 @@ export function PatientDashboard() {
               <Heart className="w-4 h-4 fill-current text-white animate-pulse" />
               <span>{t('patient.dailyCompanion') || 'My Daily Companion'}</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-              {t('patient.greeting') || 'Good day, Sunita! 🌸'}
-            </h1>
+            <div className="flex items-center space-x-3">
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
+                {t('patient.greeting') || 'Good day, Sunita! 🌸'}
+              </h1>
+              <button
+                type="button"
+                onClick={speakGreeting}
+                className="p-2.5 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all shrink-0 shadow-sm active:scale-95"
+                title="Tap to listen to greeting"
+              >
+                <Volume2 className="w-5 h-5" />
+              </button>
+            </div>
             <p className="text-sm md:text-base text-white/90 font-medium max-w-md">
-              {t('patient.description') || 'Here is your daily checklist, photo memories, and personal Voice AI Companion.'}
+              {t('patient.description') || 'Here is your daily checklist, photo memories, and personal Voice Companion.'}
             </p>
           </div>
 
@@ -133,10 +149,20 @@ export function PatientDashboard() {
       {/* ================= 2. EMBEDDED IN-DASHBOARD VOICE AI COMPANION ================= */}
       <Card className="p-8 text-center bg-gradient-to-b from-white to-[#F5F8F6] border-2 border-[#BFDCD6] rounded-3xl shadow-lg space-y-6">
         <div className="space-y-2">
-          <Badge variant="teal">{t('patient.voiceCompanion') || 'My Voice Companion'}</Badge>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-[#123B35]">
-            {t('patient.talkWithVoiceAI') || 'Talk with My Voice AI Companion'}
-          </h2>
+          <Badge variant="teal">{t('patient.voiceCompanion') || 'Voice Companion'}</Badge>
+          <div className="flex items-center justify-center space-x-2">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-[#123B35]">
+              {t('patient.talkWithVoiceAI') || 'Talk with My Voice AI Companion'}
+            </h2>
+            <button
+              type="button"
+              onClick={() => speakText("Talk with your Voice AI companion. Tap the orb to speak.")}
+              className="p-1.5 rounded-full bg-[#E8F4F1] text-[#17665B] hover:bg-[#D2ECE6] transition-colors"
+              title="Tap to listen"
+            >
+              <Volume2 className="w-4 h-4" />
+            </button>
+          </div>
           <p className="text-sm text-[#66736F] max-w-md mx-auto">
             {t('patient.tapBelowAndSpeak') || 'Tap the button to speak, report a completed task, or ask what you should do next.'}
           </p>
@@ -174,7 +200,13 @@ export function PatientDashboard() {
                 <Sparkles className="w-3.5 h-3.5 mr-1" />
                 AI Assistant Response
               </span>
-              <Volume2 className="w-4 h-4 text-[#17665B]" />
+              <button
+                type="button"
+                onClick={() => speakText(aiResponse)}
+                className="p-1 rounded-full text-[#17665B] hover:bg-white/50"
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
             </div>
             <ActionConfirmation responseText={aiResponse} />
           </div>
@@ -182,7 +214,7 @@ export function PatientDashboard() {
 
         {/* Error Message */}
         {errorMessage && (
-          <div className="max-w-md mx-auto p-3.5 rounded-2xl bg-[#C85C82]/10 text-xs font-semibold text-[#C85C82] border border-[#C85C82]/30">
+          <div className="max-w-md mx-auto p-3.5 rounded-2xl bg-amber-50 text-xs font-semibold text-amber-800 border border-amber-200">
             {errorMessage}
           </div>
         )}
@@ -198,27 +230,65 @@ export function PatientDashboard() {
           />
         </div>
 
-        {/* 1-Tap Patient Quick Action Chips */}
-        <div className="pt-2 border-t border-[#DDE7E3]">
-          <p className="text-xs font-bold text-[#66736F] mb-3">Or tap a quick action below to start talking:</p>
-          <div className="flex flex-wrap justify-center gap-2">
+        {/* 3 Simple Large Visual Tap Suggestions */}
+        <div className="pt-4 border-t border-[#DDE7E3] space-y-3">
+          <p className="text-xs font-bold text-[#66736F]">Tap any card to open or hear options:</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
-              { prompt: 'What should I do next?', icon: '❓' },
-              { prompt: 'I completed my evening medicine', icon: '✅' },
-              { prompt: 'What medicine should I take now?', icon: '💊' },
-              { prompt: 'Show me my family photos', icon: '📸' },
-              { prompt: 'Call my daughter Priya', icon: '📞' }
-            ].map((chip) => (
-              <button
-                key={chip.prompt}
-                type="button"
-                onClick={() => submitVoiceTurn(chip.prompt)}
-                className="px-3.5 py-2.5 rounded-xl bg-white border border-[#DDE7E3] text-xs font-bold text-[#123B35] hover:border-[#17665B] hover:bg-[#BFDCD6]/20 transition-all flex items-center space-x-1.5 shadow-2xs active:scale-95"
-              >
-                <span>{chip.icon}</span>
-                <span>&ldquo;{chip.prompt}&rdquo;</span>
-              </button>
-            ))}
+              {
+                title: 'Show my photos',
+                href: '/memories',
+                icon: ImageIcon,
+                color: 'bg-emerald-50 text-emerald-900 border-emerald-200 hover:bg-emerald-100',
+                prompt: 'Show my family photos'
+              },
+              {
+                title: 'Check my pills',
+                href: '/reminders',
+                icon: Bell,
+                color: 'bg-teal-50 text-teal-900 border-teal-200 hover:bg-teal-100',
+                prompt: 'What medicine should I take now?'
+              },
+              {
+                title: 'Play a game',
+                href: '/patient/memory-trivia',
+                icon: Sparkles,
+                color: 'bg-cyan-50 text-cyan-900 border-cyan-200 hover:bg-cyan-100',
+                prompt: 'Let us play a memory game'
+              }
+            ].map((item) => {
+              const ItemIcon = item.icon;
+              return (
+                <div
+                  key={item.title}
+                  className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${item.color}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-xl bg-white text-[#164E48] flex items-center justify-center shadow-xs">
+                      <ItemIcon className="w-5 h-5" />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        speakText(item.title);
+                      }}
+                      className="p-1.5 rounded-full bg-white/80 text-[#164E48] hover:bg-white shadow-2xs"
+                      title="Tap to listen"
+                    >
+                      <Volume2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <Link
+                    href={item.href}
+                    className="text-left font-extrabold text-base tracking-tight hover:underline flex items-center justify-between"
+                  >
+                    <span>{item.title}</span>
+                    <span>→</span>
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         </div>
       </Card>
@@ -227,7 +297,7 @@ export function PatientDashboard() {
       <Card className="p-6 bg-white border border-[#DDE7E3] rounded-3xl shadow-md space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Smile className="w-5 h-5 text-[#E36C59]" />
+            <Smile className="w-5 h-5 text-[#17665B]" />
             <h2 className="text-lg font-bold text-[#123B35]">
               How are you feeling right now, Sunita?
             </h2>
@@ -244,10 +314,13 @@ export function PatientDashboard() {
           ].map((item) => (
             <button
               key={item.id}
-              onClick={() => setSelectedMood(item.id)}
+              onClick={() => {
+                setSelectedMood(item.id);
+                speakText(getMoodFeedback(item.id));
+              }}
               className={`p-3.5 rounded-2xl border text-center transition-all duration-200 flex flex-col items-center space-y-1.5 ${
                 selectedMood === item.id
-                  ? 'ring-2 ring-[#E36C59] scale-105 shadow-md bg-white border-[#E36C59]'
+                  ? 'ring-2 ring-[#17665B] scale-105 shadow-md bg-white border-[#17665B]'
                   : `${item.color} hover:scale-102`
               }`}
             >
@@ -258,8 +331,8 @@ export function PatientDashboard() {
         </div>
 
         {selectedMood && (
-          <div className="p-3.5 rounded-2xl bg-[#FFF0ED] border border-[#F7DDE5] text-xs font-bold text-[#C85C82] flex items-center space-x-2 animate-in fade-in duration-200">
-            <Sparkles className="w-4 h-4 shrink-0 text-[#E36C59]" />
+          <div className="p-3.5 rounded-2xl bg-[#E8F4F1] border border-[#BFDCD6] text-xs font-bold text-[#164E48] flex items-center space-x-2 animate-in fade-in duration-200">
+            <Sparkles className="w-4 h-4 shrink-0 text-[#17665B]" />
             <span>{getMoodFeedback(selectedMood)}</span>
           </div>
         )}

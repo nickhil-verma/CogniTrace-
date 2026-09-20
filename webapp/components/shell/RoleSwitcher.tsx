@@ -18,13 +18,13 @@ export function RoleSwitcher({ className = '' }: { className?: string }) {
   return (
     <div className={`flex items-center justify-between gap-2 px-3 py-2 rounded-2xl border text-xs font-bold ${
       isPatient
-        ? 'bg-[#E36C59]/10 text-[#E36C59] border-[#E36C59]/30'
+        ? 'bg-[#E8F4F1] text-[#164E48] border-[#164E48]/20'
         : 'bg-[#17665B]/10 text-[#17665B] border-[#17665B]/30'
     } ${className}`}>
       <div className="flex items-center space-x-2">
         {isPatient ? (
           <>
-            <Heart className="w-4 h-4 fill-current text-[#E36C59]" />
+            <Heart className="w-4 h-4 fill-current text-[#164E48]" />
             <span>Patient Portal</span>
           </>
         ) : (

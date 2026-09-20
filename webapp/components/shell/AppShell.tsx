@@ -15,13 +15,15 @@ import {
   FileEdit,
   Settings,
   PhoneCall,
-  Home
+  Home,
+  Volume2
 } from 'lucide-react';
 import { LanguageSelector } from './LanguageSelector';
 import { RoleSwitcher } from './RoleSwitcher';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useLanguage } from '@/hooks/useLanguage';
 import { usePatientSettings } from '@/hooks/usePatientSettings';
+import { speakText } from '@/lib/speech';
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -64,11 +66,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   ];
 
   const patientNav = [
-    { label: 'Return Home', href: '/dashboard', icon: Home },
-    { label: t('nav.talkWithVoiceAI'), href: '/command-center', icon: Mic, highlight: true },
-    { label: t('nav.myPhotoAlbum'), href: '/memories', icon: ImageIcon },
-    { label: t('nav.memoryTrivia') || 'Memory Trivia Game', href: '/patient/memory-trivia', icon: Sparkles },
-    { label: t('nav.todaysReminders'), href: '/reminders', icon: Bell },
+    { label: t('nav.returnHome') || 'Return Home', href: '/dashboard', icon: Home, ttsText: 'Return Home' },
+    { label: t('nav.talkWithVoiceAI'), href: '/command-center', icon: Mic, highlight: true, ttsText: 'Talk with Voice AI' },
+    { label: t('nav.myPhotoAlbum'), href: '/memories', icon: ImageIcon, ttsText: 'My Photo Album' },
+    { label: t('nav.memoryGames') || 'Memory Games', href: '/patient/memory-trivia', icon: Sparkles, ttsText: 'Memory Games' },
+    { label: t('nav.todaysReminders'), href: '/reminders', icon: Bell, ttsText: 'Today’s Reminders' },
   ];
 
   const mobileBottomNav = [
@@ -121,9 +123,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   href={item.href}
                   className={`flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-bold transition-all duration-200 ${
                     isActive
-                      ? isPatient
-                        ? 'bg-[#E36C59] text-white shadow-sm'
-                        : 'bg-[#17665B] text-white shadow-sm'
+                      ? 'bg-[#164E48] text-white shadow-sm'
                       : item.highlight
                       ? 'bg-[#BFDCD6]/30 text-[#123B35] hover:bg-[#BFDCD6]/60 border border-[#BFDCD6]/50'
                       : 'text-[#66736F] hover:bg-[#F5F8F6] hover:text-[#123B35]'
@@ -141,9 +141,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     />
                     <span>{item.label}</span>
                   </div>
-                  {item.highlight && !isActive && (
-                    <span className="w-2 h-2 rounded-full bg-[#17665B] animate-ping" />
-                  )}
+                  <div className="flex items-center space-x-1">
+                    {isPatient && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          speakText((item as any).ttsText || item.label);
+                        }}
+                        className={`p-1 rounded-full transition-colors ${
+                          isActive ? 'text-white/80 hover:text-white' : 'text-[#17665B] hover:bg-[#E8F4F1]'
+                        }`}
+                        title="Tap to hear label"
+                      >
+                        <Volume2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    {item.highlight && !isActive && (
+                      <span className="w-2 h-2 rounded-full bg-[#17665B] animate-ping" />
+                    )}
+                  </div>
                 </Link>
               );
             })}
@@ -210,9 +228,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 href={isPatient ? '/dashboard' : item.href}
                 className="relative -top-5 flex flex-col items-center group"
               >
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xl border-4 border-[#F5F8F6] group-active:scale-95 transition-transform ${
-                  isPatient ? 'bg-gradient-to-tr from-[#E36C59] to-[#C85C82]' : 'bg-gradient-to-tr from-[#17665B] to-[#3E9C87]'
-                }`}>
+                <div className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl border-4 border-[#F5F8F6] bg-gradient-to-tr from-[#164E48] to-[#3E9C87] group-active:scale-95 transition-transform">
                   <Mic className="w-6 h-6 text-white animate-pulse" />
                 </div>
                 <span className="text-[10px] font-bold text-[#17665B] mt-0.5">{t('nav.voiceAi')}</span>
@@ -225,7 +241,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center py-1 px-2.5 rounded-xl transition-colors ${
-                isActive ? (isPatient ? 'text-[#E36C59] font-bold' : 'text-[#17665B] font-bold') : 'text-[#66736F]'
+                isActive ? 'text-[#164E48] font-bold' : 'text-[#66736F]'
               }`}
             >
               <Icon className="w-5 h-5 mb-0.5" />

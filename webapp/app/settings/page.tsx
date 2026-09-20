@@ -59,8 +59,8 @@ export default function SettingsPage() {
 
         {isPatient && (
           <Link href="/dashboard">
-            <Button variant="default" className="bg-[#E36C59] text-white hover:bg-[#d05946] font-bold text-xs shadow-md">
-              <Heart className="w-4 h-4 mr-1.5 fill-current" />
+            <Button variant="default" className="bg-[#164E48] text-white hover:bg-[#113e39] font-bold text-xs shadow-md">
+              <Heart className="w-4 h-4 mr-1.5 fill-current text-white" />
               Return Home
             </Button>
           </Link>
