@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Heart, ArrowRight, Loader2, AlertCircle, Shield, UserCheck } from 'lucide-react';
+import { Heart, ArrowRight, Loader2, AlertCircle, Shield, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useLanguage } from '@/hooks/useLanguage';
 
@@ -18,9 +18,6 @@ export default function LoginPage() {
   // Caregiver form state
   const [email, setEmail] = useState('priya.caregiver@example.com');
   const [password, setPassword] = useState('••••••••••••');
-
-  // Patient PIN state
-  const [pin, setPin] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,20 +49,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handlePinKeyPress = (num: string) => {
-    if (pin.length < 4) {
-      const nextPin = pin + num;
-      setPin(nextPin);
-      if (nextPin.length === 4) {
-        handlePatientQuickLogin();
-      }
-    }
-  };
-
-  const handlePinClear = () => {
-    setPin('');
   };
 
   return (
@@ -166,88 +149,40 @@ export default function LoginPage() {
           </form>
         )}
 
-        {/* ================= PATIENT INTUITIVE LOGIN FORM ================= */}
+        {/* ================= 1-TAP PATIENT PORTAL ACCESS ================= */}
         {activeTab === 'patient' && (
-          <div className="space-y-4 sm:space-y-6 text-center animate-in fade-in duration-200">
-            {/* Patient Greeting & Avatar */}
-            <div className="p-4 sm:p-6 bg-gradient-to-r from-[#E8F4F1] to-[#F5F8F6] rounded-2xl sm:rounded-3xl border-2 border-[#BFDCD6] space-y-2 sm:space-y-3">
-              <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-[#164E48] text-white flex items-center justify-center mx-auto text-2xl sm:text-3xl font-extrabold shadow-md border-2 sm:border-4 border-white">
+          <div className="space-y-5 text-center animate-in fade-in duration-200">
+            {/* Patient Welcome Card */}
+            <div className="p-5 sm:p-6 bg-gradient-to-r from-[#E8F4F1] to-[#F5F8F6] rounded-2xl sm:rounded-3xl border-2 border-[#BFDCD6] space-y-3">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#164E48] text-white flex items-center justify-center mx-auto text-2xl sm:text-3xl font-extrabold shadow-md border-4 border-white">
                 S
               </div>
               <div>
-                <h2 className="text-lg sm:text-xl font-extrabold text-[#123B35]">Welcome Back, Sunita!</h2>
-                <p className="text-xs text-[#66736F] font-medium">{t('patient.dailyCompanion')}</p>
+                <h2 className="text-xl font-extrabold text-[#123B35]">Welcome Back, Sunita!</h2>
+                <p className="text-xs text-[#66736F] font-semibold mt-1">{t('patient.dailyCompanion')}</p>
               </div>
             </div>
 
-            {/* Option 1: 1-Tap Quick Access Button */}
+            {/* Simplified 1-Tap Entrance Button */}
             <Button
               type="button"
               onClick={handlePatientQuickLogin}
               disabled={loading}
-              className="w-full py-3.5 sm:py-4 text-sm sm:text-base font-extrabold bg-[#164E48] hover:bg-[#113e39] text-white shadow-xl rounded-2xl flex items-center justify-center space-x-2 cursor-pointer"
+              className="w-full py-4 sm:py-5 text-base sm:text-lg font-extrabold bg-[#164E48] hover:bg-[#113e39] text-white shadow-xl rounded-2xl flex items-center justify-center space-x-2 cursor-pointer transition-transform active:scale-98"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
-                  Opening Your Portal...
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Entering Patient Portal...
                 </>
               ) : (
                 <>
-                  <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
-                  <span>{t('patient.tapToSpeak')}</span>
+                  <Sparkles className="w-5 h-5 mr-2 text-[#C8ECE4] animate-bounce" />
+                  <span>Tap to Enter Patient Portal</span>
+                  <ArrowRight className="w-5 h-5 ml-1" />
                 </>
               )}
             </Button>
-
-            {/* Option 2: Big 4-Digit PIN Access */}
-            <div className="space-y-2.5 sm:space-y-3 pt-2 border-t border-[#DDE7E3]">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#123B35]">{t('login.patientSubheading')}</span>
-                <button onClick={handlePinClear} className="text-[11px] font-bold text-[#17665B] hover:underline cursor-pointer">
-                  {t('login.clearPin')}
-                </button>
-              </div>
-
-              {/* PIN Display Dots */}
-              <div className="flex justify-center space-x-2 sm:space-x-3">
-                {[0, 1, 2, 3].map((idx) => (
-                  <div
-                    key={idx}
-                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl border-2 flex items-center justify-center font-extrabold text-base sm:text-lg ${
-                      pin.length > idx
-                        ? 'border-[#164E48] bg-[#164E48] text-white shadow-sm'
-                        : 'border-[#DDE7E3] bg-[#F5F8F6] text-transparent'
-                    }`}
-                  >
-                    •
-                  </div>
-                ))}
-              </div>
-
-              {/* Numeric Keypad Buttons */}
-              <div className="grid grid-cols-3 gap-1.5 sm:gap-2 max-w-[260px] sm:max-w-xs mx-auto pt-1">
-                {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((num) => (
-                  <button
-                    key={num}
-                    type="button"
-                    onClick={() => handlePinKeyPress(num)}
-                    className="h-10 sm:h-12 rounded-xl sm:rounded-2xl bg-[#F5F8F6] hover:bg-[#BFDCD6]/40 text-[#123B35] font-extrabold text-base sm:text-lg border border-[#DDE7E3] active:scale-95 transition-transform cursor-pointer"
-                  >
-                    {num}
-                  </button>
-                ))}
-                <div />
-                <button
-                  type="button"
-                  onClick={() => handlePinKeyPress('0')}
-                  className="h-10 sm:h-12 rounded-xl sm:rounded-2xl bg-[#F5F8F6] hover:bg-[#BFDCD6]/40 text-[#123B35] font-extrabold text-base sm:text-lg border border-[#DDE7E3] active:scale-95 transition-transform cursor-pointer"
-                >
-                  0
-                </button>
-                <div />
-              </div>
-            </div>
           </div>
         )}
       </Card>
