@@ -6,7 +6,7 @@ import { TodaysCare } from '@/components/dashboard/TodaysCare';
 import { RecentChanges } from '@/components/dashboard/RecentChanges';
 import { CommandCenterCard } from '@/components/dashboard/CommandCenterCard';
 import { PatientDashboard } from '@/components/dashboard/PatientDashboard';
-import { CaregiverQuickTipsCard } from '@/components/dashboard/CaregiverQuickTipsCard';
+import { LiveSynapsePulseCard } from '@/components/dashboard/LiveSynapsePulseCard';
 import { usePatientSummary } from '@/hooks/usePatientSummary';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -41,7 +41,7 @@ export default function DashboardPage() {
 
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (Patient Status + Caregiver Quick Tips + AI Command Center Card) */}
+        {/* Left Column (Patient Status + Live Synapse Pulse Dyad Radar + AI Command Center Card) */}
         <div className="lg:col-span-2 space-y-6">
           {isLoading ? (
             <Skeleton className="h-48 w-full" />
@@ -49,12 +49,10 @@ export default function DashboardPage() {
             <PatientStatus summary={summary} />
           )}
 
-          {/* CogniTrace AI Care Engine Relational Quick Tips */}
-          <CaregiverQuickTipsCard
+          {/* Live Synapse Pulse: Real-Time Dyad Health Radar & 30s Caregiver Reset */}
+          <LiveSynapsePulseCard
             caregiverName="Priya"
             patientName="Sunita"
-            relation="Daughter"
-            stage="Middle Stage"
           />
 
           {/* AI Voice Command Center Hero Card */}
