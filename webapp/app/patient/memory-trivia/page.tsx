@@ -35,6 +35,41 @@ interface TriviaRoundData {
   encouragement_fact: string;
 }
 
+function getTriviaSpeech(round: TriviaRoundData, language: string): string {
+  const options = round.options.join('. ');
+  if (language !== 'hi-IN') {
+    return `${round.question} Here are your options: ${options}`;
+  }
+
+  const title = round.title.toLowerCase();
+  if (title.includes('graduation') || title.includes('degree')) {
+    return `यह अनन्या के स्नातक समारोह का गर्व भरा दिन था। इस समारोह में आपके साथ कौन था? विकल्प हैं: अनन्या, आपकी पोती; प्रिया, आपकी देखभाल करने वाली; या राहुल, आपके बेटे।`;
+  }
+  if (title.includes('festival') || title.includes('diwali') || title.includes('sweets')) {
+    return `दीवाली पर आप परिवार के साथ कौन सी स्वादिष्ट मिठाइयाँ बना रहे थे? विकल्प हैं: इलायची वाली त्योहार की मिठाइयाँ; जन्मदिन का केक; या सुबह की कॉफी।`;
+  }
+  if (title.includes('garden') || title.includes('rose') || title.includes('flower')) {
+    return `आपके घर के बगीचे में कौन से सुंदर फूल खिले थे? विकल्प हैं: पीले और लाल गुलाब; बैंगनी ऑर्किड; या सफेद ट्यूलिप।`;
+  }
+  if (title.includes('goa') || title.includes('beach')) {
+    return `गोवा की इस सुंदर समुद्र तट यात्रा में आपके साथ कौन था? विकल्प हैं: रमेश और प्रिया; डॉक्टर अनिता; या पड़ोसी।`;
+  }
+  return `क्या आपको इस पारिवारिक याद के बारे में कुछ याद है? विकल्प हैं: ${options}`;
+}
+
+function getHindiFeedback(round: TriviaRoundData, isCorrect: boolean): string {
+  if (isCorrect) {
+    if (round.title.toLowerCase().includes('graduation')) {
+      return 'बहुत बढ़िया! सही उत्तर है। अनन्या ने अपनी इंजीनियरिंग की डिग्री लेने के बाद आपको गले लगाया था।';
+    }
+    if (round.title.toLowerCase().includes('festival') || round.title.toLowerCase().includes('sweets')) {
+      return 'बहुत बढ़िया! सही उत्तर है। त्योहार पर सभी को आपकी घर की बनी काजू कतली बहुत पसंद आई थी।';
+    }
+    return 'बहुत बढ़िया! यह सही उत्तर है। आपने एक सुंदर याद साझा की है।';
+  }
+  return 'आइए साथ में सोचते हैं। यह एक छोटी सी मदद है: फोटो में मुस्कुराते हुए लोगों को ध्यान से देखिए।';
+}
+
 export default function MemoryTriviaGamePage() {
   const { isPatient, mounted } = useUserRole();
   const { currentLangObj } = useLanguage();
@@ -89,13 +124,13 @@ export default function MemoryTriviaGamePage() {
 
       // Auto-read question aloud for patient comfort
       setTimeout(() => {
-        speakAloud(`${data.question} Here are your options: ${data.options.join('. ')}`);
+        speakAloud(getTriviaSpeech(data, currentLangObj?.code || 'en-US'));
       }, 400);
     } catch (err) {
       console.warn('Memory trivia load error:', err);
       setGameState('QUESTION');
     }
-  }, [speakAloud]);
+  }, [currentLangObj, speakAloud]);
 
   useEffect(() => {
     if (mounted && isPatient) {
@@ -114,7 +149,9 @@ export default function MemoryTriviaGamePage() {
     if (isCorrect) {
       setGameState('FEEDBACK_CORRECT');
       setRoundsCompleted((prev) => prev + 1);
-      speakAloud(`Wonderful! That is correct! ${roundData.encouragement_fact}`);
+      speakAloud(currentLangObj?.code === 'hi-IN'
+        ? getHindiFeedback(roundData, true)
+        : `Wonderful! That is correct! ${roundData.encouragement_fact}`);
 
       await api.submitMemoryTriviaRound({
         round_id: roundData.round_id,
@@ -124,7 +161,9 @@ export default function MemoryTriviaGamePage() {
       });
     } else {
       setGameState('FEEDBACK_HINT');
-      speakAloud(`Let's think together. Here is a helpful hint: ${roundData.gentle_hint}`);
+      speakAloud(currentLangObj?.code === 'hi-IN'
+        ? getHindiFeedback(roundData, false)
+        : `Let's think together. Here is a helpful hint: ${roundData.gentle_hint}`);
 
       await api.submitMemoryTriviaRound({
         round_id: roundData.round_id,
