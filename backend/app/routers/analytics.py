@@ -172,6 +172,32 @@ async def create_caretaker_appointment(payload: dict):
     }
 
 
+@router.post("/v1/caretaker/appointments/{apt_id}", dependencies=[Depends(require_patient_or_caregiver)])
+@router.put("/v1/caretaker/appointments/{apt_id}", dependencies=[Depends(require_patient_or_caregiver)])
+async def update_caretaker_appointment(apt_id: str, payload: dict):
+    """
+    Updates medical appointment in DynamoDB.
+    """
+    patient_id = payload.get("patient_id") or payload.get("user_id", "patient_001")
+    payload["id"] = apt_id
+    saved_item = dynamodb_service.save_appointment(patient_id, payload)
+    return {
+        "status": "updated",
+        "id": apt_id,
+        "appointment": saved_item
+    }
+
+
+@router.delete("/v1/caretaker/appointments/{apt_id}", dependencies=[Depends(require_patient_or_caregiver)])
+@router.post("/v1/caretaker/appointments/{apt_id}/delete", dependencies=[Depends(require_patient_or_caregiver)])
+async def delete_caretaker_appointment(apt_id: str, patient_id: str = "patient_001"):
+    """
+    Deletes medical appointment from DynamoDB.
+    """
+    dynamodb_service.delete_appointment(patient_id, apt_id)
+    return {"status": "deleted", "id": apt_id, "success": True}
+
+
 @router.get("/v1/caretaker/memories", dependencies=[Depends(require_patient_or_caregiver)])
 async def get_caretaker_memories(patient_id: str = "patient_001"):
     """

@@ -23,7 +23,7 @@ export function useAppointments() {
         }
 
         const apiData = await api.getAppointments('patient_001');
-        if (Array.isArray(apiData)) {
+        if (Array.isArray(apiData) && apiData.length > 0) {
           setAppointments(apiData);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(apiData));
         }
@@ -117,7 +117,24 @@ export function useAppointments() {
     }
   }, []);
 
-  const cancelAppointment = useCallback((id: string) => {
+  const updateAppointment = useCallback(async (id: string, updatedFields: Partial<Appointment>) => {
+    setAppointments((prev) => {
+      const updated = prev.map((a) => (a.id === id ? { ...a, ...updatedFields } : a));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        window.dispatchEvent(new Event('cognitrace_appointments_change'));
+      }
+      return updated;
+    });
+
+    try {
+      await api.updateAppointment(id, updatedFields);
+    } catch (err) {
+      console.warn('API update appointment warning:', err);
+    }
+  }, []);
+
+  const cancelAppointment = useCallback(async (id: string) => {
     setAppointments((prev) => {
       const updated = prev.map((a) => (a.id === id ? { ...a, status: 'Cancelled' as const } : a));
       if (typeof window !== 'undefined') {
@@ -126,9 +143,15 @@ export function useAppointments() {
       }
       return updated;
     });
+
+    try {
+      await api.updateAppointment(id, { status: 'Cancelled' });
+    } catch (err) {
+      console.warn('API cancel appointment warning:', err);
+    }
   }, []);
 
-  const deleteAppointment = useCallback((id: string) => {
+  const deleteAppointment = useCallback(async (id: string) => {
     setAppointments((prev) => {
       const updated = prev.filter((a) => a.id !== id);
       if (typeof window !== 'undefined') {
@@ -137,12 +160,19 @@ export function useAppointments() {
       }
       return updated;
     });
+
+    try {
+      await api.deleteAppointment(id);
+    } catch (err) {
+      console.warn('API delete appointment warning:', err);
+    }
   }, []);
 
   return {
     appointments,
     isLoaded,
     addAppointment,
+    updateAppointment,
     cancelAppointment,
     deleteAppointment,
     refreshAppointments

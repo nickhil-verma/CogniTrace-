@@ -396,6 +396,23 @@ export class ApiClient {
     return this.post('/v1/caretaker/appointments', appointment);
   }
 
+  async updateAppointment(aptId: string, appointment: any) {
+    return this.post(`/v1/caretaker/appointments/${aptId}`, appointment);
+  }
+
+  async deleteAppointment(aptId: string, patientId: string = 'patient_001') {
+    try {
+      const res = await fetch(`${this.getBaseUrl()}/v1/caretaker/appointments/${aptId}?patient_id=${patientId}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      console.warn('API delete appointment warning:', err);
+    }
+  }
+
   async getMemories(patientId: string = 'patient_001') {
     return this.get(`/v1/caretaker/memories?patient_id=${patientId}`, []);
   }

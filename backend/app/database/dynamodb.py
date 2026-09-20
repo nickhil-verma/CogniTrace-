@@ -365,19 +365,18 @@ class DynamoDBService:
                 logger.warning(f"[DynamoDB] Error querying appointments: {e}")
 
         items = [val for key, val in self.in_memory_fallback.items() if key.startswith(f"APT#{user_id}")]
-        return items if items else [
-            {
-                "id": "apt_101",
-                "title": "Dr. Anita Sharma Consultation",
-                "doctorName": "Dr. Anita Sharma",
-                "specialty": "Cognitive Neurology",
-                "date": "Tomorrow",
-                "time": "10:30 AM",
-                "location": "City Care Hospital, Suite 402",
-                "notes": "Bring recent observation log & current prescriptions",
-                "status": "Upcoming"
-            }
-        ]
+        return items
+
+    def delete_appointment(self, user_id: str, apt_id: str) -> bool:
+        apt_key = f"APT#{user_id}#{apt_id}"
+        self.in_memory_fallback.pop(apt_key, None)
+        if self.table:
+            try:
+                self.table.delete_item(Key={"PK": f"USER#{user_id}", "SK": f"APPOINTMENT#{apt_id}"})
+                return True
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Delete appointment error: {e}")
+        return True
 
     # ------------------------------------------------------------------
     # Memories CRUD
