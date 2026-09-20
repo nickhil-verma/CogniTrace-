@@ -13,6 +13,8 @@ export function useUserRole() {
       const saved = localStorage.getItem('cognitrace_user_role') as UserRole | null;
       if (saved === 'patient' || saved === 'caregiver') {
         setRoleState(saved);
+      } else {
+        setRoleState('caregiver');
       }
     }
   }, []);

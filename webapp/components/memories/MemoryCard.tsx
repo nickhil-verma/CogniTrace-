@@ -3,8 +3,9 @@
 import React from 'react';
 import { Memory } from '@/types/memory';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Mic, Users, Trash2 } from 'lucide-react';
+import { MapPin, Mic, Users, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface MemoryCardProps {
   memory: Memory;
@@ -13,7 +14,9 @@ interface MemoryCardProps {
   onDelete?: (id: string) => void;
 }
 
-export function MemoryCard({ memory, onSelect, onReminisce, onDelete }: MemoryCardProps) {
+export function MemoryCard({ memory, onReminisce, onDelete }: MemoryCardProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="group rounded-3xl border border-[#DDE7E3] bg-white overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
       <div>
@@ -34,8 +37,8 @@ export function MemoryCard({ memory, onSelect, onReminisce, onDelete }: MemoryCa
                   e.stopPropagation();
                   onDelete(memory.id);
                 }}
-                className="w-7 h-7 rounded-full bg-white/90 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-md transition-colors"
-                title="Delete Memory"
+                className="w-7 h-7 rounded-full bg-white/90 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-md transition-colors cursor-pointer"
+                title={t('memories.deleteMemory')}
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -56,7 +59,7 @@ export function MemoryCard({ memory, onSelect, onReminisce, onDelete }: MemoryCa
           </div>
 
           <p className="text-xs text-[#66736F] leading-relaxed line-clamp-2">
-            "{memory.description}"
+            &ldquo;{memory.description}&rdquo;
           </p>
 
           {memory.people && memory.people.length > 0 && (
@@ -81,10 +84,10 @@ export function MemoryCard({ memory, onSelect, onReminisce, onDelete }: MemoryCa
           variant="mint"
           size="sm"
           onClick={() => onReminisce?.(memory)}
-          className="text-xs shadow-2xs font-semibold"
+          className="text-xs shadow-2xs font-semibold cursor-pointer"
         >
           <Mic className="w-3.5 h-3.5 mr-1 text-[#17665B]" />
-          Talk about it
+          {t('memories.talkAboutIt')}
         </Button>
       </div>
     </div>

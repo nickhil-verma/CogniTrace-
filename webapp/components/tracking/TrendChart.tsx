@@ -10,6 +10,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts';
+import { useLanguage } from '@/hooks/useLanguage';
 
 const mockTrendData = [
   { month: 'Apr', memory: 82, communication: 88, independence: 78, careNeeds: 25 },
@@ -21,6 +22,8 @@ const mockTrendData = [
 ];
 
 export function TrendChart() {
+  const { t } = useLanguage();
+
   return (
     <div className="w-full h-72 pt-4">
       <ResponsiveContainer width="100%" height="100%">
@@ -68,7 +71,7 @@ export function TrendChart() {
           <Area
             type="monotone"
             dataKey="memory"
-            name="Memory recall"
+            name={t('tracking.legendMemory')}
             stroke="#17665B"
             strokeWidth={2.5}
             fillOpacity={1}
@@ -77,7 +80,7 @@ export function TrendChart() {
           <Area
             type="monotone"
             dataKey="communication"
-            name="Communication"
+            name={t('tracking.legendComm')}
             stroke="#3E9C87"
             strokeWidth={2}
             fillOpacity={1}
@@ -86,7 +89,7 @@ export function TrendChart() {
           <Area
             type="monotone"
             dataKey="independence"
-            name="Daily independence"
+            name={t('tracking.legendIndep')}
             stroke="#C85C82"
             strokeWidth={2}
             fillOpacity={1}

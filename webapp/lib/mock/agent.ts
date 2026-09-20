@@ -36,10 +36,10 @@ export async function simulateMockVoiceTurn(userPromptText: string): Promise<Aud
     },
     {
       id: 'step_2',
-      stepName: 'DynamoDB Vector RAG Retrieval',
+      stepName: 'Care Memory Retrieval',
       status: 'completed',
       timestamp: timestamp,
-      details: `Retrieved ${ragChunksCount || 3} vector chunks from DynamoDB`
+      details: `Retrieved ${ragChunksCount || 3} care memory items`
     }
   ];
 
@@ -48,114 +48,129 @@ export async function simulateMockVoiceTurn(userPromptText: string): Promise<Aud
 
   // 3. Synthesize response with Gemini API if key is present
   if (apiKey && apiKey !== 'AQ.Ab8RN6LqjBmwVMdowBJZ6_kVfXs29firXQKFCsCuLMzeGiHJFQ_invalid') {
-    try {
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-      const promptPayload = {
-        contents: [
-          {
-            parts: [
-              {
-                text: `You are CogniTrace AI Voice Agent, an empathetic dementia care companion.
-Use the following DynamoDB RAG vector memory context if relevant:
-${ragContextText || "Patient Sunita Sharma: Middle Stage dementia. Evening medication Donepezil 5mg at 8 PM. Doctor consultation Dr. Anita Sharma tomorrow 10:30 AM."}
+    const candidateModels = [
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-flash-001',
+      'gemini-1.5-flash',
+      'gemini-pro'
+    ];
+
+    const promptPayload = {
+      contents: [
+        {
+          parts: [
+            {
+              text: `You are CogniTrace AI Voice Companion, an empathetic assistant for Sunita.
+Use the following care memory context if relevant:
+${ragContextText || "Sunita Sharma: Evening medication Donepezil 5mg at 8 PM. Doctor consultation Dr. Anita Sharma tomorrow 10:30 AM."}
 
 User prompt: ${userPromptText}
 
-Output a short, warm, supportive 1-2 sentence response for the patient/caregiver.`
-              }
-            ]
-          }
-        ]
-      };
-
-      const res = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(promptPayload)
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const geminiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (geminiText) {
-          aiResponseText = geminiText.trim();
+Output a short, warm, supportive 1-2 sentence response directly to Sunita in first/second person.`
+            }
+          ]
         }
+      ]
+    };
+
+    for (const modelName of candidateModels) {
+      try {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+        const res = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(promptPayload)
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const geminiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (geminiText) {
+            aiResponseText = geminiText.trim();
+            break;
+          }
+        } else {
+          const errBody = await res.json().catch(() => ({}));
+          console.warn(`[Gemini API] Model '${modelName}' returned HTTP ${res.status}:`, errBody?.error?.message || res.statusText);
+        }
+      } catch (err) {
+        console.warn(`[Gemini API] Request error for model '${modelName}':`, err);
       }
-    } catch (err) {
-      console.warn('[Gemini API] Direct Gemini generation warning, using structured fallback:', err);
     }
   }
 
-  // 4. Construct tool action payload and fallback text if Gemini API didn't return text
+  // 4. Construct tool action payload and fallback text if API didn't return text
   if (lower.includes('remind') || lower.includes('medicine') || lower.includes('medication')) {
     actions.push({
       id: `act_${Date.now()}`,
       toolType: 'create_reminder',
-      title: 'Medication Reminder Created',
-      description: 'Donepezil 5mg at 8:00 PM for Mom',
+      title: 'Medication Task Updated',
+      description: 'Donepezil 5mg at 8:00 PM',
       parameters: {
         title: 'Take evening medicine (Donepezil)',
         time: '8:00 PM',
         category: 'Medication',
-        patientName: 'Mom'
+        patientName: 'Sunita'
       },
       status: 'completed',
       timestamp: timestamp
     });
 
     if (!aiResponseText) {
-      aiResponseText = "I've logged a reminder for Mom to take her evening medicine (Donepezil 5mg) at 8:00 PM tonight.";
+      aiResponseText = "I have updated your task to take your evening medicine (Donepezil 5mg) at 8:00 PM tonight.";
     }
   } else if (lower.includes('appointment') || lower.includes('doctor') || lower.includes('sharma')) {
     actions.push({
       id: `act_${Date.now()}`,
       toolType: 'create_appointment',
       title: 'Doctor Appointment Confirmed',
-      description: 'Dr. Anita Sharma - Cognitive Evaluation tomorrow at 10:30 AM at City Care Hospital.',
+      description: 'Dr. Anita Sharma - Consultation tomorrow at 10:30 AM.',
       parameters: { doctorName: 'Dr. Anita Sharma', date: 'Tomorrow', time: '10:30 AM' },
       status: 'completed',
       timestamp: timestamp
     });
 
     if (!aiResponseText) {
-      aiResponseText = "I've checked the DynamoDB schedule. Dr. Anita Sharma's consultation is confirmed for tomorrow at 10:30 AM.";
+      aiResponseText = "I've checked your schedule. Dr. Anita Sharma's consultation is confirmed for tomorrow at 10:30 AM.";
     }
   } else if (lower.includes('memory') || lower.includes('goa') || lower.includes('photo')) {
     actions.push({
       id: `act_${Date.now()}`,
       toolType: 'retrieve_memory',
       title: 'Memory Card Loaded',
-      description: 'Goa Vacation 1987 - "Mom, do you remember watching the sunset by the waves?"',
+      description: 'Goa Vacation 1987 - "Watching the sunset by the waves with family."',
       parameters: { memoryId: 'mem_1' },
       status: 'completed',
       timestamp: timestamp
     });
 
     if (!aiResponseText) {
-      aiResponseText = "Found the Goa Beach family vacation photo memory from 1987 in vector DB storage!";
+      aiResponseText = "Loaded your cherished Goa Beach family vacation photo memory from 1987!";
     }
   } else {
     actions.push({
       id: `act_${Date.now()}`,
       toolType: 'get_patient_summary',
       title: 'Care Context Retrieved',
-      description: 'Middle Stage: Stable memory recall & cognitive biomarkers.',
+      description: 'Daily schedule and memory status updated.',
       parameters: { patientId: 'patient_001' },
       status: 'completed',
       timestamp: timestamp
     });
 
     if (!aiResponseText) {
-      aiResponseText = `I processed: "${userPromptText}". DynamoDB RAG vector memory confirms Mom is doing well today.`;
+      aiResponseText = `I processed: "${userPromptText}". Your daily care schedule and goals are up to date!`;
     }
   }
 
   timeline.push({
     id: 'step_3',
-    stepName: 'Gemini RAG Reasoning Engine',
+    stepName: 'AI Reasoning Engine',
     status: 'completed',
     timestamp: timestamp,
-    result: 'Response synthesized using vector context'
+    result: 'Response synthesized using care context'
   });
 
   return {

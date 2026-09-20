@@ -11,7 +11,6 @@ from app.models.schemas import (
     CaretakerReminderRequest,
 )
 from app.services.longitudinal_tracker import longitudinal_tracker
-from app.database.dynamodb import dynamodb_service
 
 router = APIRouter(prefix="", tags=["Analytics & Longitudinal Tracking"])
 
@@ -24,29 +23,20 @@ async def calculate_cognitive_drift(payload: LongitudinalDriftRequest):
     """
     if not payload.history:
         raise HTTPException(status_code=400, detail="History array cannot be empty")
-    return longitudinal_tracker.analyze_drift(
-        payload.history,
-        window_days=payload.window_days,
-    )
+    return longitudinal_tracker.analyze_drift(payload.history, window_days=payload.window_days)
 
 
 # ------------------------------------------------------------------
 # Caretaker Dashboard & Patient Summary Endpoints
 # ------------------------------------------------------------------
 
-@router.get(
-    "/v1/caretaker/patient/{patient_id}/summary",
-    response_model=PatientSummaryResponse,
-)
-async def get_patient_summary(
-    patient_id: str = Path(..., description="Unique Patient Identifier"),
-):
+@router.get("/v1/caretaker/patient/{patient_id}/summary", response_model=PatientSummaryResponse)
+async def get_patient_summary(patient_id: str = Path(..., description="Unique Patient Identifier")):
     """
     Returns aggregated patient summary, longitudinal drift analysis, recent digital biomarkers,
     and upcoming caretaker schedule events.
     """
     now = datetime.utcnow()
-
     # Generate synthetic 30-day assessment history for demonstration
     history = [
         HistoricalAssessment(timestamp=now - timedelta(days=28), risk_score=0.22),
@@ -59,11 +49,7 @@ async def get_patient_summary(
     drift = longitudinal_tracker.analyze_drift(history, window_days=30)
 
     latest_score = history[-1].risk_score
-    risk_tier = (
-        "NORMAL"
-        if latest_score < 0.35
-        else ("MCI" if latest_score < 0.65 else "HIGH_RISK")
-    )
+    risk_tier = "NORMAL" if latest_score < 0.35 else ("MCI" if latest_score < 0.65 else "HIGH_RISK")
 
     return PatientSummaryResponse(
         patientId=patient_id,
@@ -78,45 +64,25 @@ async def get_patient_summary(
             "mean_pause_duration_ms": 380.0,
             "type_token_ratio": 0.58,
             "tap_latency_ms": 210.0,
-            "jitter": 0.008,
+            "jitter": 0.008
         },
         clinicalIndicators=[
             "Speech ratio slightly decreased over trailing 14 days.",
             "Subtle increase in pause hesitation during picture description task.",
-            "Psychomotor tap latencies remain within stable range.",
+            "Psychomotor tap latencies remain within stable range."
         ],
         reminders=[
-            {
-                "id": "r1",
-                "title": "Evening Medication",
-                "time": "20:00",
-                "completed": "false",
-            },
-            {
-                "id": "r2",
-                "title": "Verbal Memory Exercise",
-                "time": "14:30",
-                "completed": "true",
-            },
+            {"id": "r1", "title": "Evening Medication", "time": "20:00", "completed": "false"},
+            {"id": "r2", "title": "Verbal Memory Exercise", "time": "14:30", "completed": "true"}
         ],
         appointments=[
-            {
-                "id": "a1",
-                "title": "Neurology Follow-up",
-                "date": "2026-10-05",
-                "doctor": "Dr. Sarah Jenkins",
-            }
-        ],
+            {"id": "a1", "title": "Neurology Follow-up", "date": "2026-10-05", "doctor": "Dr. Sarah Jenkins"}
+        ]
     )
 
 
-@router.post(
-    "/v1/patient/reminiscence/prompt",
-    response_model=ReminiscencePromptResponse,
-)
-async def generate_reminiscence_prompt(
-    payload: ReminiscencePromptRequest,
-):
+@router.post("/v1/patient/reminiscence/prompt", response_model=ReminiscencePromptResponse)
+async def generate_reminiscence_prompt(payload: ReminiscencePromptRequest):
     """
     Generates personalized reminiscence conversation prompt based on photo memory description.
     """
@@ -124,13 +90,11 @@ async def generate_reminiscence_prompt(
         f"Do you remember this special moment from '{payload.description}'? "
         f"Tell me about who was there with you that day and how you felt."
     )
-
     return ReminiscencePromptResponse(prompt=prompt)
 
 
-# ------------------------------------------------------------------
-# Caretaker Reminders
-# ------------------------------------------------------------------
+from app.database.dynamodb import dynamodb_service
+
 
 @router.get("/v1/caretaker/reminders")
 async def get_caretaker_reminders(patient_id: str = "patient_001"):
@@ -141,74 +105,44 @@ async def get_caretaker_reminders(patient_id: str = "patient_001"):
 
 
 @router.post("/v1/caretaker/reminders")
-async def create_caretaker_reminder(payload: CaretakerReminderRequest):
+async def create_caretaker_reminder(payload: dict):
     """
     Creates or updates patient reminder in DynamoDB.
     """
-    reminder_payload = payload.model_dump(exclude_none=True)
-
-    patient_id = (
-        reminder_payload.get("patient_id")
-        or reminder_payload.get("patientId")
-        or reminder_payload.get("user_id")
-        or "patient_001"
-    )
-
-    saved_item = dynamodb_service.save_reminder(
-        patient_id,
-        reminder_payload,
-    )
-
+    patient_id = payload.get("patient_id") or payload.get("user_id", "patient_001") if isinstance(payload, dict) else getattr(payload, "patient_id", "patient_001")
+    data = payload.model_dump(exclude_none=True) if hasattr(payload, "model_dump") else payload
+    saved_item = dynamodb_service.save_reminder(patient_id, data)
     return {
         "status": "created",
         "id": saved_item.get("id"),
-        "reminder": saved_item,
+        "reminder": saved_item
     }
 
 
 @router.put("/v1/caretaker/reminders/{rem_id}/toggle")
-async def toggle_caretaker_reminder(
-    rem_id: str,
-    patient_id: str = "patient_001",
-):
+@router.post("/v1/caretaker/reminders/{rem_id}/toggle")
+async def toggle_caretaker_reminder(rem_id: str, patient_id: str = "patient_001"):
     """
     Toggles completion status of reminder in DynamoDB.
     """
     updated = dynamodb_service.toggle_reminder(patient_id, rem_id)
-
     if not updated:
         raise HTTPException(status_code=404, detail="Reminder not found")
-
-    return {
-        "status": "updated",
-        "reminder": updated,
-    }
+    return {"status": "updated", "reminder": updated}
 
 
 @router.delete("/v1/caretaker/reminders/{rem_id}")
-async def delete_caretaker_reminder(
-    rem_id: str,
-    patient_id: str = "patient_001",
-):
+@router.post("/v1/caretaker/reminders/{rem_id}/delete")
+async def delete_caretaker_reminder(rem_id: str, patient_id: str = "patient_001"):
     """
     Deletes reminder from DynamoDB.
     """
     dynamodb_service.delete_reminder(patient_id, rem_id)
+    return {"status": "deleted", "id": rem_id}
 
-    return {
-        "status": "deleted",
-        "id": rem_id,
-    }
-
-
-# ------------------------------------------------------------------
-# Caretaker Appointments
-# ------------------------------------------------------------------
 
 @router.get("/v1/caretaker/appointments")
-async def get_caretaker_appointments(
-    patient_id: str = "patient_001",
-):
+async def get_caretaker_appointments(patient_id: str = "patient_001"):
     """
     Retrieves all medical appointments from DynamoDB.
     """
@@ -220,32 +154,17 @@ async def create_caretaker_appointment(payload: dict):
     """
     Schedules medical appointment in DynamoDB.
     """
-    patient_id = (
-        payload.get("patient_id")
-        or payload.get("user_id")
-        or "patient_001"
-    )
-
-    saved_item = dynamodb_service.save_appointment(
-        patient_id,
-        payload,
-    )
-
+    patient_id = payload.get("patient_id") or payload.get("user_id", "patient_001")
+    saved_item = dynamodb_service.save_appointment(patient_id, payload)
     return {
         "status": "scheduled",
         "id": saved_item.get("id"),
-        "appointment": saved_item,
+        "appointment": saved_item
     }
 
 
-# ------------------------------------------------------------------
-# Caretaker Memories
-# ------------------------------------------------------------------
-
 @router.get("/v1/caretaker/memories")
-async def get_caretaker_memories(
-    patient_id: str = "patient_001",
-):
+async def get_caretaker_memories(patient_id: str = "patient_001"):
     """
     Retrieves all photo memories from DynamoDB.
     """
@@ -257,47 +176,34 @@ async def create_caretaker_memory(payload: dict):
     """
     Creates photo memory album item in DynamoDB.
     """
-    patient_id = (
-        payload.get("patient_id")
-        or payload.get("user_id")
-        or "patient_001"
-    )
-
-    saved_item = dynamodb_service.save_memory(
-        patient_id,
-        payload,
-    )
-
+    patient_id = payload.get("patient_id") or payload.get("user_id", "patient_001")
+    saved_item = dynamodb_service.save_memory(patient_id, payload)
     return {
         "status": "created",
         "id": saved_item.get("id"),
-        "memory": saved_item,
+        "memory": saved_item
     }
 
 
-# ------------------------------------------------------------------
-# RAG Research & DynamoDB Vectors
-# ------------------------------------------------------------------
+@router.delete("/v1/caretaker/memories/{mem_id}")
+@router.post("/v1/caretaker/memories/{mem_id}/delete")
+async def delete_caretaker_memory(mem_id: str, patient_id: str = "patient_001"):
+    """
+    Deletes photo memory item from DynamoDB.
+    """
+    dynamodb_service.delete_memory(patient_id, mem_id)
+    return {"status": "deleted", "id": mem_id}
 
-@router.post(
-    "/v1/rag/vectors",
-    tags=["RAG Research & DynamoDB Vectors"],
-)
+
+
+
+@router.post("/v1/rag/vectors", tags=["RAG Research & DynamoDB Vectors"])
 async def store_rag_vector(payload: dict):
     """
     Stores text chunk, vector embeddings array, and metadata in AWS DynamoDB for RAG research.
     """
-    user_id = (
-        payload.get("user_id")
-        or payload.get("patient_id")
-        or "usr_demo_001"
-    )
-
-    vector_id = (
-        payload.get("vector_id")
-        or f"vec_{int(datetime.utcnow().timestamp() * 1000)}"
-    )
-
+    user_id = payload.get("user_id") or payload.get("patient_id", "usr_demo_001")
+    vector_id = payload.get("vector_id") or f"vec_{int(datetime.utcnow().timestamp() * 1000)}"
     text_chunk = payload.get("text_chunk", "")
     embedding = payload.get("embedding", [0.0] * 1536)
     metadata = payload.get("metadata", {})
@@ -307,7 +213,7 @@ async def store_rag_vector(payload: dict):
         vector_id=vector_id,
         text_chunk=text_chunk,
         embedding=embedding,
-        metadata=metadata,
+        metadata=metadata
     )
 
     return {
@@ -316,55 +222,41 @@ async def store_rag_vector(payload: dict):
         "vector_id": vector_id,
         "embedding_dimensions": len(embedding),
         "table": dynamodb_service.table_name,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.utcnow().isoformat()
     }
 
 
-@router.get(
-    "/v1/rag/vectors/{patient_id}",
-    tags=["RAG Research & DynamoDB Vectors"],
-)
+@router.get("/v1/rag/vectors/{patient_id}", tags=["RAG Research & DynamoDB Vectors"])
 async def get_rag_vectors(patient_id: str):
     """
     Retrieves all RAG vector chunks stored in DynamoDB for a patient for RAG context retrieval.
     """
     vectors = dynamodb_service.get_user_rag_vectors(patient_id)
-
     return {
         "patient_id": patient_id,
         "count": len(vectors),
-        "vectors": vectors,
+        "vectors": vectors
     }
 
 
-@router.post(
-    "/v1/rag/search",
-    tags=["RAG Research & DynamoDB Vectors"],
-)
+@router.post("/v1/rag/search", tags=["RAG Research & DynamoDB Vectors"])
 async def search_rag_context(payload: dict):
     """
     Performs RAG context search matching query against stored vector chunks in DynamoDB.
     """
     query = payload.get("query", "")
-    patient_id = (
-        payload.get("patient_id")
-        or payload.get("user_id")
-        or "patient_001"
-    )
+    patient_id = payload.get("patient_id") or payload.get("user_id", "patient_001")
 
-    matching_chunks = dynamodb_service.search_rag_vectors(
-        patient_id,
-        query,
-    )
-
-    context_text = "\n".join(
-        [c.get("text_chunk", "") for c in matching_chunks]
-    )
+    matching_chunks = dynamodb_service.search_rag_vectors(patient_id, query)
+    context_text = "\n".join([c.get("text_chunk", "") for c in matching_chunks])
 
     return {
         "query": query,
         "patient_id": patient_id,
         "matched_chunks_count": len(matching_chunks),
         "context": context_text,
-        "chunks": matching_chunks,
+        "chunks": matching_chunks
     }
+
+
+

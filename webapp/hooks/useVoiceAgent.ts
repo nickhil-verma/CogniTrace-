@@ -130,7 +130,7 @@ export function useVoiceAgent() {
 
   // Submit prompt (either text or voice audio)
   const submitVoiceTurn = useCallback(async (textInput?: string, inputBlob?: Blob | null) => {
-    const promptText = textInput || speechTranscriptRef.current || speechTranscript || 'Remind Mom to take her medicine at 8:00 PM tonight.';
+    const promptText = textInput || speechTranscriptRef.current || speechTranscript || 'What should I do next?';
     const targetBlob = inputBlob !== undefined ? inputBlob : audioBlob;
 
     setErrorMessage(null);

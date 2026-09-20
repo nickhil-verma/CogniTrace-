@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mic, Send, AlertTriangle } from 'lucide-react';
+import { Send, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VoiceState } from '@/types/agent';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface VoiceRecorderProps {
   voiceState: VoiceState;
@@ -17,11 +18,10 @@ interface VoiceRecorderProps {
 export function VoiceRecorder({
   voiceState,
   permissionError,
-  onStartListening,
-  onStopListening,
   onSubmitTextPrompt
 }: VoiceRecorderProps) {
   const [textInput, setTextInput] = useState('');
+  const { t } = useLanguage();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,13 +40,12 @@ export function VoiceRecorder({
         </div>
       )}
 
-      {/* Manual Input Form + Mic Button */}
+      {/* Manual Input Form + Submit Button */}
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         <Input
           type="text"
           value={textInput}
-          onChange={(e) => setTextInput(e.target.value)}
-          placeholder="Or type a care command (e.g., 'Remind Mom to take medicine at 8')"
+          placeholder={t('commandCenter.inputPlaceholder') || "Type a task or question (e.g., 'What should I do next?')"}
           className="rounded-full bg-white shadow-xs border-[#DDE7E3] h-12 text-sm px-5"
           disabled={voiceState === 'PROCESSING' || voiceState === 'EXECUTING'}
         />

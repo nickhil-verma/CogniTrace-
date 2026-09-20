@@ -25,6 +25,7 @@ class DynamoDBService:
         self.resource = None
         self.table = None
         self.in_memory_fallback: Dict[str, Dict[str, Any]] = {}
+        self._seeded_reminders_users = set()
         self._init_client()
 
     def _init_client(self):
@@ -252,8 +253,15 @@ class DynamoDBService:
             except Exception as e:
                 logger.warning(f"[DynamoDB] Error querying reminders: {e}")
 
+        if user_id not in self._seeded_reminders_users:
+            self._seeded_reminders_users.add(user_id)
+            for rem in self._get_default_seed_reminders():
+                rem_key = f"REM#{user_id}#{rem['id']}"
+                if rem_key not in self.in_memory_fallback:
+                    self.in_memory_fallback[rem_key] = rem
+
         items = [val for key, val in self.in_memory_fallback.items() if key.startswith(f"REM#{user_id}")]
-        return items if items else self._get_default_seed_reminders()
+        return items
 
     def toggle_reminder(self, user_id: str, rem_id: str) -> Optional[Dict[str, Any]]:
         reminders = self.get_reminders(user_id)
@@ -265,7 +273,9 @@ class DynamoDBService:
         return None
 
     def delete_reminder(self, user_id: str, rem_id: str) -> bool:
-        self.in_memory_fallback.pop(f"REM#{user_id}#{rem_id}", None)
+        rem_key = f"REM#{user_id}#{rem_id}"
+        self.in_memory_fallback.pop(rem_key, None)
+        self._seeded_reminders_users.add(user_id)
         if self.table:
             try:
                 self.table.delete_item(Key={"PK": f"USER#{user_id}", "SK": f"REMINDER#{rem_id}"})
@@ -412,18 +422,78 @@ class DynamoDBService:
             except Exception as e:
                 logger.warning(f"[DynamoDB] Error querying memories: {e}")
 
+        if not hasattr(self, '_seeded_memories_users'):
+            self._seeded_memories_users = set()
+
+        if user_id not in self._seeded_memories_users:
+            self._seeded_memories_users.add(user_id)
+            for mem in self._get_default_seed_memories():
+                mem_key = f"MEM#{user_id}#{mem['id']}"
+                if mem_key not in self.in_memory_fallback:
+                    self.in_memory_fallback[mem_key] = mem
+
         items = [val for key, val in self.in_memory_fallback.items() if key.startswith(f"MEM#{user_id}")]
-        return items if items else [
+        return items
+
+    def delete_memory(self, user_id: str, mem_id: str) -> bool:
+        mem_key = f"MEM#{user_id}#{mem_id}"
+        self.in_memory_fallback.pop(mem_key, None)
+        if not hasattr(self, '_seeded_memories_users'):
+            self._seeded_memories_users = set()
+        self._seeded_memories_users.add(user_id)
+        if self.table:
+            try:
+                self.table.delete_item(Key={"PK": f"USER#{user_id}", "SK": f"MEMORY#{mem_id}"})
+                return True
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Delete memory error: {e}")
+        return True
+
+    def _get_default_seed_memories(self) -> List[Dict[str, Any]]:
+        return [
             {
                 "id": "mem_1",
-                "title": "Goa Family Vacation Memory",
+                "title": "Family Vacation in Goa",
                 "date": "Summer 1987",
-                "location": "Goa Beach",
+                "location": "Calangute Beach, Goa",
                 "imageUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
-                "description": "Mom watching the sunset by the ocean waves with family.",
-                "people": ["Mom", "Caregiver"],
-                "tags": ["Vacation", "Goa"],
-                "reminiscencePrompt": "Mom, do you remember watching the sunset by the ocean in Goa?"
+                "description": "Our first family beach vacation together. Mom loved watching the sunset over the sea and walking along the shoreline with ice cream.",
+                "people": ["Mom (Sunita)", "Dad (Ramesh)", "Rahul", "Priya"],
+                "tags": ["Vacation", "Beach", "Family", "1980s"],
+                "reminiscencePrompt": "Mom, do you remember our beach trip to Goa in 1987? You loved the sound of the ocean waves at sunset."
+            },
+            {
+                "id": "mem_2",
+                "title": "Spring Garden & Rose Blossoms",
+                "date": "March 2015",
+                "location": "Home Garden, New Delhi",
+                "imageUrl": "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=800&q=80",
+                "description": "Mom spent the entire morning planting yellow and red roses in her backyard garden. The blossoms bloomed beautifully for months.",
+                "people": ["Mom (Sunita)", "Priya"],
+                "tags": ["Gardening", "Flowers", "Home", "Spring"],
+                "reminiscencePrompt": "Mom, remember how vibrant yellow roses bloomed in your home garden? You always cared for them every morning."
+            },
+            {
+                "id": "mem_3",
+                "title": "Granddaughter Graduation Day",
+                "date": "June 2021",
+                "location": "University Auditorium",
+                "imageUrl": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80",
+                "description": "Mom smiled so brightly when Ananya walked across the stage to receive her engineering degree.",
+                "people": ["Mom (Sunita)", "Ananya", "Rahul"],
+                "tags": ["Graduation", "Pride", "Celebration"],
+                "reminiscencePrompt": "Mom, look at Ananya in her graduation gown! You were so proud of her achievements."
+            },
+            {
+                "id": "mem_4",
+                "title": "Traditional Festival Sweets Preparation",
+                "date": "Diwali 2019",
+                "location": "Family Kitchen",
+                "imageUrl": "https://images.unsplash.com/photo-1599785209707-a456fc1337cc?auto=format&fit=crop&w=800&q=80",
+                "description": "Mom guiding everyone in making home-style kaju katli and besan ladoos. The aroma of cardamom filled the whole house.",
+                "people": ["Mom (Sunita)", "Dad", "Priya", "Ananya"],
+                "tags": ["Diwali", "Festival", "Cooking", "Traditions"],
+                "reminiscencePrompt": "Mom, do you recall making cardamom sweets for Diwali? The kitchen smelled so delicious!"
             }
         ]
 
