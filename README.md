@@ -241,7 +241,7 @@ Rather than introducing expensive AWS Application Load Balancers or managing cus
 
 ---
 
-##Future Implementation
+## Future Implementation
 <img width="1600" height="1280" alt="image" src="https://github.com/user-attachments/assets/49332f13-f219-4223-9361-4425e02871c7" />
 
 
