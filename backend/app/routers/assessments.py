@@ -25,6 +25,40 @@ from app.services.linguistic_extractor import linguistic_extractor
 from app.services.risk_engine import risk_engine
 from app.services.redis_service import redis_service
 from app.guardrails.manager import guardrail_manager
+from app.routers.auth import get_current_user_from_token
+
+
+async def _resolve_session_context(request: Request, fallback_patient_id: str = "patient_001"):
+    patient_id = fallback_patient_id
+    user_context = {
+        "role": "patient",
+        "name": "Sunita Sharma",
+        "patient_name": "Sunita",
+        "patient_id": patient_id,
+    }
+
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        return patient_id, user_context
+
+    try:
+        current_user = await get_current_user_from_token(auth_header)
+        user_context = {
+            "role": current_user.role,
+            "name": current_user.name,
+            "patient_name": current_user.patient_name,
+            "patient_id": patient_id,
+        }
+        if current_user.role.lower() == "patient":
+            patient_id = current_user.id
+            user_context["patient_id"] = current_user.id
+        elif current_user.role.lower() == "caregiver":
+            patient_id = current_user.patient_name and fallback_patient_id or fallback_patient_id
+            user_context["patient_id"] = fallback_patient_id
+    except HTTPException:
+        return patient_id, user_context
+
+    return patient_id, user_context
 
 router = APIRouter(prefix="", tags=["Assessments & Extraction"])
 
@@ -116,6 +150,7 @@ from app.services.grok_agent import grok_agent
 
 @router.post("/v1/patient/audio-task-turn", response_model=AudioTaskTurnResponse)
 async def submit_audio_task_turn(
+    request: Request,
     file: Optional[UploadFile] = File(None),
     text: Optional[str] = Form(None),
     patient_id: str = Form("patient_001")
@@ -123,8 +158,11 @@ async def submit_audio_task_turn(
     """
     Web App & Mobile App endpoint for patient voice interaction turns with Redis rate limiting and LangGraph Grok agent.
     """
+    resolved_patient_id, user_context = await _resolve_session_context(request, fallback_patient_id=patient_id)
+    p_id = resolved_patient_id or patient_id
+
     # Rate limiting check (30 minutes sliding window per patient for task completion actions)
-    allowed = await redis_service.check_sliding_rate_limit(patient_id, "audio_turn", window_seconds=1800, max_requests=10)
+    allowed = await redis_service.check_sliding_rate_limit(p_id, "audio_turn", window_seconds=1800, max_requests=10)
     if not allowed:
         return AudioTaskTurnResponse(
             transcript=text or "Repeated patient response recorded.",
@@ -153,7 +191,7 @@ async def submit_audio_task_turn(
     report = risk_engine.evaluate_risk(acoustic, linguistic)
 
     # Execute LangGraph Grok Agent State Machine
-    agent_response = await grok_agent.run_agent_turn(linguistic.transcript, patient_id=patient_id)
+    agent_response = await grok_agent.run_agent_turn(linguistic.transcript, patient_id=p_id, user_context=user_context)
 
     # Check emergency keywords guardrail
     guardrail = guardrail_manager.check_emergency_keywords(linguistic.transcript)
@@ -171,7 +209,7 @@ async def submit_audio_task_turn(
     try:
         from app.database.dynamodb import dynamodb_service
         dynamodb_service.save_voice_chat(
-            patient_id=patient_id,
+            patient_id=p_id,
             chat_data={
                 "transcript": linguistic.transcript,
                 "ai_response": ai_response,
@@ -231,7 +269,8 @@ async def process_voice_command(
     from app.database.dynamodb import dynamodb_service
 
     raw_prompt = transcript or text or ""
-    p_id = patient_id or "patient_001"
+    resolved_patient_id, user_context = await _resolve_session_context(request, fallback_patient_id=patient_id or "patient_001")
+    p_id = resolved_patient_id or (patient_id or "patient_001")
 
     # Support application/json payload body
     if "application/json" in request.headers.get("content-type", "").lower():
@@ -338,7 +377,7 @@ async def process_voice_command(
 
     else:
         # Fall back to Grok Agent turn with memory questioning
-        agent_res = await grok_agent.run_agent_turn(prompt_text, patient_id=p_id)
+        agent_res = await grok_agent.run_agent_turn(prompt_text, patient_id=p_id, user_context=user_context)
         speech_response = agent_res.ai_response
         intent = "UNKNOWN"
         action_executed = True
@@ -421,6 +460,8 @@ async def process_voice_chat_turn(
         except Exception:
             pass
 
+    resolved_patient_id, user_context = await _resolve_session_context(request, fallback_patient_id=patient_id)
+    patient_id = resolved_patient_id or patient_id
     lower = transcript.strip().lower()
     is_caregiver = (user_role == "CAREGIVER")
 
@@ -591,7 +632,7 @@ async def process_voice_chat_turn(
 
     # --- 4. GENERAL CONVERSATION & MEMORY RECALL QUESTIONING ---
     else:
-        agent_res = await grok_agent.run_agent_turn(transcript, patient_id=patient_id)
+        agent_res = await grok_agent.run_agent_turn(transcript, patient_id=patient_id, user_context=user_context)
         speech_response = agent_res.ai_response
         intent = "UNKNOWN"
         action_executed = True

@@ -54,7 +54,7 @@ class LangGraphVoiceAgent:
         self.api_key = GEMINI_API_KEY
         self.models = GEMINI_MODELS
 
-    async def run_agent_turn(self, prompt_text: str, patient_id: str = "patient_001") -> GrokAgentResponse:
+    async def run_agent_turn(self, prompt_text: str, patient_id: str = "patient_001", user_context: Optional[Dict[str, Any]] = None) -> GrokAgentResponse:
         """
         Executes a 4-step state graph:
         Node 1: Acoustic & Intent Ingestion
@@ -64,12 +64,23 @@ class LangGraphVoiceAgent:
         """
         from app.database.dynamodb import dynamodb_service
 
-        rag_chunks = dynamodb_service.search_rag_vectors(patient_id, prompt_text)
+        resolved_patient_id = patient_id or "patient_001"
+        user_context = user_context or {}
+        user_role = str(user_context.get("role", "patient")).lower()
+        user_name = str(user_context.get("name") or "Sunita")
+        patient_name = str(user_context.get("patient_name") or user_name)
+
+        if not resolved_patient_id or resolved_patient_id == "patient_001" and user_role == "caregiver":
+            caregiver_patient_id = user_context.get("patient_id") or user_context.get("patientId")
+            if caregiver_patient_id:
+                resolved_patient_id = caregiver_patient_id
+
+        rag_chunks = dynamodb_service.search_rag_vectors(resolved_patient_id, prompt_text)
         rag_context = "\n".join([c.get("text_chunk", "") for c in rag_chunks]) if rag_chunks else ""
 
         # Fetch stored memories and past voice chats from DB
-        memories = dynamodb_service.get_memories(patient_id)
-        past_chats = dynamodb_service.get_voice_chats(patient_id, limit=5)
+        memories = dynamodb_service.get_memories(resolved_patient_id)
+        past_chats = dynamodb_service.get_voice_chats(resolved_patient_id, limit=5)
 
         mem_snippets = []
         for m in memories[:4]:
@@ -80,6 +91,7 @@ class LangGraphVoiceAgent:
             chat_snippets.append(f"- Past Chat Turn: Patient said '{c.get('transcript')}' -> AI answered '{c.get('ai_response')}'")
 
         memory_ref_context = (
+            f"PATIENT CONTEXT: {patient_name} ({user_role})\n"
             "STORED PHOTO MEMORIES ALBUM:\n" + ("\n".join(mem_snippets) if mem_snippets else "None") + "\n\n"
             "STORED VOICE CHAT HISTORY & PERFORMANCE:\n" + ("\n".join(chat_snippets) if chat_snippets else "None")
         )
@@ -94,7 +106,7 @@ class LangGraphVoiceAgent:
             TimelineStep(
                 stepIndex=2,
                 title="DynamoDB Memory & Vector Retrieval",
-                description=f"Retrieved {len(memories)} photo memories and {len(past_chats)} stored voice chats from AWS DynamoDB.",
+                description=f"Retrieved {len(memories)} photo memories and {len(past_chats)} stored voice chats for user/session '{resolved_patient_id}'.",
                 timestamp="35ms"
             ),
             TimelineStep(
