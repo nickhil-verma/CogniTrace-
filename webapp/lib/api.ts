@@ -319,7 +319,7 @@ export class ApiClient {
     return this.get(`/v1/patient/voice-chats?patient_id=${patientId}`, { patient_id: patientId, count: 0, chats: [] });
   }
 
-  // Stateful Conversational Voice Agent Turn (POST /api/voice/chat-turn)
+  // Stateful Conversational Voice Agent Turn (Bifurcated: Caregiver vs Patient Engine)
   async executeVoiceChatTurn(payload: {
     transcript: string;
     user_role?: 'PATIENT' | 'CAREGIVER';
@@ -333,24 +333,41 @@ export class ApiClient {
     ui_action: Record<string, any>;
   }> {
     try {
-      const userRole = payload.user_role || (typeof window !== 'undefined' && localStorage.getItem('cognitrace_user_role') === 'patient' ? 'PATIENT' : 'CAREGIVER');
-      const body = {
-        transcript: payload.transcript,
-        user_role: userRole,
-        conversation_history: payload.conversation_history || [],
-        pending_state: payload.pending_state || null,
-      };
-      const res = await fetch(`${this.getBaseUrl()}/api/voice/chat-turn`, {
+      const isPatient = payload.user_role === 'PATIENT' || (typeof window !== 'undefined' && localStorage.getItem('cognitrace_user_role') === 'patient');
+      const endpoint = isPatient ? '/api/voice/patient/chat-turn' : '/api/voice/caregiver/chat-turn';
+      const requestBody = isPatient 
+        ? { transcript: payload.transcript, patient_id: 'patient_001', conversation_history: payload.conversation_history }
+        : { transcript: payload.transcript, caregiver_id: 'usr_demo_001', patient_id: 'patient_001', conversation_history: payload.conversation_history };
+
+      const res = await fetch(`${this.getBaseUrl()}${endpoint}`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify(body),
+        body: JSON.stringify(requestBody),
       });
+
       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-      return await res.json();
-    } catch (err) {
-      console.warn('[CogniTrace API] /api/voice/chat-turn offline. Using fallback simulation.', err);
+      const data = await res.json();
+
       return {
-        speech_response: "I've noted that for you. Is there anything else I can help with?",
+        speech_response: data.speech_response || "I'm right here with you.",
+        action_executed: (data.actions && data.actions.length > 0),
+        requires_followup: false,
+        updated_state: payload.pending_state || null,
+        ui_action: {
+          modal_type: data.ui_modal || 'NONE',
+          target_route: data.target_route || null,
+          data: data.patient_status_summary || data.retrieved_memory || {}
+        },
+      };
+    } catch (err) {
+      console.warn('[CogniTrace API] Voice endpoint offline. Using fallback simulation.', err);
+      const isPatient = payload.user_role === 'PATIENT' || (typeof window !== 'undefined' && localStorage.getItem('cognitrace_user_role') === 'patient');
+      const fallbackSpeech = isPatient
+        ? "You're doing wonderfully today! Take a gentle breath and enjoy your day."
+        : "Understood. Sunita's daily care schedule and status metrics have been refreshed.";
+
+      return {
+        speech_response: fallbackSpeech,
         action_executed: false,
         requires_followup: false,
         updated_state: null,
@@ -358,6 +375,7 @@ export class ApiClient {
       };
     }
   }
+
 
   // ------------------------------------------------------------------
   // Reminders & Schedule APIs

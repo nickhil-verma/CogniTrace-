@@ -8,7 +8,7 @@ from app.config import settings
 from app.database.postgres import init_postgres_pool, close_postgres_pool, check_postgres_health
 from app.services.redis_service import redis_service
 from app.database.dynamodb import dynamodb_service
-from app.routers import assessments, analytics, auth
+from app.routers import assessments, analytics, auth, voice
 
 
 # FastAPI Lifespan Context Manager
@@ -123,3 +123,5 @@ async def root():
 app.include_router(auth.router)
 app.include_router(assessments.router)
 app.include_router(analytics.router)
+app.include_router(voice.router)
+

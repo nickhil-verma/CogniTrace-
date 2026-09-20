@@ -164,12 +164,14 @@ export function useVoiceAgent() {
     setVoiceState('PROCESSING');
     setTranscript(promptText);
 
-    // Determine current user role
+    // Determine current user role (checks stored role and current page path)
     let userRole: 'PATIENT' | 'CAREGIVER' = 'CAREGIVER';
     if (typeof window !== 'undefined') {
       const storedRole = localStorage.getItem('cognitrace_user_role');
-      if (storedRole === 'patient') userRole = 'PATIENT';
+      const isPatientPath = window.location.pathname.includes('/patient');
+      if (storedRole === 'patient' || isPatientPath) userRole = 'PATIENT';
     }
+
 
     try {
       // Step 1: Execute stateful chat turn via FastAPI endpoint

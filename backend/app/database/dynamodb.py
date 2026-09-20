@@ -497,55 +497,124 @@ class DynamoDBService:
         ]
 
     # ------------------------------------------------------------------
-    # Voice Chat Memory Logs CRUD
+    # Bifurcated Voice Chat Sessions (Caregiver vs Patient)
     # ------------------------------------------------------------------
-    def save_voice_chat(self, user_id: str = "patient_001", chat_data: Dict[str, Any] = None, patient_id: Optional[str] = None) -> Dict[str, Any]:
-        user_id = patient_id or user_id or "patient_001"
-        chat_data = chat_data or {}
+    def save_caregiver_chat(self, caregiver_id: str, patient_id: str, chat_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Stores executive caregiver dialogue history in caregiver_chat_history table/partition.
+        Never leaks into patient voice sessions.
+        """
+        caregiver_id = caregiver_id or "usr_demo_001"
+        patient_id = patient_id or "patient_001"
         ts_ms = int(datetime.utcnow().timestamp() * 1000)
-        chat_id = chat_data.get("id") or f"chat_{ts_ms}"
+        chat_id = chat_data.get("id") or f"cg_chat_{ts_ms}"
         iso_now = datetime.utcnow().isoformat()
 
-        from decimal import Decimal
-        raw_score = chat_data.get("risk_score") or chat_data.get("riskScore", 0.2)
-
         item = {
-            "PK": f"USER#{user_id}",
+            "PK": f"CAREGIVER_CHAT#{caregiver_id}",
             "SK": f"CHAT#{ts_ms}",
             "id": chat_id,
-            "patient_id": user_id,
+            "caregiver_id": caregiver_id,
+            "patient_id": patient_id,
             "transcript": chat_data.get("transcript", ""),
-            "ai_response": chat_data.get("ai_response") or chat_data.get("aiResponse", ""),
-            "risk_tier": chat_data.get("risk_tier") or chat_data.get("riskTier", "NORMAL"),
-            "risk_score": Decimal(str(raw_score)),
-            "acoustic_features": chat_data.get("acoustic_features") or chat_data.get("acousticFeatures", {}),
-            "linguistic_features": chat_data.get("linguistic_features") or chat_data.get("linguisticFeatures", {}),
-            "timestamp": chat_data.get("timestamp") or iso_now,
+            "ai_response": chat_data.get("ai_response", ""),
+            "tool_invocations": chat_data.get("tool_invocations", []),
             "created_at": iso_now
         }
 
-        self.in_memory_fallback[f"CHAT#{user_id}#{chat_id}"] = item
+        self.in_memory_fallback[f"CG_CHAT#{caregiver_id}#{chat_id}"] = item
 
         if self.table:
             try:
                 self.table.put_item(Item=item)
-                logger.info(f"[DynamoDB] Saved voice chat log '{chat_id}' for user '{user_id}'.")
+                logger.info(f"[DynamoDB] Saved caregiver chat session '{chat_id}' for caregiver '{caregiver_id}'.")
             except Exception as e:
-                logger.warning(f"[DynamoDB] Error saving voice chat: {e}")
-
-        # Also store as RAG vector chunk for memory reference retrieval
-        try:
-            self.save_rag_vector(
-                user_id=user_id,
-                vector_id=f"vec_chat_{ts_ms}",
-                text_chunk=f"Voice Chat Turn: Patient said '{item['transcript']}'. Voice companion responded '{item['ai_response']}'. Risk tier: {item['risk_tier']}.",
-                embedding=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
-                metadata={"category": "Voice Chat Memory", "risk_tier": item['risk_tier'], "timestamp": iso_now}
-            )
-        except Exception as ve:
-            logger.warning(f"[DynamoDB] Error saving chat RAG vector: {ve}")
+                logger.warning(f"[DynamoDB] Error saving caregiver chat: {e}")
 
         return item
+
+    def get_caregiver_chat_history(self, caregiver_id: str = "usr_demo_001", limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Loads strictly from caregiver_chat_history partition.
+        """
+        caregiver_id = caregiver_id or "usr_demo_001"
+        if self.table:
+            try:
+                resp = self.table.query(
+                    KeyConditionExpression="PK = :pk AND begins_with(SK, :sk_prefix)",
+                    ExpressionAttributeValues={
+                        ":pk": f"CAREGIVER_CHAT#{caregiver_id}",
+                        ":sk_prefix": "CHAT#"
+                    },
+                    ScanIndexForward=False,
+                    Limit=limit
+                )
+                if resp.get("Items"):
+                    return resp["Items"]
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Error querying caregiver chat history: {e}")
+
+        items = [val for key, val in self.in_memory_fallback.items() if key.startswith(f"CG_CHAT#{caregiver_id}")]
+        items.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        return items[:limit]
+
+    def save_patient_chat(self, patient_id: str, chat_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Stores gentle therapeutic patient dialogue history in patient_chat_history table/partition.
+        Never leaks to caregiver session memory.
+        """
+        patient_id = patient_id or "patient_001"
+        ts_ms = int(datetime.utcnow().timestamp() * 1000)
+        chat_id = chat_data.get("id") or f"pt_chat_{ts_ms}"
+        iso_now = datetime.utcnow().isoformat()
+
+        item = {
+            "PK": f"PATIENT_CHAT#{patient_id}",
+            "SK": f"CHAT#{ts_ms}",
+            "id": chat_id,
+            "patient_id": patient_id,
+            "transcript": chat_data.get("transcript", ""),
+            "ai_response": chat_data.get("ai_response", ""),
+            "sentiment_flag": chat_data.get("sentiment_flag", "CALM"),
+            "grounding_cue_used": chat_data.get("grounding_cue_used"),
+            "created_at": iso_now
+        }
+
+        self.in_memory_fallback[f"PT_CHAT#{patient_id}#{chat_id}"] = item
+
+        if self.table:
+            try:
+                self.table.put_item(Item=item)
+                logger.info(f"[DynamoDB] Saved patient chat session '{chat_id}' for patient '{patient_id}'.")
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Error saving patient chat: {e}")
+
+        return item
+
+    def get_patient_chat_history(self, patient_id: str = "patient_001", limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Loads strictly from patient_chat_history partition.
+        """
+        patient_id = patient_id or "patient_001"
+        if self.table:
+            try:
+                resp = self.table.query(
+                    KeyConditionExpression="PK = :pk AND begins_with(SK, :sk_prefix)",
+                    ExpressionAttributeValues={
+                        ":pk": f"PATIENT_CHAT#{patient_id}",
+                        ":sk_prefix": "CHAT#"
+                    },
+                    ScanIndexForward=False,
+                    Limit=limit
+                )
+                if resp.get("Items"):
+                    return resp["Items"]
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Error querying patient chat history: {e}")
+
+        items = [val for key, val in self.in_memory_fallback.items() if key.startswith(f"PT_CHAT#{patient_id}")]
+        items.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        return items[:limit]
 
     def get_voice_chats(self, user_id: str, limit: int = 20) -> List[Dict[str, Any]]:
         if self.table:
@@ -680,6 +749,139 @@ class DynamoDBService:
         scored_results.sort(key=lambda x: x[0], reverse=True)
         return [item[1] for item in scored_results[:top_k]]
 
+    # ------------------------------------------------------------------
+    # Bifurcated Voice Chat Sessions (Caregiver vs Patient Isolation)
+    # ------------------------------------------------------------------
+    def save_caregiver_chat(
+        self,
+        caregiver_id: str,
+        patient_id: str,
+        role: str,
+        message_text: str,
+        tool_invocations: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
+        """
+        Stores strategic dialogue, executive summaries, status queries, and scheduling commands
+        in caregiver_chat_history (PK: CAREGIVER_CHAT#<caregiver_id>). Never leaks to patient.
+        """
+        msg_id = f"cg_msg_{int(datetime.utcnow().timestamp() * 1000)}"
+        now_iso = datetime.utcnow().isoformat()
+        item = {
+            "PK": f"CAREGIVER_CHAT#{caregiver_id}",
+            "SK": f"MSG#{now_iso}#{msg_id}",
+            "id": msg_id,
+            "caregiver_id": caregiver_id,
+            "patient_id": patient_id,
+            "role": role,
+            "message_text": message_text,
+            "created_at": now_iso,
+            "tool_invocations": tool_invocations or []
+        }
+        self.in_memory_fallback[f"CG_CHAT#{caregiver_id}#{msg_id}"] = item
+
+        if self.table:
+            try:
+                self.table.put_item(Item=item)
+                logger.info(f"[DynamoDB] Saved caregiver chat turn '{msg_id}' for caregiver '{caregiver_id}'.")
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Error saving caregiver chat turn: {e}")
+
+        return item
+
+    def get_caregiver_chat_history(self, caregiver_id: str, limit: int = 20) -> List[Dict[str, Any]]:
+        """
+        Loads dialogue context ONLY from caregiver_chat_history.
+        """
+        if self.table:
+            try:
+                resp = self.table.query(
+                    KeyConditionExpression="PK = :pk AND begins_with(SK, :sk_prefix)",
+                    ExpressionAttributeValues={
+                        ":pk": f"CAREGIVER_CHAT#{caregiver_id}",
+                        ":sk_prefix": "MSG#"
+                    },
+                    ScanIndexForward=True,  # Oldest to newest
+                    Limit=limit
+                )
+                items = resp.get("Items", [])
+                if items:
+                    return items
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Error querying caregiver chat history: {e}")
+
+        # Fallback to in-memory store
+        matching = [
+            val for key, val in self.in_memory_fallback.items()
+            if key.startswith(f"CG_CHAT#{caregiver_id}")
+        ]
+        matching.sort(key=lambda x: x.get("created_at", ""))
+        return matching[-limit:]
+
+    def save_patient_chat(
+        self,
+        patient_id: str,
+        role: str,
+        message_text: str,
+        sentiment_flag: str = "CALM",
+        grounding_cue_used: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Stores gentle reassurance loops, medication status check-ins, and reminiscence interactions
+        in patient_chat_history (PK: PATIENT_CHAT#<patient_id>). Never leaks to caregiver.
+        """
+        msg_id = f"pt_msg_{int(datetime.utcnow().timestamp() * 1000)}"
+        now_iso = datetime.utcnow().isoformat()
+        item = {
+            "PK": f"PATIENT_CHAT#{patient_id}",
+            "SK": f"MSG#{now_iso}#{msg_id}",
+            "id": msg_id,
+            "patient_id": patient_id,
+            "role": role,
+            "message_text": message_text,
+            "created_at": now_iso,
+            "sentiment_flag": sentiment_flag,
+            "grounding_cue_used": grounding_cue_used
+        }
+        self.in_memory_fallback[f"PT_CHAT#{patient_id}#{msg_id}"] = item
+
+        if self.table:
+            try:
+                self.table.put_item(Item=item)
+                logger.info(f"[DynamoDB] Saved patient chat turn '{msg_id}' for patient '{patient_id}'.")
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Error saving patient chat turn: {e}")
+
+        return item
+
+    def get_patient_chat_history(self, patient_id: str, limit: int = 20) -> List[Dict[str, Any]]:
+        """
+        Loads dialogue context ONLY from patient_chat_history.
+        """
+        if self.table:
+            try:
+                resp = self.table.query(
+                    KeyConditionExpression="PK = :pk AND begins_with(SK, :sk_prefix)",
+                    ExpressionAttributeValues={
+                        ":pk": f"PATIENT_CHAT#{patient_id}",
+                        ":sk_prefix": "MSG#"
+                    },
+                    ScanIndexForward=True,
+                    Limit=limit
+                )
+                items = resp.get("Items", [])
+                if items:
+                    return items
+            except Exception as e:
+                logger.warning(f"[DynamoDB] Error querying patient chat history: {e}")
+
+        # Fallback to in-memory store
+        matching = [
+            val for key, val in self.in_memory_fallback.items()
+            if key.startswith(f"PT_CHAT#{patient_id}")
+        ]
+        matching.sort(key=lambda x: x.get("created_at", ""))
+        return matching[-limit:]
+
     def seed_initial_users(self):
         """
         Seeds initial caregiver and patient user profiles into DynamoDB and fallback store.
@@ -737,5 +939,6 @@ class DynamoDBService:
 dynamodb_service = DynamoDBService()
 dynamodb_service.seed_initial_users()
 dynamodb_service.seed_dummy_rag_vectors()
+
 
 
