@@ -57,7 +57,7 @@ async def get_patient_summary(patient_id: str = Path(..., description="Unique Pa
 
     return PatientSummaryResponse(
         patientId=patient_id,
-        name="Eleanor Vance",
+        name="Sunita ",
         age=74,
         riskScore=latest_score,
         riskTier=risk_tier,

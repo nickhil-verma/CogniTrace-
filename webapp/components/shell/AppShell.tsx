@@ -24,6 +24,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useLanguage } from '@/hooks/useLanguage';
 import { usePatientSettings } from '@/hooks/usePatientSettings';
 import { speakText } from '@/lib/speech';
+import { ToastContainer } from '@/components/ui/toast';
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -44,13 +45,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [mounted, isPatient, pathname, router]);
 
   if (pathname === '/' || pathname === '/login' || pathname === '/onboarding') {
-    return <>{children}</>;
+    return (
+      <>
+        <ToastContainer />
+        {children}
+      </>
+    );
   }
 
   if (mounted && isPatient && caregiverOnlyRoutes.includes(pathname)) {
     return null;
   }
-
 
   const caregiverNav = [
     { label: t('nav.dashboard'), href: '/dashboard', icon: LayoutDashboard },
@@ -87,6 +92,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className={`min-h-screen flex flex-col md:flex-row font-sans antialiased ${
       isPatient ? 'bg-[#FFFBF5] text-[#123B35]' : 'bg-[#F5F8F6] text-[#123B35]'
     }`}>
+      <ToastContainer />
       {/* ================= DESKTOP SIDEBAR ================= */}
       <aside className="hidden md:flex flex-col w-64 border-r border-[#DDE7E3] bg-white p-5 space-y-6 shrink-0 justify-between sticky top-0 h-screen">
         <div className="space-y-5">

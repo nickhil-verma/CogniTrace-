@@ -212,6 +212,18 @@ class DynamoDBService:
     # Reminders CRUD
     # ------------------------------------------------------------------
     def save_reminder(self, user_id: str, reminder_data: Dict[str, Any]) -> Dict[str, Any]:
+        # Deduplication check: avoid setting duplicate reminder with same title at same time
+        new_title = reminder_data.get("title", "Care Task").strip().lower()
+        new_time = reminder_data.get("time", "8:00 PM").strip().lower()
+
+        existing = self.get_reminders(user_id)
+        for r in existing:
+            if reminder_data.get("id") and r.get("id") == reminder_data.get("id"):
+                continue
+            if r.get("title", "").strip().lower() == new_title and r.get("time", "").strip().lower() == new_time:
+                logger.info(f"[DynamoDB] Duplicate reminder detected ('{new_title}' at '{new_time}'). Returning existing.")
+                return r
+
         rem_id = reminder_data.get("id") or f"rem_{int(datetime.utcnow().timestamp() * 1000)}"
         item = {
             "PK": f"USER#{user_id}",
@@ -253,6 +265,7 @@ class DynamoDBService:
             except Exception as e:
                 logger.warning(f"[DynamoDB] Error querying reminders: {e}")
 
+        # Fallback to seeded or in-memory
         if user_id not in self._seeded_reminders_users:
             self._seeded_reminders_users.add(user_id)
             for rem in self._get_default_seed_reminders():
@@ -325,6 +338,21 @@ class DynamoDBService:
     # Appointments CRUD
     # ------------------------------------------------------------------
     def save_appointment(self, user_id: str, apt_data: Dict[str, Any]) -> Dict[str, Any]:
+        # Deduplication check: avoid setting duplicate appointment at same date & time
+        new_title = apt_data.get("title", "Doctor Consultation").strip().lower()
+        new_doctor = apt_data.get("doctorName", "Dr. Anita Sharma").strip().lower()
+        new_date = apt_data.get("date", "Tomorrow").strip().lower()
+        new_time = apt_data.get("time", "10:30 AM").strip().lower()
+
+        existing = self.get_appointments(user_id)
+        for a in existing:
+            if apt_data.get("id") and a.get("id") == apt_data.get("id"):
+                continue
+            match_title_or_doc = (a.get("title", "").strip().lower() == new_title or a.get("doctorName", "").strip().lower() == new_doctor)
+            match_date_time = (a.get("date", "").strip().lower() == new_date and a.get("time", "").strip().lower() == new_time)
+            if match_title_or_doc and match_date_time:
+                logger.info(f"[DynamoDB] Duplicate appointment detected ('{new_doctor}' on '{new_date}' at '{new_time}'). Returning existing.")
+                return a
         apt_id = apt_data.get("id") or f"apt_{int(datetime.utcnow().timestamp() * 1000)}"
         item = {
             "PK": f"USER#{user_id}",

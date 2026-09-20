@@ -199,6 +199,7 @@ class CaregiverVoiceAgent:
                                 status_summary = self._build_patient_status_summary(patient_id)
                             elif fn_name == "create_reminder":
                                 modal = "VERIFY_ADD"
+                                target = "/reminders"
                                 dynamodb_service.save_reminder(patient_id, {
                                     "title": fn_args.get("title", transcript),
                                     "time": fn_args.get("time", "8:00 PM"),
@@ -269,6 +270,7 @@ class CaregiverVoiceAgent:
         else:
             actions.append({"tool": "create_reminder", "args": {"title": transcript, "time": "8:00 PM"}})
             modal = "VERIFY_ADD"
+            target = "/reminders"
             dynamodb_service.save_reminder(patient_id, {
                 "title": transcript,
                 "time": "8:00 PM",

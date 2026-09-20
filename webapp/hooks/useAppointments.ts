@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Appointment } from '@/types/appointment';
 import { initialMockAppointments } from '@/lib/mock/appointments';
 import { api } from '@/lib/api';
+import { showToast } from './useToast';
 
 const STORAGE_KEY = 'cognitrace_appointments_v1';
 
@@ -97,24 +98,52 @@ export function useAppointments() {
   }, [appointments]);
 
   const addAppointment = useCallback(async (newApt: Omit<Appointment, 'id'>) => {
-    const item: Appointment = {
-      ...newApt,
-      id: `apt_${Date.now()}`
-    };
+    let isDuplicate = false;
+
     setAppointments((prev) => {
+      const normTitle = (newApt.title || '').trim().toLowerCase();
+      const normDoctor = (newApt.doctorName || '').trim().toLowerCase();
+      const normDate = (newApt.date || '').trim().toLowerCase();
+      const normTime = (newApt.time || '').trim().toLowerCase();
+
+      // Check duplicate appointment at same date & time with matching doctor/title
+      const duplicateExists = prev.some((a) => {
+        const matchTitleOrDoc =
+          (a.title || '').trim().toLowerCase() === normTitle ||
+          (a.doctorName || '').trim().toLowerCase() === normDoctor;
+        const matchDateTime =
+          (a.date || '').trim().toLowerCase() === normDate &&
+          (a.time || '').trim().toLowerCase() === normTime;
+        return matchTitleOrDoc && matchDateTime;
+      });
+
+      if (duplicateExists) {
+        isDuplicate = true;
+        return prev;
+      }
+
+      const item: Appointment = {
+        ...newApt,
+        id: `apt_${Date.now()}`
+      };
+
       const updated = [item, ...prev];
       if (typeof window !== 'undefined') {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
         window.dispatchEvent(new Event('cognitrace_appointments_change'));
       }
+
+      api.createAppointment(item).catch((err) => console.warn('API sync appointment warning:', err));
+
       return updated;
     });
 
-    try {
-      await api.createAppointment(item);
-    } catch (err) {
-      console.warn('API sync appointment warning:', err);
-    }
+    // Trigger toast notification and redirect to /appointments
+    showToast(
+      isDuplicate ? 'Appointment already scheduled for this time' : 'Added appointment',
+      isDuplicate ? 'info' : 'success',
+      '/appointments'
+    );
   }, []);
 
   const updateAppointment = useCallback(async (id: string, updatedFields: Partial<Appointment>) => {

@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Reminder, ReminderStatus } from '@/types/reminder';
 import { api } from '@/lib/api';
 
+import { showToast } from './useToast';
+
 const STORAGE_KEY = 'cognitrace_reminders_v1';
 
 export function useReminders() {
@@ -51,26 +53,41 @@ export function useReminders() {
   }, [reminders, isLoaded]);
 
   const addReminder = useCallback(async (newReminder: Omit<Reminder, 'id' | 'createdAt'>) => {
-    const item: Reminder = {
-      ...newReminder,
-      id: `rem_${Date.now()}`,
-      createdAt: new Date().toISOString()
-    };
+    let isDuplicate = false;
 
     setReminders((prev) => {
+      const normTitle = newReminder.title.trim().toLowerCase();
+      const normTime = newReminder.time.trim().toLowerCase();
+
+      // Check if duplicate exists at same title & time
+      const duplicateExists = prev.some(
+        (r) => r.title.trim().toLowerCase() === normTitle && r.time.trim().toLowerCase() === normTime
+      );
+
+      if (duplicateExists) {
+        isDuplicate = true;
+        return prev;
+      }
+
+      const item: Reminder = {
+        ...newReminder,
+        id: `rem_${Date.now()}`,
+        createdAt: new Date().toISOString()
+      };
+
       const updated = [item, ...prev];
       if (typeof window !== 'undefined') {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       }
+
+      // Send to backend DynamoDB API asynchronously
+      api.createReminder(item).catch((err) => console.warn('API create reminder warning:', err));
+
       return updated;
     });
 
-    // Send to backend DynamoDB API asynchronously
-    try {
-      await api.createReminder(item);
-    } catch (err) {
-      console.warn('API create reminder warning:', err);
-    }
+    // Trigger toast notification and redirect to /reminders
+    showToast(isDuplicate ? 'Reminder already set for this time' : 'Added reminder', isDuplicate ? 'info' : 'success', '/reminders');
   }, []);
 
   const toggleComplete = useCallback(async (id: string) => {
