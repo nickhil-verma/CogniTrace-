@@ -81,13 +81,13 @@ export function FloatingNavbar() {
         {/* Action Buttons */}
         <div className="flex items-center space-x-2 shrink-0 whitespace-nowrap">
           <Link
-            href="/command-center"
+            href="/login?role=patient"
             className="px-3.5 py-1.5 text-xs font-bold rounded-full bg-[#E8F4F1] text-[#164E48] hover:bg-[#D2ECE6] transition-all border border-[#164E48]/10 hidden sm:inline-flex items-center whitespace-nowrap"
           >
             Patient Portal
           </Link>
           <Link
-            href="/dashboard"
+            href="/login?role=caregiver"
             className="bg-[#164E48] text-white hover:bg-[#113e39] rounded-full px-4 py-1.5 text-xs font-bold transition-all shadow-md flex items-center space-x-1 group whitespace-nowrap"
           >
             <span className="whitespace-nowrap">Caregiver Access</span>

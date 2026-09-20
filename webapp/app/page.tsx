@@ -147,7 +147,7 @@ export default function LandingPage() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2"
             >
-              <Link href="/dashboard">
+              <Link href="/login?role=caregiver">
                 <Button
                   variant="default"
                   size="lg"
@@ -157,7 +157,7 @@ export default function LandingPage() {
                   <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
-              <Link href="/command-center">
+              <Link href="/login?role=patient">
                 <Button
                   variant="mint"
                   size="lg"
@@ -552,7 +552,7 @@ export default function LandingPage() {
               </div>
 
               <div className="pt-4">
-                <Link href="/command-center">
+                <Link href="/login?role=patient">
                   <Button variant="default" size="default" className="bg-[#164E48] text-white hover:bg-[#113e39] rounded-full px-6 font-bold text-xs shadow-md">
                     Explore Reminiscence Game
                   </Button>

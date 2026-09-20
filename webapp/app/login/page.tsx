@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -10,10 +10,20 @@ import { Heart, ArrowRight, Loader2, AlertCircle, Shield, Sparkles } from 'lucid
 import { api } from '@/lib/api';
 import { useLanguage } from '@/hooks/useLanguage';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const roleParam = searchParams.get('role');
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'caregiver' | 'patient'>('caregiver');
+
+  useEffect(() => {
+    if (roleParam === 'patient') {
+      setActiveTab('patient');
+    } else if (roleParam === 'caregiver') {
+      setActiveTab('caregiver');
+    }
+  }, [roleParam]);
 
   // Caregiver form state
   const [email, setEmail] = useState('priya.caregiver@example.com');
@@ -43,7 +53,7 @@ export default function LoginPage() {
 
     try {
       await api.patientLogin();
-      router.push('/dashboard');
+      router.push('/command-center');
     } catch (err: any) {
       setError('Patient quick login failed. Please try again.');
     } finally {
@@ -187,5 +197,19 @@ export default function LoginPage() {
         )}
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen w-full flex items-center justify-center bg-[#F5F8F6]">
+          <Loader2 className="w-8 h-8 text-[#164E48] animate-spin" />
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

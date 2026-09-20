@@ -58,7 +58,7 @@ export function LandingFooter() {
                 </a>
               </li>
               <li>
-                <Link href="/command-center" className="hover:text-white transition-colors">
+                <Link href="/login?role=patient" className="hover:text-white transition-colors">
                   Patient Voice Center
                 </Link>
               </li>
@@ -68,7 +68,7 @@ export function LandingFooter() {
                 </a>
               </li>
               <li>
-                <Link href="/reminders" className="hover:text-white transition-colors">
+                <Link href="/login?role=patient" className="hover:text-white transition-colors">
                   Care Reminders
                 </Link>
               </li>
@@ -87,17 +87,17 @@ export function LandingFooter() {
                 </a>
               </li>
               <li>
-                <Link href="/tracking" className="hover:text-white transition-colors">
+                <Link href="/login?role=caregiver" className="hover:text-white transition-colors">
                   Routine Consistency Index
                 </Link>
               </li>
               <li>
-                <Link href="/insights" className="hover:text-white transition-colors">
+                <Link href="/login?role=caregiver" className="hover:text-white transition-colors">
                   Longitudinal Metrics
                 </Link>
               </li>
               <li>
-                <Link href="/journal" className="hover:text-white transition-colors">
+                <Link href="/login?role=caregiver" className="hover:text-white transition-colors">
                   Care Partner Journal
                 </Link>
               </li>
@@ -146,7 +146,7 @@ export function LandingFooter() {
             </div>
           </div>
           <Link
-            href="/dashboard"
+            href="/login?role=caregiver"
             className="px-5 py-2.5 rounded-full bg-[#E8F4F1] text-[#164E48] hover:bg-white font-bold text-xs transition-all shadow-md flex items-center space-x-2 group shrink-0"
           >
             <span>Launch Caregiver Portal</span>
