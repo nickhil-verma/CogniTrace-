@@ -45,14 +45,6 @@ function CommandCenterContent() {
     }
   }, [initialQuery, submitVoiceTurn]);
 
-  const suggestions = [
-    t('dashboard.suggestion2') || 'What should I do next?',
-    t('dashboard.suggestion3') || 'I completed my evening medicine.',
-    t('dashboard.suggestion4') || 'What medicine should I take now?',
-    t('dashboard.suggestion1') || 'Show me my family photos.',
-    t('dashboard.suggestion5') || 'Show upcoming appointments.'
-  ];
-
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300">
       {/* Header */}
@@ -146,10 +138,9 @@ function CommandCenterContent() {
           />
         </div>
 
-        {/* Suggested Voice Commands */}
+        {/* Suggested Voice Commands (Role-Aware) */}
         <div className="max-w-xl mx-auto pt-4 text-left">
           <SuggestedCommand
-            commands={suggestions}
             onSelectCommand={triggerSuggestedCommand}
           />
         </div>

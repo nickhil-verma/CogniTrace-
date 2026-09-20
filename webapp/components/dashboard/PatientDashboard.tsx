@@ -25,6 +25,7 @@ import { useVoiceAgent } from '@/hooks/useVoiceAgent';
 import { useLanguage } from '@/hooks/useLanguage';
 import { VoiceOrb } from '@/components/command-center/VoiceOrb';
 import { VoiceRecorder } from '@/components/command-center/VoiceRecorder';
+import { SuggestedCommand } from '@/components/command-center/SuggestedCommand';
 import { ActionConfirmation } from '@/components/command-center/ActionConfirmation';
 import { VoiceActionModal } from '@/components/command-center/VoiceActionModal';
 import { speakText } from '@/lib/speech';
@@ -227,6 +228,14 @@ export function PatientDashboard() {
             onStartListening={handleStartListening}
             onStopListening={handleStopListeningAndSubmit}
             onSubmitTextPrompt={(text) => submitVoiceTurn(text)}
+          />
+        </div>
+
+        {/* Suggested Voice Check-Ins for Patient */}
+        <div className="max-w-xl mx-auto pt-3 text-left">
+          <SuggestedCommand
+            role="patient"
+            onSelectCommand={(cmd) => submitVoiceTurn(cmd)}
           />
         </div>
 
