@@ -49,14 +49,32 @@ export default function MemoryTriviaGamePage() {
   // Speak text aloud using SpeechSynthesis
   const speakAloud = useCallback((text: string) => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+      const speechSynthesis = window.speechSynthesis;
+      speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.92;
       utterance.pitch = 1.0;
-      utterance.lang = currentLangObj?.speechLang || 'en-US';
-      window.speechSynthesis.speak(utterance);
+      const speechLang = currentLangObj?.speechLang || 'en-US';
+      utterance.lang = speechLang;
+
+      const voices = speechSynthesis.getVoices();
+      const matchingVoice = voices.find((voice) => voice.lang.toLowerCase() === speechLang.toLowerCase())
+        || voices.find((voice) => voice.lang.toLowerCase().startsWith(speechLang.split('-')[0].toLowerCase()));
+      if (matchingVoice) {
+        utterance.voice = matchingVoice;
+      }
+
+      speechSynthesis.speak(utterance);
     }
   }, [currentLangObj]);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   // Load new trivia round from backend
   const loadNextRound = useCallback(async () => {
