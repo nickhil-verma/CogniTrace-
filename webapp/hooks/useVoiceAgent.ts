@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { VoiceState, TimelineStep, AgentActionItem } from '@/types/agent';
 import { useAudioRecorder } from './useAudioRecorder';
 import { useReminders } from './useReminders';
@@ -16,8 +16,21 @@ export function useVoiceAgent() {
   const [timeline, setTimeline] = useState<TimelineStep[]>([]);
   const [actions, setActions] = useState<AgentActionItem[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [activeModalAction, setActiveModalAction] = useState<AgentActionItem | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  // Multi-turn slot filling & conversation history tracking
+  const [pendingState, setPendingState] = useState<Record<string, any> | null>(null);
+  const [conversationHistory, setConversationHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+
+  const pendingStateRef = useRef<Record<string, any> | null>(null);
+  const conversationHistoryRef = useRef<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
 
   const { currentLangObj } = useLanguage();
+
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
 
   const {
     isRecording,
@@ -30,39 +43,41 @@ export function useVoiceAgent() {
     stopRecording
   } = useAudioRecorder();
 
-  const { addReminder } = useReminders();
+  const { addReminder, reminders, toggleComplete } = useReminders();
   const { addAppointment } = useAppointments();
   const { addMemory } = useMemories();
 
-  // Speak AI response using Polly audio or Web Speech API synthesis
-  const speakWithWebSpeech = useCallback((text: string) => {
+  // Barge-In helper: immediately halt ongoing synthesis
+  const cancelSynthesis = useCallback(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
+
+  // Speak AI response using Web Speech API synthesis
+  const speakWithWebSpeech = useCallback((text: string, onEnded?: () => void) => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.95;
       utterance.pitch = 1.0;
       utterance.lang = currentLangObj?.speechLang || 'en-US';
-      utterance.onend = () => setVoiceState('IDLE');
-      utterance.onerror = () => setVoiceState('IDLE');
+      utterance.onend = () => {
+        setVoiceState('IDLE');
+        if (onEnded) onEnded();
+      };
+      utterance.onerror = () => {
+        setVoiceState('IDLE');
+        if (onEnded) onEnded();
+      };
       window.speechSynthesis.speak(utterance);
     } else {
-      setTimeout(() => setVoiceState('IDLE'), 2500);
+      setTimeout(() => {
+        setVoiceState('IDLE');
+        if (onEnded) onEnded();
+      }, 2500);
     }
   }, [currentLangObj]);
-
-  const playAudioResponse = useCallback((text: string, audioUrl?: string) => {
-    setVoiceState('SPEAKING');
-    if (audioUrl) {
-      const audio = new Audio(audioUrl);
-      audio.onended = () => setVoiceState('IDLE');
-      audio.onerror = () => speakWithWebSpeech(text);
-      audio.play().catch(() => speakWithWebSpeech(text));
-    } else {
-      speakWithWebSpeech(text);
-    }
-  }, [speakWithWebSpeech]);
-
-  const { reminders, toggleComplete } = useReminders();
 
   // Dispatch tool actions dynamically to real React state and persistent storage
   const executeRealToolAction = useCallback((action: AgentActionItem, textInput: string) => {
@@ -89,7 +104,6 @@ export function useVoiceAgent() {
         time: action.parameters?.time || (timeMatch ? timeMatch[1].toUpperCase() : '8:00 PM'),
         date: action.parameters?.date || 'Today',
         category: lower.includes('medicine') || lower.includes('medication') ? 'Medication' : 'Daily Routine',
-
         status: 'Upcoming',
         patientName: 'Mom',
         dosageOrDetails: action.parameters?.details || 'Scheduled via Voice AI Assistant',
@@ -127,67 +141,109 @@ export function useVoiceAgent() {
     }
   }, [addReminder, addAppointment, addMemory, reminders, toggleComplete]);
 
+  // Handle start listening with immediate barge-in cancellation
+  const handleStartListening = useCallback(() => {
+    cancelSynthesis();
+    setVoiceState('LISTENING');
+    startRecording();
+  }, [cancelSynthesis, startRecording]);
 
-  // Submit prompt (either text or voice audio)
+  // Submit prompt (either text or voice audio) to backend conversational chat endpoint
   const submitVoiceTurn = useCallback(async (textInput?: string, inputBlob?: Blob | null) => {
+    cancelSynthesis();
+
     const promptText = textInput || speechTranscriptRef.current || speechTranscript || 'What should I do next?';
-    const targetBlob = inputBlob !== undefined ? inputBlob : audioBlob;
 
     setErrorMessage(null);
     setVoiceState('PROCESSING');
     setTranscript(promptText);
 
+    // Determine current user role
+    let userRole: 'PATIENT' | 'CAREGIVER' = 'CAREGIVER';
+    if (typeof window !== 'undefined') {
+      const storedRole = localStorage.getItem('cognitrace_user_role');
+      if (storedRole === 'patient') userRole = 'PATIENT';
+    }
+
     try {
-      // Step 1: Processing prompt via backend API
-      const response = await api.submitAudioTaskTurn(targetBlob || null, promptText);
-      
-      const finalTranscript = response.transcript || promptText;
-      const responseText = response.aiResponseText || (response as any).aiResponse || "Request processed and saved to schedule.";
+      // Step 1: Execute stateful chat turn via FastAPI endpoint
+      const turnResponse = await api.executeVoiceChatTurn({
+        transcript: promptText,
+        user_role: userRole,
+        conversation_history: conversationHistoryRef.current,
+        pending_state: pendingStateRef.current,
+      });
 
-      setTranscript(finalTranscript);
+      const responseText = turnResponse.speech_response;
+      const updatedState = turnResponse.updated_state;
+      const uiAction = turnResponse.ui_action || {};
+
+      // Update slot state & dialogue memory
+      pendingStateRef.current = updatedState;
+      setPendingState(updatedState);
+
+      const updatedHistory = [
+        ...conversationHistoryRef.current,
+        { role: 'user' as const, content: promptText },
+        { role: 'assistant' as const, content: responseText },
+      ];
+      conversationHistoryRef.current = updatedHistory;
+      setConversationHistory(updatedHistory);
+
+      setTranscript(promptText);
       setAiResponse(responseText);
-      
-      if (response.executionTimeline) {
-        setTimeline(response.executionTimeline);
-      }
 
-      // Step 2: Execute tool actions on app state
-      if (response.actions && response.actions.length > 0) {
-        setVoiceState('EXECUTING');
-        setActions((prev) => [...response.actions, ...prev]);
+      // Step 2: Trigger dynamic verification modal if UI action specified
+      if (uiAction.modal_type && uiAction.modal_type !== 'NONE') {
+        const modalType = uiAction.modal_type;
+        const targetRoute = uiAction.target_route || (modalType === 'MEMORIES_PREVIEW' ? '/memories' : null);
 
-        for (const act of response.actions) {
-          executeRealToolAction(act, finalTranscript);
-        }
-        await new Promise((res) => setTimeout(res, 600));
-      } else {
-        const mockAction: AgentActionItem = {
+        const modalItem: AgentActionItem = {
           id: `act_${Date.now()}`,
-          toolType: promptText.toLowerCase().includes('appointment') ? 'create_appointment' : (promptText.toLowerCase().includes('remind') ? 'create_reminder' : 'retrieve_memory'),
-          title: 'Action Executed',
+          toolType: modalType === 'VERIFY_COMPLETE' ? 'complete_reminder' : (modalType === 'MEMORIES_PREVIEW' ? 'retrieve_memory' : 'create_reminder'),
+          title: modalType === 'VERIFY_COMPLETE' ? 'Task Marked as Completed' : (modalType === 'MEMORIES_PREVIEW' ? 'Family Memory Album' : 'New Reminder Scheduled'),
           description: responseText,
-          parameters: {},
+          parameters: uiAction.data || {},
           status: 'completed',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          ...( { modalType, targetRoute } as any)
         };
-        executeRealToolAction(mockAction, finalTranscript);
-        setActions((prev) => [mockAction, ...prev]);
+
+        setActiveModalAction(modalItem);
+        setIsModalOpen(true);
+        setActions((prev) => [modalItem, ...prev]);
+        executeRealToolAction(modalItem, promptText);
       }
 
-      // Step 3: Speak AI Voice response
-      playAudioResponse(responseText, response.audioUrl);
+      setTimeline((prev) => [
+        ...prev,
+        {
+          id: `step_${Date.now()}`,
+          stepName: updatedState?.step ? `Slot Filling: ${updatedState.step}` : 'Conversational Turn',
+          status: 'completed',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          details: responseText,
+        }
+      ]);
+
+      // Step 3: Speak AI Voice response & handle auto-followup listening if needed
+      setVoiceState('SPEAKING');
+      speakWithWebSpeech(responseText, () => {
+        if (turnResponse.requires_followup) {
+          // Auto-re-engage microphone for next turn in slot filling
+          setTimeout(() => {
+            handleStartListening();
+          }, 350);
+        } else {
+          setVoiceState('IDLE');
+        }
+      });
     } catch (err: any) {
       console.error('Voice agent turn error:', err);
       setVoiceState('ERROR');
       setErrorMessage('CogniTrace couldn’t reach the care service. Please try again.');
     }
-  }, [audioBlob, speechTranscript, speechTranscriptRef, playAudioResponse, executeRealToolAction]);
-
-  // Handle start listening
-  const handleStartListening = useCallback(() => {
-    setVoiceState('LISTENING');
-    startRecording();
-  }, [startRecording]);
+  }, [cancelSynthesis, speechTranscript, speechTranscriptRef, speakWithWebSpeech, executeRealToolAction, handleStartListening]);
 
   // Handle stop listening & process audio asynchronously
   const handleStopListeningAndSubmit = useCallback(async () => {
@@ -212,7 +268,12 @@ export function useVoiceAgent() {
     aiResponse,
     timeline,
     actions,
+    activeModalAction,
+    isModalOpen,
+    closeModal,
     errorMessage,
+    pendingState,
+    conversationHistory,
     handleStartListening,
     handleStopListeningAndSubmit,
     submitVoiceTurn,
@@ -220,3 +281,4 @@ export function useVoiceAgent() {
     setVoiceState
   };
 }
+

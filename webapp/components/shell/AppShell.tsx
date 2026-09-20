@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Mic,
@@ -14,7 +14,6 @@ import {
   BookOpen,
   FileEdit,
   Settings,
-  Heart,
   PhoneCall
 } from 'lucide-react';
 import { LanguageSelector } from './LanguageSelector';
@@ -22,14 +21,29 @@ import { RoleSwitcher } from './RoleSwitcher';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useLanguage } from '@/hooks/useLanguage';
 
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isPatient } = useUserRole();
+  const router = useRouter();
+  const { isPatient, mounted } = useUserRole();
   const { t } = useLanguage();
+
+  const caregiverOnlyRoutes = ['/tracking', '/insights', '/journal', '/resources', '/appointments'];
+
+  React.useEffect(() => {
+    if (mounted && isPatient && caregiverOnlyRoutes.includes(pathname)) {
+      router.replace('/command-center');
+    }
+  }, [mounted, isPatient, pathname, router]);
 
   if (pathname === '/' || pathname === '/login' || pathname === '/onboarding') {
     return <>{children}</>;
   }
+
+  if (mounted && isPatient && caregiverOnlyRoutes.includes(pathname)) {
+    return null;
+  }
+
 
   const caregiverNav = [
     { label: t('nav.dashboard'), href: '/dashboard', icon: LayoutDashboard },
@@ -47,8 +61,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const patientNav = [
     { label: t('nav.talkWithVoiceAI'), href: '/command-center', icon: Mic, highlight: true },
     { label: t('nav.myPhotoAlbum'), href: '/memories', icon: ImageIcon },
+    { label: t('nav.memoryTrivia') || 'Memory Trivia Game', href: '/patient/memory-trivia', icon: Sparkles },
     { label: t('nav.todaysReminders'), href: '/reminders', icon: Bell },
-    { label: t('nav.dailyTapGame'), href: '/tracking', icon: LineChart },
   ];
 
   const mobileBottomNav = [
@@ -71,11 +85,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {/* Logo & Brand */}
           <div className="flex items-center justify-between">
             <Link href={isPatient ? "/command-center" : "/dashboard"} className="flex items-center space-x-3 group">
-              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-md transition-transform group-hover:scale-105 ${
-                isPatient ? 'bg-[#E36C59] text-white' : 'bg-[#17665B] text-white'
-              }`}>
-                <Heart className="w-5 h-5 fill-current text-white" />
-              </div>
+              <img
+                src="/logo.svg"
+                alt="CogniTrace Logo"
+                className="w-10 h-10 rounded-2xl shadow-md object-contain transition-transform group-hover:scale-105"
+              />
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-[#123B35]">CogniTrace</h1>
                 <span className="text-[10px] font-semibold text-[#3E9C87] tracking-widest uppercase">
@@ -158,11 +172,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* ================= MOBILE HEADER ================= */}
       <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-[#DDE7E3] sticky top-0 z-40">
         <Link href={isPatient ? "/command-center" : "/dashboard"} className="flex items-center space-x-2">
-          <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-white ${
-            isPatient ? 'bg-[#E36C59]' : 'bg-[#17665B]'
-          }`}>
-            <Heart className="w-4 h-4 text-white" />
-          </div>
+          <img
+            src="/logo.svg"
+            alt="CogniTrace Logo"
+            className="w-8 h-8 rounded-xl object-contain"
+          />
           <span className="text-lg font-bold text-[#123B35]">CogniTrace</span>
         </Link>
         <div className="flex items-center space-x-2">

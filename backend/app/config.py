@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     DYNAMODB_TABLE_NAME: str = "CogniTrace"
     LOCAL_STORAGE_DIR: str = "data/uploads"
 
+    # Gemini AI Settings
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+
+
     
     model_config = SettingsConfigDict(
         env_file=".env",

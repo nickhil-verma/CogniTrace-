@@ -8,6 +8,7 @@ import { AgentTimeline } from '@/components/command-center/AgentTimeline';
 import { AgentAction } from '@/components/command-center/AgentAction';
 import { ActionConfirmation } from '@/components/command-center/ActionConfirmation';
 import { SuggestedCommand } from '@/components/command-center/SuggestedCommand';
+import { VoiceActionModal } from '@/components/command-center/VoiceActionModal';
 import { useVoiceAgent } from '@/hooks/useVoiceAgent';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +28,9 @@ function CommandCenterContent() {
     aiResponse,
     timeline,
     actions,
+    activeModalAction,
+    isModalOpen,
+    closeModal,
     errorMessage,
     handleStartListening,
     handleStopListeningAndSubmit,
@@ -97,7 +101,7 @@ function CommandCenterContent() {
             <div className="flex flex-wrap gap-1.5 pt-1 border-t border-slate-100">
               <span className="inline-flex items-center text-[10px] font-bold bg-[#17665B]/10 text-[#17665B] px-2.5 py-0.5 rounded-full">
                 <Cpu className="w-3 h-3 mr-1" />
-                Intent: {transcript.toLowerCase().includes('remind') || transcript.toLowerCase().includes('medicine') ? 'Medication Goal' : (transcript.toLowerCase().includes('appointment') ? 'Schedule' : 'Memory Recall')}
+                Goal: {transcript.toLowerCase().includes('remind') || transcript.toLowerCase().includes('medicine') ? 'Medication Schedule' : (transcript.toLowerCase().includes('appointment') ? 'Appointment Care' : 'Memory Recall')}
               </span>
               <span className="inline-flex items-center text-[10px] font-bold bg-purple-50 text-purple-700 px-2.5 py-0.5 rounded-full">
                 <Database className="w-3 h-3 mr-1" />
@@ -175,6 +179,13 @@ function CommandCenterContent() {
           )}
         </div>
       </div>
+
+      {/* Voice Verification Action Modal */}
+      <VoiceActionModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        actionItem={activeModalAction}
+      />
     </div>
   );
 }

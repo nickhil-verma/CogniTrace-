@@ -145,10 +145,10 @@
     "catFamilyCall": "Familienanruf"
   },
   "commandCenter": {
-    "badge": "Sprach-NLP & RAG Aktiv",
-    "badgeDetail": "Google Gemini 1.5 Flash API + DynamoDB RAG",
-    "title": "CogniTrace Gemini Sprach- & Chat-Agent",
-    "subtitle": "Spracherkennung mit KI-gestützter Extraktion für Google Gemini mit Kontext.",
+    "badge": "Sprach-Care Engine & RAG Aktiv",
+    "badgeDetail": "Cognitive Assistant + Secure Health Record RAG",
+    "title": "CogniTrace Cognitive Assistant Sprach- & Chat-Agent",
+    "subtitle": "Spracherkennung mit KI-gestützter Extraktion für Google Cognitive Assistant mit Kontext.",
     "orbListening": "Höre zu...",
     "orbListeningSub": "Sprechen Sie ganz natürlich mit CogniTrace",
     "orbReasoning": "Verarbeite...",
@@ -162,7 +162,7 @@
     "orbIdle": "Tippen zum Sprechen",
     "orbIdleSub": "\"Erinnere Mama daran, um 20 Uhr ihre Medizin zu nehmen\"",
     "userTranscriptTitle": "Transkript der Benutzersprache",
-    "geminiResponseTitle": "Antwort des Gemini-KI-Agenten",
+    "geminiResponseTitle": "Antwort des Cognitive Assistant-KI-Agenten",
     "inputPlaceholder": "Oder Befehl eingeben (z. B. 'Mama um 20 Uhr an Medizin erinnern')",
     "suggestedCommandsTitle": "Vorgeschlagene Sprachbefehle:",
     "executedActionsTitle": "Ausgeführte Aktionen",
@@ -172,7 +172,9 @@
     "editReminder": "Erinnerung bearbeiten",
     "done": "Fertig",
     "completedBadge": "✓ Abgeschlossen",
-    "executingBadge": "Wird ausgeführt"
+    "executingBadge": "Wird ausgeführt",
+    "greeting": "Welcome back, {caregiverName}",
+    "relationTag": "Care Partner: {relation}"
   },
   "tracking": {
     "badge": "Beobachtungs-Tracking",
@@ -247,7 +249,16 @@
     "dailyNeedsTitle": "Täglicher Unterstützungsbedarf",
     "guidedEveningRoutine": "Geleitete Abendroutine",
     "dailyNeedsDesc": "Die Erinnerung um 20:00 Uhr sichert eine verlässliche Routine. Abendspaziergänge fördern erholsamen Schlaf.",
-    "trendGuidedConsistent": "✓ Beobachteter Trend: Geleitet & beständig"
+    "trendGuidedConsistent": "✓ Beobachteter Trend: Geleitet & beständig",
+    "cohortBenchmark": "Comparative Health Cohort Baseline",
+    "cohortMatchedNote": "Matched with {count} participants in similar age and cognitive assessment bands",
+    "cognitiveStabilityIndex": "Cognitive Stability Index",
+    "routineAdherence": "Routine Consistency Index",
+    "percentileNote": "Performing in the top {percentile}% of matching care profiles",
+    "memoryLatency": "Memory Recall Response Latency",
+    "latencyValue": "{seconds}s (Optimal Range)",
+    "peerMedianDelta": "+{delta}% above peer median",
+    "researchSubtext": "Normalized against peer participants evaluated within the last 30 days"
   },
   "journal": {
     "badge": "Tägliches Pflegetagebuch",
@@ -294,7 +305,7 @@
     "activeLangTitle": "Aktive Dialogsprache",
     "activeLangDesc": "Unterstützt 10 Sprachen inklusive Deutsch, Englisch, Hindi und Spanisch",
     "apiEndpointTitle": "Backend-API-Konfiguration",
-    "apiEndpointDesc": "CogniTrace API Basis-URL (FastAPI, PyTorch, Librosa)",
+    "apiEndpointDesc": "CogniTrace API Basis-URL (Care Portal, Cognitive Engine, Librosa)",
     "saveUrl": "URL speichern",
     "urlSaved": "Gespeichert!",
     "telemetryTitle": "Beobachtungssynchronisation & Offline-Telemetrie",
@@ -332,5 +343,11 @@
     "stageAdvanced": "Späte Phase (Umfassende Pflege)",
     "completeSetup": "Einrichtung abschließen & Dashboard öffnen",
     "settingUp": "Wird eingerichtet..."
+  },
+  "modals": {
+    "taskCompleted": "Activity recorded successfully",
+    "memoriesTitle": "Visual Memory Archive",
+    "verifyAddTitle": "New Schedule Entry Scheduled",
+    "verifyCompleteTitle": "Care Activity Completed"
   }
 }

@@ -145,10 +145,10 @@
     "catFamilyCall": "குடும்ப அழைப்பு"
   },
   "commandCenter": {
-    "badge": "குரல் NLP & RAG செயலில் உள்ளது",
-    "badgeDetail": "Google Gemini 1.5 Flash API + DynamoDB RAG",
-    "title": "CogniTrace Gemini குரல் & அரட்டை உதவியாளர்",
-    "subtitle": "இயற்கை மொழி அறிதல் மூலம் Gemini AI-க்கு சூழலை வழங்கும் குரல் தளம்.",
+    "badge": "குரல் Care Engine & RAG செயலில் உள்ளது",
+    "badgeDetail": "Cognitive Assistant + Secure Health Record RAG",
+    "title": "CogniTrace Cognitive Assistant குரல் & அரட்டை உதவியாளர்",
+    "subtitle": "இயற்கை மொழி அறிதல் மூலம் Cognitive Assistant AI-க்கு சூழலை வழங்கும் குரல் தளம்.",
     "orbListening": "கேட்கிறது...",
     "orbListeningSub": "CogniTrace-யிடம் இயல்பாகப் பேசுங்கள்",
     "orbReasoning": "சிந்திக்கிறது...",
@@ -162,7 +162,7 @@
     "orbIdle": "பேச தட்டவும்",
     "orbIdleSub": "\"அம்மாவுக்கு இரவு 8 மணிக்கு மருந்து நினைவூட்டு\"",
     "userTranscriptTitle": "பயனர் குரல் உரை",
-    "geminiResponseTitle": "Gemini AI பதில்",
+    "geminiResponseTitle": "Cognitive Assistant AI பதில்",
     "inputPlaceholder": "அல்லது கட்டளையை உள்ளிடவும்...",
     "suggestedCommandsTitle": "பரிந்துரைக்கப்பட்ட குரல் கட்டளைகள்:",
     "executedActionsTitle": "செயல்படுத்தப்பட்ட நடவடிக்கைகள்",
@@ -172,7 +172,9 @@
     "editReminder": "திருத்து",
     "done": "முடிந்தது",
     "completedBadge": "✓ முடிந்தது",
-    "executingBadge": "செயலில்"
+    "executingBadge": "செயலில்",
+    "greeting": "Welcome back, {caregiverName}",
+    "relationTag": "Care Partner: {relation}"
   },
   "tracking": {
     "badge": "கண்காணிப்பு பதிவு",
@@ -247,7 +249,16 @@
     "dailyNeedsTitle": "தினசரி ஆதரவு தேவைகள்",
     "guidedEveningRoutine": "வழிகாட்டப்பட்ட மாலை வழக்கம்",
     "dailyNeedsDesc": "இரவு 8:00 மணி நினைவூட்டல் சரியான நேரப் பராமரிப்பை உறுதி செய்கிறது.",
-    "trendGuidedConsistent": "✓ போக்கு: சீரான வழிகாட்டல்"
+    "trendGuidedConsistent": "✓ போக்கு: சீரான வழிகாட்டல்",
+    "cohortBenchmark": "Comparative Health Cohort Baseline",
+    "cohortMatchedNote": "Matched with {count} participants in similar age and cognitive assessment bands",
+    "cognitiveStabilityIndex": "Cognitive Stability Index",
+    "routineAdherence": "Routine Consistency Index",
+    "percentileNote": "Performing in the top {percentile}% of matching care profiles",
+    "memoryLatency": "Memory Recall Response Latency",
+    "latencyValue": "{seconds}s (Optimal Range)",
+    "peerMedianDelta": "+{delta}% above peer median",
+    "researchSubtext": "Normalized against peer participants evaluated within the last 30 days"
   },
   "journal": {
     "badge": "தினசரி பராமரிப்பாளர் நாட்குறிப்பு",
@@ -332,5 +343,11 @@
     "stageAdvanced": "முதிர்ந்த நிலை (முழு பராமரிப்பு)",
     "completeSetup": "அமைப்பை நிறைவுசெய்",
     "settingUp": "அமைக்கிறது..."
+  },
+  "modals": {
+    "taskCompleted": "Activity recorded successfully",
+    "memoriesTitle": "Visual Memory Archive",
+    "verifyAddTitle": "New Schedule Entry Scheduled",
+    "verifyCompleteTitle": "Care Activity Completed"
   }
 }

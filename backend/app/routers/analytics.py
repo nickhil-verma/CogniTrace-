@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
-from typing import List, Dict
-from fastapi import APIRouter, HTTPException, Path
+from typing import List, Dict, Optional
+from fastapi import APIRouter, HTTPException, Path, Depends
+from app.routers.auth import require_caregiver, require_patient_or_caregiver
 from app.models.schemas import (
     LongitudinalDriftRequest,
     DriftAnalysisResponse,
@@ -9,6 +10,9 @@ from app.models.schemas import (
     ReminiscencePromptRequest,
     ReminiscencePromptResponse,
     CaretakerReminderRequest,
+    CommandCenterTipsRequest,
+    CommandCenterTipsResponse,
+    CommandCenterTipItem,
 )
 from app.services.longitudinal_tracker import longitudinal_tracker
 
@@ -27,10 +31,10 @@ async def calculate_cognitive_drift(payload: LongitudinalDriftRequest):
 
 
 # ------------------------------------------------------------------
-# Caretaker Dashboard & Patient Summary Endpoints
+# Caretaker Dashboard & Patient Summary Endpoints (Caregiver Protected)
 # ------------------------------------------------------------------
 
-@router.get("/v1/caretaker/patient/{patient_id}/summary", response_model=PatientSummaryResponse)
+@router.get("/v1/caretaker/patient/{patient_id}/summary", response_model=PatientSummaryResponse, dependencies=[Depends(require_caregiver)])
 async def get_patient_summary(patient_id: str = Path(..., description="Unique Patient Identifier")):
     """
     Returns aggregated patient summary, longitudinal drift analysis, recent digital biomarkers,
@@ -96,7 +100,8 @@ async def generate_reminiscence_prompt(payload: ReminiscencePromptRequest):
 from app.database.dynamodb import dynamodb_service
 
 
-@router.get("/v1/caretaker/reminders")
+@router.get("/v1/caretaker/reminders", dependencies=[Depends(require_patient_or_caregiver)])
+@router.get("/api/reminders", dependencies=[Depends(require_patient_or_caregiver)])
 async def get_caretaker_reminders(patient_id: str = "patient_001"):
     """
     Retrieves all patient reminders from DynamoDB.
@@ -104,7 +109,8 @@ async def get_caretaker_reminders(patient_id: str = "patient_001"):
     return dynamodb_service.get_reminders(patient_id)
 
 
-@router.post("/v1/caretaker/reminders")
+@router.post("/v1/caretaker/reminders", dependencies=[Depends(require_patient_or_caregiver)])
+@router.post("/api/reminders", dependencies=[Depends(require_patient_or_caregiver)])
 async def create_caretaker_reminder(payload: dict):
     """
     Creates or updates patient reminder in DynamoDB.
@@ -119,8 +125,9 @@ async def create_caretaker_reminder(payload: dict):
     }
 
 
-@router.put("/v1/caretaker/reminders/{rem_id}/toggle")
-@router.post("/v1/caretaker/reminders/{rem_id}/toggle")
+@router.put("/v1/caretaker/reminders/{rem_id}/toggle", dependencies=[Depends(require_patient_or_caregiver)])
+@router.post("/v1/caretaker/reminders/{rem_id}/toggle", dependencies=[Depends(require_patient_or_caregiver)])
+@router.post("/api/reminders/{rem_id}/toggle", dependencies=[Depends(require_patient_or_caregiver)])
 async def toggle_caretaker_reminder(rem_id: str, patient_id: str = "patient_001"):
     """
     Toggles completion status of reminder in DynamoDB.
@@ -131,17 +138,19 @@ async def toggle_caretaker_reminder(rem_id: str, patient_id: str = "patient_001"
     return {"status": "updated", "reminder": updated}
 
 
-@router.delete("/v1/caretaker/reminders/{rem_id}")
-@router.post("/v1/caretaker/reminders/{rem_id}/delete")
+@router.delete("/v1/caretaker/reminders/{rem_id}", dependencies=[Depends(require_patient_or_caregiver)])
+@router.post("/v1/caretaker/reminders/{rem_id}/delete", dependencies=[Depends(require_patient_or_caregiver)])
+@router.delete("/api/reminders/{rem_id}", dependencies=[Depends(require_patient_or_caregiver)])
+@router.post("/api/reminders/{rem_id}/delete", dependencies=[Depends(require_patient_or_caregiver)])
 async def delete_caretaker_reminder(rem_id: str, patient_id: str = "patient_001"):
     """
     Deletes reminder from DynamoDB.
     """
     dynamodb_service.delete_reminder(patient_id, rem_id)
-    return {"status": "deleted", "id": rem_id}
+    return {"status": "deleted", "id": rem_id, "success": True}
 
 
-@router.get("/v1/caretaker/appointments")
+@router.get("/v1/caretaker/appointments", dependencies=[Depends(require_patient_or_caregiver)])
 async def get_caretaker_appointments(patient_id: str = "patient_001"):
     """
     Retrieves all medical appointments from DynamoDB.
@@ -149,7 +158,7 @@ async def get_caretaker_appointments(patient_id: str = "patient_001"):
     return dynamodb_service.get_appointments(patient_id)
 
 
-@router.post("/v1/caretaker/appointments")
+@router.post("/v1/caretaker/appointments", dependencies=[Depends(require_patient_or_caregiver)])
 async def create_caretaker_appointment(payload: dict):
     """
     Schedules medical appointment in DynamoDB.
@@ -163,7 +172,7 @@ async def create_caretaker_appointment(payload: dict):
     }
 
 
-@router.get("/v1/caretaker/memories")
+@router.get("/v1/caretaker/memories", dependencies=[Depends(require_patient_or_caregiver)])
 async def get_caretaker_memories(patient_id: str = "patient_001"):
     """
     Retrieves all photo memories from DynamoDB.
@@ -171,7 +180,7 @@ async def get_caretaker_memories(patient_id: str = "patient_001"):
     return dynamodb_service.get_memories(patient_id)
 
 
-@router.post("/v1/caretaker/memories")
+@router.post("/v1/caretaker/memories", dependencies=[Depends(require_patient_or_caregiver)])
 async def create_caretaker_memory(payload: dict):
     """
     Creates photo memory album item in DynamoDB.
@@ -185,16 +194,123 @@ async def create_caretaker_memory(payload: dict):
     }
 
 
-@router.delete("/v1/caretaker/memories/{mem_id}")
-@router.post("/v1/caretaker/memories/{mem_id}/delete")
+@router.delete("/v1/caretaker/memories/{mem_id}", dependencies=[Depends(require_patient_or_caregiver)])
+@router.post("/v1/caretaker/memories/{mem_id}/delete", dependencies=[Depends(require_patient_or_caregiver)])
 async def delete_caretaker_memory(mem_id: str, patient_id: str = "patient_001"):
+
     """
     Deletes photo memory item from DynamoDB.
     """
     dynamodb_service.delete_memory(patient_id, mem_id)
-    return {"status": "deleted", "id": mem_id}
+    return {"status": "deleted", "id": mem_id, "success": True}
 
 
+# ------------------------------------------------------------------
+# Command Center Quick Tips API
+# ------------------------------------------------------------------
+
+@router.post("/api/cognitrace/command-center/tips", response_model=CommandCenterTipsResponse)
+async def generate_command_center_tips(payload: CommandCenterTipsRequest):
+    """
+    Returns brief, actionable, empathetic tips tailored specifically to caregiver-patient relationship dynamics.
+    """
+    caregiver = payload.caregiver_name or "Caregiver"
+    patient = payload.patient_name or "loved one"
+    rel = (payload.relation or "Daughter").strip().lower()
+
+    if "daughter" in rel or "son" in rel or "child" in rel:
+        greeting = f"Welcome back, {caregiver}. Remember to pause and take a gentle breath today."
+        relational_insight = f"As a caring {payload.relation.capitalize()}, balancing support for {patient} with your own rest is vital for lasting strength."
+        tips = [
+            CommandCenterTipItem(
+                id="tip_1",
+                category="Emotional Balance",
+                title="Gentle Reassurance",
+                tip=f"When {patient} feels anxious or confused, softly validate their feelings rather than correcting minor details.",
+                badge="Emotional Health",
+                theme="teal"
+            ),
+            CommandCenterTipItem(
+                id="tip_2",
+                category="Burnout Prevention",
+                title="Micro Caregiver Rest",
+                tip="Take 5 quiet minutes during afternoon routines for yourself. Your peace helps steady your loved one's day.",
+                badge="Self Care",
+                theme="purple"
+            ),
+            CommandCenterTipItem(
+                id="tip_3",
+                category="Communication",
+                title="No-Confrontation Cues",
+                tip=f"Use familiar photo prompts or soft background music to guide {patient} through daily transitions.",
+                badge="Daily Routine",
+                theme="amber"
+            )
+        ]
+    elif "spouse" in rel or "husband" in rel or "wife" in rel or "partner" in rel:
+        greeting = f"Hello {caregiver}, honoring your shared journey with {patient} today."
+        relational_insight = f"Leveraging your deep shared history and familiar daily rhythms brings comfort and emotional stability to {patient}."
+        tips = [
+            CommandCenterTipItem(
+                id="tip_1",
+                category="Memory Anchors",
+                title="Shared Routine Cueing",
+                tip=f"Anchor daily tasks around morning tea or old favorite melodies you and {patient} both cherish.",
+                badge="Spousal Connection",
+                theme="teal"
+            ),
+            CommandCenterTipItem(
+                id="tip_2",
+                category="Orientation",
+                title="Familiar Touchpoints",
+                tip="Keep cherished photo albums or memory boxes within easy reach to ease unexpected moments of disorientation.",
+                badge="Orientation",
+                theme="amber"
+            ),
+            CommandCenterTipItem(
+                id="tip_3",
+                category="Pacing",
+                title="Gentle Pacing",
+                tip="Break complex steps into single, reassuring cues to maintain independence with calm confidence.",
+                badge="Pacing",
+                theme="purple"
+            )
+        ]
+    else:
+        greeting = f"Greetings, {caregiver}. Directing evidence-informed cognitive guidance for {patient}'s care schedule."
+        relational_insight = f"Professional observations, routine pacing, and structured orientation maintain peak safety and engagement."
+        tips = [
+            CommandCenterTipItem(
+                id="tip_1",
+                category="Cognitive Observation",
+                title="Fluency & Pause Tracking",
+                tip=f"Monitor speech pause intervals during memory tasks to detect subtle fatigue before frustration occurs.",
+                badge="Clinical Marker",
+                theme="teal"
+            ),
+            CommandCenterTipItem(
+                id="tip_2",
+                category="Pacing",
+                title="Structured Task Pacing",
+                tip="Space motor and speech exercises evenly across 15-minute blocks with clear visual confirmation steps.",
+                badge="Routine Pacing",
+                theme="purple"
+            ),
+            CommandCenterTipItem(
+                id="tip_3",
+                category="Orientation Cues",
+                title="Visual Schedule Sync",
+                tip=f"Confirm completed tasks on the Command Center board to reinforce orientation for {patient}.",
+                badge="Orientation",
+                theme="amber"
+            )
+        ]
+
+    return CommandCenterTipsResponse(
+        greeting=greeting,
+        relational_insight=relational_insight,
+        quick_tips=tips
+    )
 
 
 @router.post("/v1/rag/vectors", tags=["RAG Research & DynamoDB Vectors"])
@@ -257,6 +373,7 @@ async def search_rag_context(payload: dict):
         "context": context_text,
         "chunks": matching_chunks
     }
+
 
 
 

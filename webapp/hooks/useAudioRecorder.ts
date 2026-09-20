@@ -126,7 +126,7 @@ export function useAudioRecorder() {
         }
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(250);
       setIsRecording(true);
     } catch (err: any) {
       console.warn('Microphone access refused or unavailable:', err);

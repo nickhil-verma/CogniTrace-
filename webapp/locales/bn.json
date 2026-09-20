@@ -146,9 +146,9 @@
   },
   "commandCenter": {
     "badge": "ভয়েস এনএলপি ও র‍্যাগ সক্রিয়",
-    "badgeDetail": "Google Gemini 1.5 Flash API + DynamoDB RAG",
-    "title": "CogniTrace Gemini ভয়েস ও চ্যাট এজেন্ট",
-    "subtitle": "ন্যাচারাল ল্যাঙ্গুয়েজ প্রসেসিংয়ের মাধ্যমে Gemini AI-কে সহায়তাকারী ভয়েস প্ল্যাটফর্ম।",
+    "badgeDetail": "Cognitive Assistant + Secure Health Record RAG",
+    "title": "CogniTrace Cognitive Assistant ভয়েস ও চ্যাট এজেন্ট",
+    "subtitle": "ন্যাচারাল ল্যাঙ্গুয়েজ প্রসেসিংয়ের মাধ্যমে Cognitive Assistant AI-কে সহায়তাকারী ভয়েস প্ল্যাটফর্ম।",
     "orbListening": "শুনছি...",
     "orbListeningSub": "CogniTrace-এর সাথে স্বাভাবিকভাবে কথা বলুন",
     "orbReasoning": "ভাবছি...",
@@ -162,7 +162,7 @@
     "orbIdle": "কথা বলতে চাপুন",
     "orbIdleSub": "\"মাকে রাত ৮টায় ওষুধ খাওয়ার কথা মনে করিয়ে দিন\"",
     "userTranscriptTitle": "ব্যবহারকারীর ভয়েস ট্রান্সক্রিপ্ট",
-    "geminiResponseTitle": "Gemini এআই-এর প্রতিক্রিয়া",
+    "geminiResponseTitle": "Cognitive Assistant এআই-এর প্রতিক্রিয়া",
     "inputPlaceholder": "অথবা কমান্ড লিখুন...",
     "suggestedCommandsTitle": "প্রস্তাবিত ভয়েস কমান্ডসমূহ:",
     "executedActionsTitle": "সম্পাদিত পদক্ষেপসমূহ",
@@ -172,7 +172,9 @@
     "editReminder": "সম্পাদনা করুন",
     "done": "সম্পন্ন",
     "completedBadge": "✓ সম্পন্ন",
-    "executingBadge": "চলমান"
+    "executingBadge": "চলমান",
+    "greeting": "Welcome back, {caregiverName}",
+    "relationTag": "Care Partner: {relation}"
   },
   "tracking": {
     "badge": "পর্যবেক্ষণ ট্র্যাকিং",
@@ -247,7 +249,16 @@
     "dailyNeedsTitle": "দৈনন্দিন সহায়তার প্রয়োজনীয়তা",
     "guidedEveningRoutine": "সন্ধ্যায় নির্দেশিত রুটিন",
     "dailyNeedsDesc": "রাত ৮:০০ টায় ওষুধ খাওয়ার ইঙ্গিত নিয়মনিষ্ঠতা বজায় রাখে।",
-    "trendGuidedConsistent": "✓ প্রবণতা: সুসংগত ও নির্দেশিত"
+    "trendGuidedConsistent": "✓ প্রবণতা: সুসংগত ও নির্দেশিত",
+    "cohortBenchmark": "Comparative Health Cohort Baseline",
+    "cohortMatchedNote": "Matched with {count} participants in similar age and cognitive assessment bands",
+    "cognitiveStabilityIndex": "Cognitive Stability Index",
+    "routineAdherence": "Routine Consistency Index",
+    "percentileNote": "Performing in the top {percentile}% of matching care profiles",
+    "memoryLatency": "Memory Recall Response Latency",
+    "latencyValue": "{seconds}s (Optimal Range)",
+    "peerMedianDelta": "+{delta}% above peer median",
+    "researchSubtext": "Normalized against peer participants evaluated within the last 30 days"
   },
   "journal": {
     "badge": "যত্নশীলের দৈনন্দিন ডায়েরি",
@@ -294,7 +305,7 @@
     "activeLangTitle": "সক্রিয় কথোপকথন ভাষা",
     "activeLangDesc": "বাংলা, হিন্দি, তামিল, তেলুগু সহ ১০টি ভাষা সমর্থিত",
     "apiEndpointTitle": "ব্যাকএন্ড এপিআই কনফিগারেশন",
-    "apiEndpointDesc": "CogniTrace API Base URL",
+    "apiEndpointDesc": "CogniTrace Care Portal Server Address",
     "saveUrl": "ইউআরএল সংরক্ষণ করুন",
     "urlSaved": "সংরক্ষিত!",
     "telemetryTitle": "সিঙ্ক ও অফলাইন টেলিমেট্রি",
@@ -332,5 +343,11 @@
     "stageAdvanced": "উন্নত পর্যায় (পূর্ণ যত্ন)",
     "completeSetup": "সেটআপ সম্পন্ন করুন",
     "settingUp": "সেটআপ হচ্ছে..."
+  },
+  "modals": {
+    "taskCompleted": "Activity recorded successfully",
+    "memoriesTitle": "Visual Memory Archive",
+    "verifyAddTitle": "New Schedule Entry Scheduled",
+    "verifyCompleteTitle": "Care Activity Completed"
   }
 }

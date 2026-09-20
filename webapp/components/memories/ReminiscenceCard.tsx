@@ -80,7 +80,7 @@ export function ReminiscenceCard({ memory, onStartVoiceSession }: ReminiscenceCa
           onClick={() => onStartVoiceSession?.(promptText)}
         >
           <Mic className="w-5 h-5 text-white" />
-          <span>{t('memories.talkWithMom')}</span>
+          <span>Talk about it</span>
         </Button>
       </div>
     </div>

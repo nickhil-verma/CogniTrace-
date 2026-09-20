@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { MemoryCard } from '@/components/memories/MemoryCard';
 import { ReminiscenceCard } from '@/components/memories/ReminiscenceCard';
 import { useMemories } from '@/hooks/useMemories';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 export default function MemoriesPage() {
   const router = useRouter();
   const { memories, setSelectedMemory, addMemory, deleteMemory } = useMemories();
+  const { isCaregiver } = useUserRole();
   const { t } = useLanguage();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [reminisceActiveMemory, setReminisceActiveMemory] = useState<Memory | null>(null);
@@ -107,7 +109,7 @@ export default function MemoriesPage() {
                 memory={mem}
                 onSelect={(m) => setSelectedMemory(m)}
                 onReminisce={(m) => setReminisceActiveMemory(m)}
-                onDelete={(id) => deleteMemory(id)}
+                onDelete={isCaregiver ? (id) => deleteMemory(id) : undefined}
               />
             ))}
           </div>

@@ -48,6 +48,11 @@ export default function OnboardingPage() {
     <div className="min-h-screen flex items-center justify-center p-6 bg-[#F5F8F6]">
       <Card className="w-full max-w-lg p-8 space-y-6 shadow-xl border-[#DDE7E3] bg-white">
         <div className="text-center space-y-2">
+          <img
+            src="/logo.svg"
+            alt="CogniTrace Logo"
+            className="w-14 h-14 rounded-2xl mx-auto shadow-md object-contain mb-2"
+          />
           <Badge variant="teal">{t('onboarding.badge')}</Badge>
           <h1 className="text-2xl font-extrabold text-[#123B35]">{t('onboarding.title')}</h1>
           <p className="text-xs text-[#66736F]">{t('onboarding.subtitle')}</p>

@@ -73,9 +73,11 @@ export default function LoginPage() {
       <Card className="w-full max-w-lg p-8 space-y-6 shadow-2xl border-[#DDE7E3] bg-white rounded-3xl">
         {/* Logo & Brand Header */}
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#17665B] to-[#3E9C87] text-white flex items-center justify-center mx-auto shadow-lg border-2 border-white">
-            <Heart className="w-7 h-7 fill-current text-[#BFDCD6]" />
-          </div>
+          <img
+            src="/logo.svg"
+            alt="CogniTrace Logo"
+            className="w-16 h-16 rounded-2xl mx-auto shadow-lg object-contain"
+          />
           <h1 className="text-3xl font-extrabold text-[#123B35] tracking-tight">CogniTrace Care</h1>
           <p className="text-xs text-[#66736F] font-semibold">{t('login.subtitle')}</p>
         </div>

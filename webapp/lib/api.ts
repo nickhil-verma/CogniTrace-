@@ -280,6 +280,85 @@ export class ApiClient {
     }
   }
 
+  // Execute end-to-end Voice Command Pipeline (POST /api/voice/command)
+  async executeVoiceCommand(audioBlob: Blob | null, textPrompt?: string, patientId: string = 'patient_001'): Promise<any> {
+    try {
+      const formData = new FormData();
+      if (audioBlob) {
+        const ext = audioBlob.type.includes('webm') ? 'webm' : (audioBlob.type.includes('ogg') ? 'ogg' : (audioBlob.type.includes('mp4') ? 'mp4' : 'wav'));
+        formData.append('file', audioBlob, `voice_command.${ext}`);
+      }
+      if (textPrompt) {
+        formData.append('transcript', textPrompt);
+        formData.append('text', textPrompt);
+      }
+      formData.append('patient_id', patientId);
+
+      const headers: Record<string, string> = {};
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('cognitrace_token');
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${this.getBaseUrl()}/api/voice/command`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      console.warn(`[CogniTrace API] /api/voice/command offline. Using fallback simulation.`, err);
+      return this.submitAudioTaskTurn(audioBlob, textPrompt);
+    }
+  }
+
+  // Fetch stored voice chat memory logs & performance history (GET /v1/patient/voice-chats)
+  async getVoiceChats(patientId: string = 'patient_001') {
+    return this.get(`/v1/patient/voice-chats?patient_id=${patientId}`, { patient_id: patientId, count: 0, chats: [] });
+  }
+
+  // Stateful Conversational Voice Agent Turn (POST /api/voice/chat-turn)
+  async executeVoiceChatTurn(payload: {
+    transcript: string;
+    user_role?: 'PATIENT' | 'CAREGIVER';
+    conversation_history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+    pending_state?: Record<string, any> | null;
+  }): Promise<{
+    speech_response: string;
+    action_executed: boolean;
+    requires_followup: boolean;
+    updated_state: Record<string, any> | null;
+    ui_action: Record<string, any>;
+  }> {
+    try {
+      const userRole = payload.user_role || (typeof window !== 'undefined' && localStorage.getItem('cognitrace_user_role') === 'patient' ? 'PATIENT' : 'CAREGIVER');
+      const body = {
+        transcript: payload.transcript,
+        user_role: userRole,
+        conversation_history: payload.conversation_history || [],
+        pending_state: payload.pending_state || null,
+      };
+      const res = await fetch(`${this.getBaseUrl()}/api/voice/chat-turn`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      console.warn('[CogniTrace API] /api/voice/chat-turn offline. Using fallback simulation.', err);
+      return {
+        speech_response: "I've noted that for you. Is there anything else I can help with?",
+        action_executed: false,
+        requires_followup: false,
+        updated_state: null,
+        ui_action: { type: "NONE" },
+      };
+    }
+  }
+
   // ------------------------------------------------------------------
   // Reminders & Schedule APIs
   // ------------------------------------------------------------------
@@ -362,7 +441,107 @@ export class ApiClient {
       fileKey: `memories/${Date.now()}_${filename}`
     });
   }
+
+  // Command Center Quick Tips API (POST /api/cognitrace/command-center/tips)
+  async fetchCommandCenterTips(payload?: {
+    patient_name?: string;
+    caregiver_name?: string;
+    relation?: string;
+    cognitive_stage_or_notes?: string;
+  }) {
+    return this.post('/api/cognitrace/command-center/tips', payload || {
+      patient_name: 'Sunita',
+      caregiver_name: 'Priya',
+      relation: 'Daughter',
+      cognitive_stage_or_notes: 'Middle Stage'
+    }, {
+      greeting: "Welcome back, Priya. Remember to pause and take a gentle breath today.",
+      relational_insight: "As a caring Daughter, balancing your support for Sunita with your own rest is vital for lasting strength.",
+      quick_tips: [
+        {
+          id: "tip_1",
+          category: "Emotional Balance",
+          title: "Gentle Reassurance",
+          tip: "When Sunita feels anxious or confused, softly validate her feelings rather than correcting minor details.",
+          badge: "Emotional Health",
+          theme: "teal"
+        },
+        {
+          id: "tip_2",
+          category: "Burnout Prevention",
+          title: "Micro Caregiver Rest",
+          tip: "Take 5 quiet minutes during afternoon routines for yourself. Your peace helps steady your loved one's day.",
+          badge: "Self Care",
+          theme: "purple"
+        },
+        {
+          id: "tip_3",
+          category: "Communication",
+          title: "No-Confrontation Cues",
+          tip: "Use familiar photo prompts or soft background music to guide Sunita through daily transitions.",
+          badge: "Daily Routine",
+          theme: "amber"
+        }
+      ]
+    });
+  }
+
+  // Memory Trivia Game API
+  async fetchMemoryTriviaRound(patientId: string = 'patient_001'): Promise<{
+    round_id: string;
+    memory_id: string;
+    image_url: string;
+    title: string;
+    date: string;
+    location: string;
+    question: string;
+    options: string[];
+    correct_index: number;
+    gentle_hint: string;
+    encouragement_fact: string;
+  }> {
+    return this.post('/api/games/memory-trivia/round', { patient_id: patientId }, {
+      round_id: `rnd_${Date.now()}`,
+      memory_id: 'mem_1',
+      image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+      title: 'Family Vacation in Goa',
+      date: 'Summer 1987',
+      location: 'Calangute Beach, Goa',
+      question: 'Who joined you on this sunny beach trip to Goa?',
+      options: ['Dad (Ramesh) & Priya', 'Doctor Anita', 'Neighbors from next door'],
+      correct_index: 0,
+      gentle_hint: 'Think about who loved walking along the shoreline with you for sunset ice cream!',
+      encouragement_fact: 'Ramesh and Priya loved making sandcastles by the ocean waves with you that afternoon!'
+    });
+  }
+
+  async submitMemoryTriviaRound(payload: {
+    patient_id?: string;
+    round_id: string;
+    selected_index: number;
+    is_correct: boolean;
+    duration_s?: number;
+  }): Promise<{
+    status: string;
+    is_correct: boolean;
+    encouragement_fact: string;
+    message: string;
+  }> {
+    return this.post('/api/games/memory-trivia/submit', {
+      patient_id: payload.patient_id || 'patient_001',
+      round_id: payload.round_id,
+      selected_index: payload.selected_index,
+      is_correct: payload.is_correct,
+      duration_s: payload.duration_s || 0
+    }, {
+      status: 'success',
+      is_correct: payload.is_correct,
+      encouragement_fact: 'Wonderful memories shared today! Memory engagement keeps your mind vibrant and warm.',
+      message: 'Round activity recorded successfully.'
+    });
+  }
 }
 
 export const api = new ApiClient();
+
 

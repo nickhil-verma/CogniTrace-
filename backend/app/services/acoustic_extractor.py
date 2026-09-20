@@ -39,6 +39,28 @@ class AcousticExtractor:
         except Exception:
             pass
 
+        # 3. Tertiary decoder: scipy.io.wavfile
+        try:
+            import scipy.io.wavfile as wavfile
+            buffer = io.BytesIO(audio_bytes)
+            sr, raw_data = wavfile.read(buffer)
+            if raw_data.dtype == np.int16:
+                y = raw_data.astype(np.float32) / 32768.0
+            elif raw_data.dtype == np.int32:
+                y = raw_data.astype(np.float32) / 2147483648.0
+            elif raw_data.dtype == np.float32:
+                y = raw_data
+            else:
+                y = raw_data.astype(np.float32)
+            if y.ndim > 1:
+                y = np.mean(y, axis=1)
+            if sr != self.target_sr and len(y) > 0:
+                y = librosa.resample(y, orig_sr=sr, target_sr=self.target_sr)
+                sr = self.target_sr
+            return y.astype(np.float32), sr
+        except Exception:
+            pass
+
         # 3. Direct PCM 16-bit LE raw header parse fallback
         try:
             if len(audio_bytes) >= 44 and audio_bytes[:4] == b'RIFF':

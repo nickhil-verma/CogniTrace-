@@ -90,7 +90,7 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <form onSubmit={handleSaveApiUrl} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[#123B35]">NEXT_PUBLIC_API_URL</label>
+                <label className="text-xs font-bold text-[#123B35]">Care Portal Connection Address</label>
                 <div className="flex space-x-2">
                   <Input
                     value={apiUrl}
@@ -114,7 +114,7 @@ export default function SettingsPage() {
             </form>
 
             <div className="p-3.5 rounded-2xl bg-[#F5F8F6] border border-[#DDE7E3] text-xs text-[#66736F]">
-              <span className="font-bold text-[#123B35]">Security Notice:</span> AWS Credentials (AWS_ACCESS_KEY_ID / SECRET) are strictly isolated on the backend server. The frontend consumes public API routes only.
+              <span className="font-bold text-[#123B35]">Security Notice:</span> Health record access keys are encrypted and isolated on our secure server. Your care portal remains private and protected.
             </div>
           </CardContent>
         </Card>
@@ -127,7 +127,7 @@ export default function SettingsPage() {
               <CardTitle className="text-lg font-bold text-[#123B35]">{t('settings.telemetryTitle')}</CardTitle>
             </div>
             <CardDescription className="text-xs text-[#66736F]">
-              POST /v1/patient/telemetry/sync
+              Encrypted Offline Store-and-Forward Gateway
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

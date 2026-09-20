@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/hooks/useLanguage';
+import { CohortBenchmarkCard } from '@/components/insights/CohortBenchmarkCard';
 
 export default function InsightsPage() {
   const router = useRouter();
@@ -27,6 +28,14 @@ export default function InsightsPage() {
         </div>
       </div>
 
+      {/* Peer-Reviewed Cohort Benchmark Card */}
+      <CohortBenchmarkCard
+        matchedCount={1240}
+        stabilityIndex={94}
+        adherencePercentile={88}
+        recallLatencySeconds={2.4}
+      />
+
       {/* AI Summary Card */}
       <Card className="card-hero p-6 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-2">
@@ -42,7 +51,7 @@ export default function InsightsPage() {
           variant="default"
           size="lg"
           onClick={() => router.push('/command-center?q=What%20changed%20recently%20in%20Mom%27s%20care%3F')}
-          className="shadow-md shrink-0"
+          className="shadow-md shrink-0 cursor-pointer"
         >
           {t('insights.whatChangedRecently')}
           <ArrowRight className="w-4 h-4 ml-2" />

@@ -26,6 +26,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { VoiceOrb } from '@/components/command-center/VoiceOrb';
 import { VoiceRecorder } from '@/components/command-center/VoiceRecorder';
 import { ActionConfirmation } from '@/components/command-center/ActionConfirmation';
+import { VoiceActionModal } from '@/components/command-center/VoiceActionModal';
 
 export function PatientDashboard() {
   const { reminders, toggleComplete } = useReminders();
@@ -37,6 +38,9 @@ export function PatientDashboard() {
     voiceState,
     transcript,
     aiResponse,
+    activeModalAction,
+    isModalOpen,
+    closeModal,
     errorMessage,
     volumeLevel,
     permissionError,
@@ -351,7 +355,7 @@ export function PatientDashboard() {
                   className="w-full py-2.5 rounded-2xl bg-[#F7DDE5] text-[#C85C82] font-bold text-xs flex items-center justify-center space-x-2 hover:bg-[#f3cbd7] transition-colors shadow-2xs active:scale-95"
                 >
                   <Sparkles className="w-4 h-4" />
-                  <span>{t('patient.talkAboutPhoto') || 'Talk about this photo with Voice AI'}</span>
+                  <span>Talk about it</span>
                 </button>
               </div>
             ) : (
@@ -405,6 +409,13 @@ export function PatientDashboard() {
           </a>
         </div>
       </Card>
+
+      {/* Real-time Voice Verification Action Modal */}
+      <VoiceActionModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        actionItem={activeModalAction}
+      />
     </div>
   );
 }

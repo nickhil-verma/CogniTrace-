@@ -145,9 +145,9 @@
     "catFamilyCall": "कौटुंबिक कॉल"
   },
   "commandCenter": {
-    "badge": "स्पीच NLP आणि RAG सक्रिय",
-    "badgeDetail": "Google Gemini 1.5 Flash API + DynamoDB RAG",
-    "title": "CogniTrace Gemini व्हॉइस आणि चॅट एजंट",
+    "badge": "स्पीच Care Engine आणि RAG सक्रिय",
+    "badgeDetail": "Cognitive Assistant + Secure Health Record RAG",
+    "title": "CogniTrace Cognitive Assistant व्हॉइस आणि चॅट एजंट",
     "subtitle": "नैसर्गिक भाषा प्रक्रियेद्वारे जेमिनी AI ला संदर्भासह जोडणारा व्हॉइस प्लॅटफॉर्म.",
     "orbListening": "ऐकत आहे...",
     "orbListeningSub": "CogniTrace शी सहजतेने बोला",
@@ -162,7 +162,7 @@
     "orbIdle": "बोलण्यासाठी टॅप करा",
     "orbIdleSub": "\"आईला रात्री ८ वाजता औषध घेण्याची आठवण करा\"",
     "userTranscriptTitle": "वापरकर्त्याचा आवाज मजकूर",
-    "geminiResponseTitle": "Gemini AI चे उत्तर",
+    "geminiResponseTitle": "Cognitive Assistant AI चे उत्तर",
     "inputPlaceholder": "किंवा आज्ञा टाइप करा...",
     "suggestedCommandsTitle": "सुचवलेल्या व्हॉइस आज्ञा:",
     "executedActionsTitle": "पूर्ण झालेल्या कृती",
@@ -172,7 +172,9 @@
     "editReminder": "संपादित करा",
     "done": "पूर्ण",
     "completedBadge": "✓ पूर्ण झाले",
-    "executingBadge": "सुरू आहे"
+    "executingBadge": "सुरू आहे",
+    "greeting": "Welcome back, {caregiverName}",
+    "relationTag": "Care Partner: {relation}"
   },
   "tracking": {
     "badge": "निरीक्षण ट्रॅकिंग",
@@ -247,7 +249,16 @@
     "dailyNeedsTitle": "दैनंदिन आधाराची गरज",
     "guidedEveningRoutine": "मार्गदर्शित संध्याकाळची दिनचर्या",
     "dailyNeedsDesc": "रात्री ८:०० वाजता औषध स्मरण नियमितता राखते.",
-    "trendGuidedConsistent": "✓ कल: सुसंगत आणि मार्गदर्शित"
+    "trendGuidedConsistent": "✓ कल: सुसंगत आणि मार्गदर्शित",
+    "cohortBenchmark": "Comparative Health Cohort Baseline",
+    "cohortMatchedNote": "Matched with {count} participants in similar age and cognitive assessment bands",
+    "cognitiveStabilityIndex": "Cognitive Stability Index",
+    "routineAdherence": "Routine Consistency Index",
+    "percentileNote": "Performing in the top {percentile}% of matching care profiles",
+    "memoryLatency": "Memory Recall Response Latency",
+    "latencyValue": "{seconds}s (Optimal Range)",
+    "peerMedianDelta": "+{delta}% above peer median",
+    "researchSubtext": "Normalized against peer participants evaluated within the last 30 days"
   },
   "journal": {
     "badge": "दैनिक काळजीवाहू डायरी",
@@ -294,7 +305,7 @@
     "activeLangTitle": "सध्याची संभाषण भाषा",
     "activeLangDesc": "मराठी, हिंदी, तमिळ, तेलगू सह १० भाषा समर्थित",
     "apiEndpointTitle": "बॅकएंड API रचना",
-    "apiEndpointDesc": "CogniTrace API Base URL",
+    "apiEndpointDesc": "CogniTrace Care Portal Server Address",
     "saveUrl": "URL जतन करा",
     "urlSaved": "जतन केले!",
     "telemetryTitle": "सिंक आणि ऑफलाइन टेलिमेट्री",
@@ -332,5 +343,11 @@
     "stageAdvanced": "प्रगत टप्पा (पूर्ण काळजी)",
     "completeSetup": "सेटअप पूर्ण करा",
     "settingUp": "तयार होत आहे..."
+  },
+  "modals": {
+    "taskCompleted": "Activity recorded successfully",
+    "memoriesTitle": "Visual Memory Archive",
+    "verifyAddTitle": "New Schedule Entry Scheduled",
+    "verifyCompleteTitle": "Care Activity Completed"
   }
 }

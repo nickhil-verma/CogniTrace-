@@ -45,6 +45,7 @@ export function VoiceRecorder({
         <Input
           type="text"
           value={textInput}
+          onChange={(e) => setTextInput(e.target.value)}
           placeholder={t('commandCenter.inputPlaceholder') || "Type a task or question (e.g., 'What should I do next?')"}
           className="rounded-full bg-white shadow-xs border-[#DDE7E3] h-12 text-sm px-5"
           disabled={voiceState === 'PROCESSING' || voiceState === 'EXECUTING'}
