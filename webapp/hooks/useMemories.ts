@@ -36,7 +36,8 @@ export function useMemories() {
 
         const apiData = await api.getMemories('patient_001');
         const backendMemories = Array.isArray(apiData) ? apiData : [];
-        const mergedMemories = mergeMemories(initialMockMemories, savedMemories, backendMemories);
+        const pinnedMemories = initialMockMemories.filter((memory) => memory.id === 'mem_3' || memory.id === 'mem_4');
+        const mergedMemories = mergeMemories(initialMockMemories, backendMemories, savedMemories, pinnedMemories);
         setMemories(mergedMemories);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedMemories));
       } catch {
