@@ -239,50 +239,56 @@ export function PatientDashboard() {
           />
         </div>
 
-        {/* 3 Simple Large Visual Tap Suggestions */}
-        <div className="pt-4 border-t border-[#DDE7E3] space-y-3">
-          <p className="text-xs font-bold text-[#66736F]">Tap any card to open or hear options:</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* 3 Oversized Tactile Cards (90px+ min height with active depress animation) */}
+        <div className="pt-4 border-t border-[#164E48]/10 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-extrabold text-[#164E48] tracking-micro uppercase">Tactile Quick Activity Tiles</p>
+            <span className="text-[11px] font-semibold text-[#3D615B]">Tap to hear or open</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               {
-                title: 'Show my photos',
+                title: '📸 My Photo Album',
                 href: '/memories',
                 icon: ImageIcon,
-                color: 'bg-emerald-50 text-emerald-900 border-emerald-200 hover:bg-emerald-100',
-                prompt: 'Show my family photos'
+                color: 'bg-white text-[#164E48] border-[#164E48]/15 hover:border-[#164E48] hover:bg-[#E8F4F1]/50',
+                prompt: 'Show my photo album',
+                ttsText: 'My Photo Album. Tap to open your family photos.'
               },
               {
-                title: 'Check my pills',
+                title: "⏰ Today's Routine & Medicine",
                 href: '/reminders',
                 icon: Bell,
-                color: 'bg-teal-50 text-teal-900 border-teal-200 hover:bg-teal-100',
-                prompt: 'What medicine should I take now?'
+                color: 'bg-white text-[#164E48] border-[#164E48]/15 hover:border-[#164E48] hover:bg-[#E8F4F1]/50',
+                prompt: 'What medicine should I take now?',
+                ttsText: "Today's Routine and Medicine. Tap to check your daily pills."
               },
               {
-                title: 'Play a game',
+                title: '🧩 Memory Games',
                 href: '/patient/memory-trivia',
                 icon: Sparkles,
-                color: 'bg-cyan-50 text-cyan-900 border-cyan-200 hover:bg-cyan-100',
-                prompt: 'Let us play a memory game'
+                color: 'bg-white text-[#164E48] border-[#164E48]/15 hover:border-[#164E48] hover:bg-[#E8F4F1]/50',
+                prompt: 'Play a memory game',
+                ttsText: 'Memory Games. Tap to play personalized memory trivia.'
               }
             ].map((item) => {
               const ItemIcon = item.icon;
               return (
                 <div
                   key={item.title}
-                  className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${item.color}`}
+                  className={`min-h-[100px] p-5 rounded-3xl border shadow-sm transition-all duration-200 flex flex-col justify-between space-y-3 cursor-pointer active:scale-95 group ${item.color}`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-white text-[#164E48] flex items-center justify-center shadow-xs">
-                      <ItemIcon className="w-5 h-5" />
+                    <div className="w-12 h-12 rounded-2xl bg-[#E8F4F1] text-[#164E48] flex items-center justify-center shadow-xs border border-[#164E48]/10 group-hover:scale-110 transition-transform">
+                      <ItemIcon className="w-6 h-6" />
                     </div>
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        speakText(item.title);
+                        speakText(item.ttsText);
                       }}
-                      className="p-1.5 rounded-full bg-white/80 text-[#164E48] hover:bg-white shadow-2xs"
+                      className="p-2 rounded-full bg-[#E8F4F1] text-[#164E48] hover:bg-[#164E48] hover:text-white transition-colors shadow-2xs"
                       title="Tap to listen"
                     >
                       <Volume2 className="w-4 h-4" />
@@ -293,7 +299,7 @@ export function PatientDashboard() {
                     className="text-left font-extrabold text-base tracking-tight hover:underline flex items-center justify-between"
                   >
                     <span>{item.title}</span>
-                    <span>→</span>
+                    <span className="text-xl font-bold group-hover:translate-x-1 transition-transform">→</span>
                   </Link>
                 </div>
               );

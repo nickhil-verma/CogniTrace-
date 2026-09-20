@@ -212,6 +212,36 @@ export function LiveSynapsePulseCard({
             </div>
           </div>
 
+          {/* 3 TACTICAL HORIZON CARDS */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            <div className="p-3.5 rounded-2xl bg-white/10 border border-white/15 space-y-1.5 backdrop-blur-sm">
+              <div className="flex items-center justify-between text-xs font-bold text-[#E8F4F1]">
+                <span>Optimal Window</span>
+                <span className="text-[10px] bg-emerald-400/20 text-emerald-200 px-2 py-0.5 rounded-full font-bold">8:00 - 11:30 AM</span>
+              </div>
+              <p className="text-xs font-bold text-white">Morning Cognitive Clarity</p>
+              <p className="text-[11px] text-white/75 leading-tight">Peak focus window for memory activities and routine tasks.</p>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white/10 border border-white/15 space-y-1.5 backdrop-blur-sm">
+              <div className="flex items-center justify-between text-xs font-bold text-[#E8F4F1]">
+                <span>Sundown Prep</span>
+                <span className="text-[10px] bg-amber-400/20 text-amber-200 px-2 py-0.5 rounded-full font-bold">4:30 PM Horizon</span>
+              </div>
+              <p className="text-xs font-bold text-white">Calm Ambient Transition</p>
+              <p className="text-[11px] text-white/75 leading-tight">Dim lights, play soothing music, and prepare peaceful evening.</p>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white/10 border border-white/15 space-y-1.5 backdrop-blur-sm">
+              <div className="flex items-center justify-between text-xs font-bold text-[#E8F4F1]">
+                <span>Protected Break</span>
+                <span className="text-[10px] bg-teal-400/20 text-teal-200 px-2 py-0.5 rounded-full font-bold">1:30 - 2:15 PM</span>
+              </div>
+              <p className="text-xs font-bold text-white">45m Caregiver Rest</p>
+              <p className="text-[11px] text-white/75 leading-tight">Scheduled respite window while patient enjoys calm relaxation.</p>
+            </div>
+          </div>
+
           {/* THE INTERACTIVE ONE-TAP "CAREGIVER RESET" BREATH PULSE */}
           <div className="pt-2 border-t border-white/15">
             {!isBreathing ? (

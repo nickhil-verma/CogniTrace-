@@ -90,12 +90,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const navItems = isPatient ? patientNav : caregiverNav;
 
   return (
-    <div className={`min-h-screen flex flex-col md:flex-row font-sans antialiased ${
-      isPatient ? 'bg-[#FFFBF5] text-[#123B35]' : 'bg-[#F5F8F6] text-[#123B35]'
-    }`}>
+    <div className="min-h-screen flex flex-col md:flex-row font-sans antialiased bg-[#F5F8F6] text-[#123B35]">
       <ToastContainer />
       {/* ================= DESKTOP SIDEBAR ================= */}
-      <aside className="hidden md:flex flex-col w-64 border-r border-[#DDE7E3] bg-white p-5 space-y-6 shrink-0 justify-between sticky top-0 h-screen">
+      <aside className="hidden md:flex flex-col w-64 border-r border-[#164E48]/10 bg-white/90 backdrop-blur-xl p-5 space-y-6 shrink-0 justify-between sticky top-0 h-screen shadow-xs">
         <div className="space-y-5">
           {/* Logo & Brand */}
           <div className="flex items-center justify-between">
@@ -106,8 +104,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 className="w-10 h-10 rounded-2xl shadow-md object-contain transition-transform group-hover:scale-105"
               />
               <div>
-                <h1 className="text-xl font-bold tracking-tight text-[#123B35]">CogniTrace</h1>
-                <span className="text-[10px] font-semibold text-[#3E9C87] tracking-widest uppercase">
+                <h1 className="text-xl font-extrabold tracking-tight text-[#164E48]">CogniTrace</h1>
+                <span className="text-[10px] font-bold text-[#10B981] tracking-widest uppercase">
                   {isPatient ? t('common.patientPortal') : t('common.cognitiveCare')}
                 </span>
               </div>
@@ -120,7 +118,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Navigation Items */}
-          <nav className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-260px)] pr-1">
+          <nav className="space-y-2 overflow-y-auto max-h-[calc(100vh-260px)] pr-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -128,12 +126,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-bold transition-all duration-200 ${
+                  className={`flex items-center justify-between px-4 py-3 rounded-full text-xs font-bold transition-all duration-200 ${
                     isActive
-                      ? 'bg-[#164E48] text-white shadow-sm'
+                      ? 'bg-[#164E48] text-white shadow-md'
                       : item.highlight
-                      ? 'bg-[#BFDCD6]/30 text-[#123B35] hover:bg-[#BFDCD6]/60 border border-[#BFDCD6]/50'
-                      : 'text-[#66736F] hover:bg-[#F5F8F6] hover:text-[#123B35]'
+                      ? 'bg-[#E8F4F1] text-[#164E48] hover:bg-[#D2ECE6] border border-[#164E48]/15'
+                      : 'text-[#3D615B] hover:bg-[#E8F4F1] hover:text-[#164E48]'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
@@ -141,9 +139,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       className={`w-5 h-5 ${
                         isActive
                           ? 'text-white'
-                          : item.highlight
-                          ? 'text-[#17665B]'
-                          : 'text-[#66736F]'
+                          : 'text-[#164E48]'
                       }`}
                     />
                     <span>{item.label}</span>
@@ -158,7 +154,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           speakText((item as any).ttsText || item.label);
                         }}
                         className={`p-1 rounded-full transition-colors ${
-                          isActive ? 'text-white/80 hover:text-white' : 'text-[#17665B] hover:bg-[#E8F4F1]'
+                          isActive ? 'text-white/80 hover:text-white' : 'text-[#164E48] hover:bg-[#E8F4F1]'
                         }`}
                         title="Tap to hear label"
                       >
@@ -166,7 +162,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       </button>
                     )}
                     {item.highlight && !isActive && (
-                      <span className="w-2 h-2 rounded-full bg-[#17665B] animate-ping" />
+                      <span className="w-2 h-2 rounded-full bg-[#164E48] animate-ping" />
                     )}
                   </div>
                 </Link>

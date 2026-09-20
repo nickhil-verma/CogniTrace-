@@ -22,20 +22,16 @@ html.lenis, html.lenis body {
 }
 
 :root {
-  --bg-main: #F8FAF9;
+  --bg-main: #F5F8F6;
   --card-bg: #FFFFFF;
   --text-primary: #123B35;
-  --text-secondary: #66736F;
-  --mint: #BFDCD6;
-  --deep-teal: #17665B;
+  --text-secondary: #3D615B;
   --forest-teal: #164E48;
-  --soft-mint: #E8F4F1;
-  --mint-border: #D2ECE6;
-  --accent-green: #3E9C87;
-  --soft-pink: #F7DDE5;
-  --pink-accent: #C85C82;
-  --warning: #E7A23B;
-  --border-subtle: #DDE7E3;
+  --mint-accent: #E8F4F1;
+  --emerald-indicator: #10B981;
+  --emerald-dark: #0D6E63;
+  --border-subtle: rgba(22, 78, 72, 0.12);
+  --squircle-shadow: 0 10px 30px -5px rgba(22, 78, 72, 0.06), 0 4px 12px -2px rgba(22, 78, 72, 0.03);
 }
 
 @theme inline {
@@ -43,35 +39,55 @@ html.lenis, html.lenis body {
   --color-card: var(--card-bg);
   --color-primary: var(--text-primary);
   --color-secondary: var(--text-secondary);
-  --color-mint: var(--mint);
-  --color-deep-teal: var(--deep-teal);
   --color-forest-teal: var(--forest-teal);
-  --color-soft-mint: var(--soft-mint);
-  --color-mint-border: var(--mint-border);
-  --color-accent-green: var(--accent-green);
-  --color-soft-pink: var(--soft-pink);
-  --color-pink-accent: var(--pink-accent);
-  --color-warning: var(--warning);
+  --color-mint-accent: var(--mint-accent);
+  --color-emerald-indicator: var(--emerald-indicator);
   --color-border-subtle: var(--border-subtle);
   
   --font-sans: var(--font-dm-sans), 'DM Sans', var(--font-geist-sans), Inter, system-ui, -apple-system, sans-serif;
 }
 
 body {
-  background-color: var(--bg-main);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
+  background-color: #F5F8F6;
+  background-image: radial-gradient(rgba(22, 78, 72, 0.04) 1px, transparent 0);
+  background-size: 48px 48px;
+  color: #123B35;
+  font-family: var(--font-dm-sans), 'DM Sans', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+h1, h2 {
+  letter-spacing: -0.025em; /* tracking-tight */
+}
+
+p, span, div {
+  letter-spacing: 0em; /* tracking-normal */
+}
+
+.tracking-micro {
+  letter-spacing: 0.05em; /* tracking-wide */
+}
+
 .font-cursive {
   font-family: var(--font-caveat), 'Caveat', cursive, sans-serif;
 }
 
-/* Custom Healthcare SaaS Utility Classes */
+/* Custom Healthcare SaaS Utility Classes & Squircle Cards */
+.squircle-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(22, 78, 72, 0.1);
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 30px -5px rgba(22, 78, 72, 0.06), 0 4px 12px -2px rgba(22, 78, 72, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.squircle-card:hover {
+  box-shadow: 0 16px 36px -6px rgba(22, 78, 72, 0.1), 0 6px 16px -3px rgba(22, 78, 72, 0.05);
+}
+
 .bg-cogni-main {
   background-color: #F5F8F6;
 }
@@ -85,55 +101,23 @@ body {
 }
 
 .text-cogni-secondary {
-  color: #66736F;
+  color: #3D615B;
 }
 
 .bg-cogni-mint {
-  background-color: #BFDCD6;
+  background-color: #E8F4F1;
 }
 
 .bg-cogni-teal {
-  background-color: #17665B;
+  background-color: #164E48;
 }
 
 .text-cogni-teal {
-  color: #17665B;
-}
-
-.bg-cogni-accent {
-  background-color: #3E9C87;
-}
-
-.bg-cogni-soft-pink {
-  background-color: #F7DDE5;
-}
-
-.text-cogni-pink {
-  color: #C85C82;
+  color: #164E48;
 }
 
 .border-cogni {
-  border-color: #DDE7E3;
-}
-
-/* Organic Soft Shadows & Cards */
-.card-healthcare {
-  background: #FFFFFF;
-  border: 1px solid #DDE7E3;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px -2px rgba(18, 59, 53, 0.04), 0 2px 6px -1px rgba(18, 59, 53, 0.02);
-  transition: all 0.2s ease-in-out;
-}
-
-.card-healthcare:hover {
-  box-shadow: 0 10px 25px -4px rgba(18, 59, 53, 0.07), 0 4px 10px -2px rgba(18, 59, 53, 0.03);
-}
-
-.card-hero {
-  background: linear-gradient(135deg, #FFFFFF 0%, #F5F8F6 100%);
-  border: 1px solid #DDE7E3;
-  border-radius: 24px;
-  box-shadow: 0 8px 30px rgba(23, 102, 91, 0.06);
+  border-color: rgba(22, 78, 72, 0.12);
 }
 
 /* Custom scrollbar */
@@ -147,10 +131,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #BFDCD6;
+  background: #E8F4F1;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #17665B;
+  background: #164E48;
 }
