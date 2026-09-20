@@ -73,7 +73,7 @@ export default function MemoriesPage() {
             {t('memories.title')}
           </h1>
         </div>
-        <Button variant="default" onClick={() => setIsUploadOpen(true)} className="shadow-md">
+        <Button variant="default" onClick={() => router.push('/caregiver/memories/new')} className="shadow-md">
           <Plus className="w-4 h-4 mr-2 text-white" />
           {t('memories.addNewMemory')}
         </Button>

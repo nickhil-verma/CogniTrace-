@@ -198,21 +198,26 @@ async def delete_caretaker_appointment(apt_id: str, patient_id: str = "patient_0
     return {"status": "deleted", "id": apt_id, "success": True}
 
 
+from app.services.vector_store import vector_store
+
+
 @router.get("/v1/caretaker/memories", dependencies=[Depends(require_patient_or_caregiver)])
+@router.get("/api/caregiver/memories", dependencies=[Depends(require_patient_or_caregiver)])
 async def get_caretaker_memories(patient_id: str = "patient_001"):
     """
-    Retrieves all photo memories from DynamoDB.
+    Retrieves all photo memories from DynamoDB & Vector Store.
     """
     return dynamodb_service.get_memories(patient_id)
 
 
 @router.post("/v1/caretaker/memories", dependencies=[Depends(require_patient_or_caregiver)])
+@router.post("/api/caregiver/memories", dependencies=[Depends(require_patient_or_caregiver)])
 async def create_caretaker_memory(payload: dict):
     """
-    Creates photo memory album item in DynamoDB.
+    Ingests photo memory album item with vector embeddings into VectorStore & DynamoDB.
     """
     patient_id = payload.get("patient_id") or payload.get("user_id", "patient_001")
-    saved_item = dynamodb_service.save_memory(patient_id, payload)
+    saved_item = vector_store.add_memory(patient_id, payload)
     return {
         "status": "created",
         "id": saved_item.get("id"),
