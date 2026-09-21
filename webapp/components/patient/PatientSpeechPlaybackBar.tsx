@@ -24,7 +24,7 @@ export function PatientSpeechPlaybackBar() {
       const detail = (e as CustomEvent<SpeechEventData>).detail;
       setIsSpeaking(true);
       setIsPaused(false);
-      setSpeechText(detail?.text || 'Agent Speaking...');
+      setSpeechText(detail?.text || 'Aria Speaking...');
       setProgressPercent(0);
     };
 
@@ -64,8 +64,10 @@ export function PatientSpeechPlaybackBar() {
     };
   }, []);
 
-  // Display whenever active speech synthesis is speaking
+  // Display whenever active speech synthesis is speaking for Caregiver or Patient
   if (!isSpeaking) return null;
+
+  const roleLabel = isPatient ? 'Aria • Patient POV' : 'Aria • Caregiver Insights';
 
   return (
     <AnimatePresence>
@@ -74,11 +76,11 @@ export function PatientSpeechPlaybackBar() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -25 }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="sticky top-0 z-50 w-full bg-gradient-to-r from-[#164E48] via-[#17665B] to-[#123B35] text-white shadow-xl border-b-2 border-white/20 px-4 py-3"
+        className="sticky top-0 z-50 w-full bg-gradient-to-r from-[#164E48] via-[#17665B] to-[#123B35] text-white shadow-xl border-b-2 border-white/20 px-4 py-3 select-none"
       >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
           
-          {/* Left: Agent Soundwave & Live Utterance Snippet */}
+          {/* Left: Aria Soundwave & Utterance Snippet */}
           <div className="flex items-center space-x-3 w-full md:w-auto min-w-0">
             {/* Animated Soundwave / Pause icon */}
             <div className="w-10 h-10 rounded-2xl bg-white/15 border border-white/30 flex items-center justify-center shrink-0 shadow-inner">
@@ -102,7 +104,7 @@ export function PatientSpeechPlaybackBar() {
               <div className="flex items-center space-x-2">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-300 flex items-center">
                   <Sparkles className="w-3.5 h-3.5 mr-1" />
-                  {isPaused ? 'Voice Companion Paused' : 'Voice Companion Speaking'}
+                  {isPaused ? `${roleLabel} (Paused)` : `${roleLabel} Speaking`}
                 </span>
                 <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold">
                   {progressPercent}% spoken
@@ -114,7 +116,7 @@ export function PatientSpeechPlaybackBar() {
             </div>
           </div>
 
-          {/* Middle: Progress Bar */}
+          {/* Middle: Live Track Progress Bar */}
           <div className="w-full md:w-64 space-y-1">
             <div className="w-full h-2.5 rounded-full bg-black/30 overflow-hidden p-0.5 border border-white/20">
               <motion.div
@@ -136,7 +138,7 @@ export function PatientSpeechPlaybackBar() {
                 title="Resume reading"
               >
                 <Play className="w-4 h-4 fill-current" />
-                <span>Resume Playback</span>
+                <span>Resume Voice</span>
               </button>
             ) : (
               <button

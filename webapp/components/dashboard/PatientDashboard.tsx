@@ -153,11 +153,11 @@ export function PatientDashboard() {
           <Badge variant="teal">{t('patient.voiceCompanion') || 'Voice Companion'}</Badge>
           <div className="flex items-center justify-center space-x-2">
             <h2 className="text-2xl md:text-3xl font-extrabold text-[#123B35]">
-              {t('patient.talkWithVoiceAI') || 'Talk with My Voice AI Companion'}
+              {t('patient.talkWithVoiceAI') || 'Talk with Aria, My Voice AI Companion'}
             </h2>
             <button
               type="button"
-              onClick={() => speakText("Talk with your Voice AI companion. Tap the orb to speak.")}
+              onClick={() => speakText("Talk with Aria, your Voice AI companion. Tap the orb to speak.")}
               className="p-1.5 rounded-full bg-[#E8F4F1] text-[#17665B] hover:bg-[#D2ECE6] transition-colors"
               title="Tap to listen"
             >
