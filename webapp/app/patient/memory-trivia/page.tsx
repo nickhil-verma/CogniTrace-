@@ -15,11 +15,14 @@ import {
   Maximize2,
   X,
   Lock,
-  Smile
+  Smile,
+  Trophy,
+  Calendar
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useLanguage } from '@/hooks/useLanguage';
+import { speakText } from '@/lib/speech';
 
 interface TriviaRoundData {
   round_id: string;
@@ -35,26 +38,160 @@ interface TriviaRoundData {
   encouragement_fact: string;
 }
 
+// Built-in daily trivia question bank (expands backend dynamic pool)
+const DAILY_TRIVIA_POOL: TriviaRoundData[] = [
+  {
+    round_id: 'rnd_goa_001',
+    memory_id: 'mem_1',
+    image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+    title: 'Family Vacation in Goa',
+    date: 'Summer 1987',
+    location: 'Calangute Beach, Goa',
+    question: 'Who joined you on this sunny beach trip to Goa?',
+    options: ['Dad (Ramesh) & Priya', 'Doctor Anita', 'Neighbors from next door'],
+    correct_index: 0,
+    gentle_hint: 'Think about who loved walking along the shoreline with you for sunset ice cream!',
+    encouragement_fact: 'Ramesh and Priya loved making sandcastles by the ocean waves with you that afternoon!'
+  },
+  {
+    round_id: 'rnd_garden_002',
+    memory_id: 'mem_2',
+    image_url: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=800&q=80',
+    title: 'Morning Garden Care',
+    date: 'March 2015',
+    location: 'Home Garden',
+    question: 'What special flowers bloomed so vibrantly in your home garden here?',
+    options: ['Yellow & Red Roses', 'Purple Orchids', 'White Tulips'],
+    correct_index: 0,
+    gentle_hint: 'You spent the morning planting these fragrant blossoms in your backyard garden!',
+    encouragement_fact: 'You cared for those rose bushes every single morning and they bloomed beautifully for months!'
+  },
+  {
+    round_id: 'rnd_grad_003',
+    memory_id: 'mem_3',
+    image_url: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
+    title: "Ananya's Graduation Day",
+    date: 'June 2021',
+    location: 'University Auditorium',
+    question: "Whose special graduation ceremony were you celebrating on this proud day?",
+    options: ['Ananya (Granddaughter)', 'Priya (Caregiver)', 'Rahul (Son)'],
+    correct_index: 0,
+    gentle_hint: 'Look at who is wearing the black cap and gown in the middle of the photo!',
+    encouragement_fact: 'Ananya hugged you tightly right after receiving her engineering diploma!'
+  },
+  {
+    round_id: 'rnd_diwali_004',
+    memory_id: 'mem_4',
+    image_url: 'https://images.unsplash.com/photo-1599785209707-a456fc1337cc?auto=format&fit=crop&w=800&q=80',
+    title: 'Diwali Festival Preparation',
+    date: 'Diwali 2019',
+    location: 'Family Kitchen',
+    question: 'What delicious tradition were you preparing together in the kitchen?',
+    options: ['Cardamom Festival Sweets', 'Birthday Cake', 'Morning Coffee'],
+    correct_index: 0,
+    gentle_hint: 'The kitchen was filled with sweet cardamom and almond aromas all afternoon!',
+    encouragement_fact: 'Everyone loved your famous home-style kaju katli sweets during the festival!'
+  },
+  {
+    round_id: 'rnd_tea_005',
+    memory_id: 'mem_5',
+    image_url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
+    title: 'Evening Tea & Radio Hits',
+    date: 'Autumn 2018',
+    location: 'Living Room Balcony',
+    question: 'What music was playing on the radio while sipping warm cardamom tea?',
+    options: ['Classic Radio Melodies', 'Heavy Metal Drums', 'Loud Electronic Synth'],
+    correct_index: 0,
+    gentle_hint: 'It was a peaceful vintage melody that Priya hummed along to with you!',
+    encouragement_fact: 'Listening to classic radio songs brought bright smiles to the whole balcony that evening!'
+  },
+  {
+    round_id: 'rnd_park_006',
+    memory_id: 'mem_6',
+    image_url: 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=800&q=80',
+    title: 'Sunny Park Walk',
+    date: 'Spring 2022',
+    location: 'Lodi Botanical Gardens',
+    question: 'Where did you take your refreshing morning walk with Priya?',
+    options: ['Lodi Botanical Gardens', 'Shopping Mall Parking', 'Busy Airport Terminal'],
+    correct_index: 0,
+    gentle_hint: 'You loved watching the green trees and singing birds along the paved walking path!',
+    encouragement_fact: 'You completed a full 20-minute morning walk under the sunny shade trees!'
+  }
+];
+
+// Get current date string (YYYY-MM-DD) for 1-day lifetime tracking
+function getTodayKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Retrieve asked question IDs for today from localStorage
+function getTodayAskedQuestions(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const key = `cognitrace_asked_questions_${getTodayKey()}`;
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+// Store asked question ID for today
+function markQuestionAskedToday(roundId: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    const asked = getTodayAskedQuestions();
+    if (!asked.includes(roundId)) {
+      asked.push(roundId);
+      const key = `cognitrace_asked_questions_${getTodayKey()}`;
+      localStorage.setItem(key, JSON.stringify(asked));
+    }
+  } catch {
+    // ignore
+  }
+}
+
+// Randomly shuffle options array and update correct_index
+function shuffleRoundOptions(round: TriviaRoundData): TriviaRoundData {
+  const correctText = round.options[round.correct_index] || round.options[0];
+  const shuffled = [...round.options];
+
+  // Fisher-Yates shuffle algorithm
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  const newCorrectIdx = shuffled.indexOf(correctText);
+  return {
+    ...round,
+    options: shuffled,
+    correct_index: newCorrectIdx >= 0 ? newCorrectIdx : 0
+  };
+}
+
 function getTriviaSpeech(round: TriviaRoundData, language: string): string {
-  const options = round.options.join('. ');
+  const optionsStr = round.options.map((opt, i) => `Option ${String.fromCharCode(65 + i)}: ${opt}`).join('. ');
   if (language !== 'hi-IN') {
-    return `${round.question} Here are your options: ${options}`;
+    return `${round.question} Here are your choices: ${optionsStr}`;
   }
 
   const title = round.title.toLowerCase();
   if (title.includes('graduation') || title.includes('degree')) {
-    return `यह अनन्या के स्नातक समारोह का गर्व भरा दिन था। इस समारोह में आपके साथ कौन था? विकल्प हैं: अनन्या, आपकी पोती; प्रिया, आपकी देखभाल करने वाली; या राहुल, आपके बेटे।`;
+    return `यह अनन्या के स्नातक समारोह का गर्व भरा दिन था। इस समारोह में आपके साथ कौन था? विकल्प हैं: ${optionsStr}`;
   }
   if (title.includes('festival') || title.includes('diwali') || title.includes('sweets')) {
-    return `दीवाली पर आप परिवार के साथ कौन सी स्वादिष्ट मिठाइयाँ बना रहे थे? विकल्प हैं: इलायची वाली त्योहार की मिठाइयाँ; जन्मदिन का केक; या सुबह की कॉफी।`;
+    return `दीवाली पर आप परिवार के साथ कौन सी स्वादिष्ट मिठाइयाँ बना रहे थे? विकल्प हैं: ${optionsStr}`;
   }
   if (title.includes('garden') || title.includes('rose') || title.includes('flower')) {
-    return `आपके घर के बगीचे में कौन से सुंदर फूल खिले थे? विकल्प हैं: पीले और लाल गुलाब; बैंगनी ऑर्किड; या सफेद ट्यूलिप।`;
+    return `आपके घर के बगीचे में कौन से सुंदर फूल खिले थे? विकल्प हैं: ${optionsStr}`;
   }
   if (title.includes('goa') || title.includes('beach')) {
-    return `गोवा की इस सुंदर समुद्र तट यात्रा में आपके साथ कौन था? विकल्प हैं: रमेश और प्रिया; डॉक्टर अनिता; या पड़ोसी।`;
+    return `गोवा की इस सुंदर समुद्र तट यात्रा में आपके साथ कौन था? विकल्प हैं: ${optionsStr}`;
   }
-  return `क्या आपको इस पारिवारिक याद के बारे में कुछ याद है? विकल्प हैं: ${options}`;
+  return `क्या आपको इस पारिवारिक याद के बारे में कुछ याद है? विकल्प हैं: ${optionsStr}`;
 }
 
 function getHindiFeedback(round: TriviaRoundData, isCorrect: boolean): string {
@@ -74,33 +211,17 @@ export default function MemoryTriviaGamePage() {
   const { isPatient, mounted } = useUserRole();
   const { currentLangObj } = useLanguage();
 
-  const [gameState, setGameState] = useState<'LOADING' | 'QUESTION' | 'FEEDBACK_CORRECT' | 'FEEDBACK_HINT' | 'COMPLETED'>('LOADING');
+  const [gameState, setGameState] = useState<'LOADING' | 'QUESTION' | 'FEEDBACK_CORRECT' | 'FEEDBACK_HINT' | 'COMPLETED_TODAY'>('LOADING');
   const [roundData, setRoundData] = useState<TriviaRoundData | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [showZoomModal, setShowZoomModal] = useState<boolean>(false);
   const [roundsCompleted, setRoundsCompleted] = useState<number>(0);
   const [startTime, setStartTime] = useState<number>(Date.now());
 
-  // Speak text aloud using SpeechSynthesis
+  // Speak text aloud via speech utility (triggers top track bar & pause button)
   const speakAloud = useCallback((text: string) => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      const speechSynthesis = window.speechSynthesis;
-      speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.92;
-      utterance.pitch = 1.0;
-      const speechLang = currentLangObj?.speechLang || 'en-US';
-      utterance.lang = speechLang;
-
-      const voices = speechSynthesis.getVoices();
-      const matchingVoice = voices.find((voice) => voice.lang.toLowerCase() === speechLang.toLowerCase())
-        || voices.find((voice) => voice.lang.toLowerCase().startsWith(speechLang.split('-')[0].toLowerCase()));
-      if (matchingVoice) {
-        utterance.voice = matchingVoice;
-      }
-
-      speechSynthesis.speak(utterance);
-    }
+    const speechLang = currentLangObj?.speechLang || 'en-US';
+    speakText(text, speechLang);
   }, [currentLangObj]);
 
   useEffect(() => {
@@ -111,26 +232,69 @@ export default function MemoryTriviaGamePage() {
     };
   }, []);
 
-  // Load new trivia round from backend
+  // Load new trivia round ensuring single-day deduplication and randomized options
   const loadNextRound = useCallback(async () => {
     setGameState('LOADING');
     setSelectedIndex(null);
     setStartTime(Date.now());
 
-    try {
-      const data = await api.fetchMemoryTriviaRound('patient_001');
-      setRoundData(data);
-      setGameState('QUESTION');
+    const askedToday = getTodayAskedQuestions();
+    let candidate: TriviaRoundData | null = null;
 
-      // Auto-read question aloud for patient comfort
-      setTimeout(() => {
-        speakAloud(getTriviaSpeech(data, currentLangObj?.code || 'en-US'));
-      }, 400);
-    } catch (err) {
-      console.warn('Memory trivia load error:', err);
-      setGameState('QUESTION');
+    // 1. Try fetching from backend RAG service
+    try {
+      const fetched = await api.fetchMemoryTriviaRound('patient_001');
+      if (fetched && !askedToday.includes(fetched.round_id) && !askedToday.includes(fetched.question)) {
+        candidate = fetched;
+      }
+    } catch {
+      // ignore
     }
+
+    // 2. If backend candidate was already asked today, pick from unasked daily pool
+    if (!candidate) {
+      const unaskedPool = DAILY_TRIVIA_POOL.filter(
+        (r) => !askedToday.includes(r.round_id) && !askedToday.includes(r.question)
+      );
+
+      if (unaskedPool.length > 0) {
+        candidate = unaskedPool[Math.floor(Math.random() * unaskedPool.length)];
+      }
+    }
+
+    // 3. If all questions for today have been asked, show daily completed view
+    if (!candidate) {
+      setGameState('COMPLETED_TODAY');
+      return;
+    }
+
+    // Mark question as asked today
+    markQuestionAskedToday(candidate.round_id);
+    markQuestionAskedToday(candidate.question);
+
+    // Shuffle options so correct answer position is randomized
+    const randomizedRound = shuffleRoundOptions(candidate);
+    setRoundData(randomizedRound);
+    setGameState('QUESTION');
+
+    // Auto-read question aloud for patient comfort (triggers top playback bar & pause button)
+    setTimeout(() => {
+      speakAloud(getTriviaSpeech(randomizedRound, currentLangObj?.code || 'en-US'));
+    }, 400);
   }, [currentLangObj, speakAloud]);
+
+  // Reset today's asked history to replay
+  const handleResetTodayHistory = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const key = `cognitrace_asked_questions_${getTodayKey()}`;
+        localStorage.removeItem(key);
+      } catch {
+        // ignore
+      }
+    }
+    loadNextRound();
+  };
 
   useEffect(() => {
     if (mounted && isPatient) {
@@ -184,7 +348,7 @@ export default function MemoryTriviaGamePage() {
         <div className="space-y-2">
           <Badge variant="warning">Patient Exclusive Reminiscence Game</Badge>
           <h2 className="text-2xl font-bold text-[#123B35]">Patient Memory Journey Locked</h2>
-          <p className="text-sm text-[#66736F] leading-relaxed max-w-md mx-auto">
+          <p className="text-sm text-[#3D615B] leading-relaxed max-w-md mx-auto">
             This interactive trivia game is designed exclusively for patients to recall family photos and moments.
             Caregivers can view observation trends and activity logs in the Caregiver Dashboard.
           </p>
@@ -197,60 +361,92 @@ export default function MemoryTriviaGamePage() {
     <div className="max-w-3xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300 select-none">
       
       {/* Top Header Badge */}
-      <div className="flex items-center justify-between border-b border-[#DDE7E3] pb-4">
-        <div className="flex items-center space-x-2">
-          <div className="p-2 rounded-2xl bg-[#164E48] text-white shadow-sm">
-            <Heart className="w-5 h-5 fill-current text-white" />
+      <div className="flex items-center justify-between border-b border-[#164E48]/10 pb-4">
+        <div className="flex items-center space-x-3">
+          <div className="p-2.5 rounded-2xl bg-[#164E48] text-white shadow-md">
+            <Heart className="w-6 h-6 fill-current text-white" />
           </div>
           <div>
-            <span className="text-xs font-bold text-[#164E48] uppercase tracking-wider">Patient Memory Companion</span>
-            <h1 className="text-2xl font-extrabold text-[#123B35] tracking-tight">Family Memory Journeys</h1>
+            <span className="text-xs font-bold text-[#164E48] uppercase tracking-micro">Patient Memory Companion</span>
+            <h1 className="text-2xl font-extrabold text-[#123B35] tracking-tight">Memory Games</h1>
           </div>
         </div>
 
-        <Badge variant="accent" className="text-xs px-3 py-1 font-bold">
-          {roundsCompleted > 0 ? `${roundsCompleted} Moments Shared` : 'Warm Reminiscence'}
+        <Badge variant="accent" className="text-xs px-3.5 py-1 font-bold">
+          {roundsCompleted > 0 ? `${roundsCompleted} Moments Shared Today` : 'Daily Reminiscence'}
         </Badge>
       </div>
 
       {/* ================= GAME STATE: LOADING ================= */}
       {gameState === 'LOADING' && (
-        <Card className="p-12 text-center space-y-6 card-hero">
-          <div className="w-20 h-20 rounded-full bg-[#BFDCD6]/40 text-[#17665B] flex items-center justify-center mx-auto animate-pulse shadow-inner">
+        <Card className="p-12 text-center space-y-6 bg-white border border-[#164E48]/10 rounded-3xl shadow-sm">
+          <div className="w-20 h-20 rounded-full bg-[#E8F4F1] text-[#164E48] flex items-center justify-center mx-auto animate-pulse shadow-inner border border-[#164E48]/10">
             <Sparkles className="w-10 h-10 animate-spin" />
           </div>
           <div className="space-y-2">
-            <h3 className="text-xl font-bold text-[#123B35]">Gathering Your Memory Moments...</h3>
-            <p className="text-xs text-[#66736F]">Preparing a warm photo memory to share with you.</p>
+            <h3 className="text-xl font-extrabold text-[#123B35]">Gathering Today's Memory Moments...</h3>
+            <p className="text-xs font-semibold text-[#3D615B]">Selecting an unasked photo memory for today.</p>
+          </div>
+        </Card>
+      )}
+
+      {/* ================= GAME STATE: ALL COMPLETED TODAY ================= */}
+      {gameState === 'COMPLETED_TODAY' && (
+        <Card className="p-8 md:p-10 text-center space-y-6 bg-gradient-to-b from-white to-[#E8F4F1]/40 border-2 border-[#164E48]/20 rounded-3xl shadow-xl animate-in fade-in duration-300">
+          <div className="w-20 h-20 rounded-full bg-[#164E48] text-white flex items-center justify-center mx-auto shadow-lg border-4 border-white">
+            <Trophy className="w-10 h-10 text-amber-300" />
+          </div>
+          <div className="space-y-3 max-w-lg mx-auto">
+            <Badge variant="teal" className="px-3.5 py-1 text-xs font-bold">
+              Daily Memory Quest Complete!
+            </Badge>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-[#123B35] tracking-tight">
+              You've Explored All Memory Moments for Today! 🎉
+            </h2>
+            <p className="text-sm font-medium text-[#3D615B] leading-relaxed">
+              Wonderful work! You have completed all of today's memory questions. Your mind is active, vibrant, and connected. 
+              New memory moments will unlock tomorrow!
+            </p>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Button
+              onClick={handleResetTodayHistory}
+              variant="outline"
+              className="w-full sm:w-auto px-6 py-3 rounded-full border-[#164E48]/20 text-[#164E48] font-bold text-xs shadow-sm hover:bg-[#E8F4F1]"
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              <span>Replay Today's Moments</span>
+            </Button>
           </div>
         </Card>
       )}
 
       {/* ================= GAME STATE: QUESTION / FEEDBACK ================= */}
-      {roundData && gameState !== 'LOADING' && gameState !== 'COMPLETED' && (
+      {roundData && gameState !== 'LOADING' && gameState !== 'COMPLETED_TODAY' && (
         <div className="space-y-6">
           
           {/* Main Archival Memory Photo Card */}
-          <Card className="overflow-hidden border border-[#DDE7E3] shadow-md bg-white relative">
+          <Card className="overflow-hidden border border-[#164E48]/15 shadow-md bg-white relative rounded-3xl">
             <div className="relative h-64 md:h-80 w-full bg-slate-900 overflow-hidden group">
               <img
                 src={roundData.image_url}
                 alt={roundData.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-5 text-white">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex items-end p-6 text-white">
                 <div className="flex-1 flex items-center justify-between">
                   <div>
-                    <h3 className="text-xl font-extrabold text-white tracking-tight">{roundData.title}</h3>
-                    <p className="text-xs text-white/80 font-semibold">{roundData.location} &bull; {roundData.date}</p>
+                    <h3 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">{roundData.title}</h3>
+                    <p className="text-xs text-white/90 font-bold mt-0.5">{roundData.location} &bull; {roundData.date}</p>
                   </div>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => setShowZoomModal(true)}
-                    className="text-white hover:bg-white/20 text-xs rounded-xl"
+                    className="text-white hover:bg-white/20 text-xs rounded-full border border-white/30"
                   >
-                    <Maximize2 className="w-4 h-4 mr-1" />
+                    <Maximize2 className="w-4 h-4 mr-1.5" />
                     Zoom Photo
                   </Button>
                 </div>
@@ -259,14 +455,14 @@ export default function MemoryTriviaGamePage() {
           </Card>
 
           {/* Question Text & Read Aloud Controls */}
-          <Card className="p-6 bg-gradient-to-r from-white via-[#F5F8F6] to-white border-[#DDE7E3] shadow-sm space-y-4">
+          <Card className="p-6 bg-white border border-[#164E48]/15 shadow-sm space-y-4 rounded-3xl">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
-                <span className="text-xs font-bold text-[#17665B] flex items-center">
-                  <Smile className="w-4 h-4 mr-1.5 text-amber-500" />
-                  Reminiscence Question
+                <span className="text-xs font-extrabold text-[#164E48] flex items-center tracking-micro uppercase">
+                  <Smile className="w-4 h-4 mr-1.5 text-[#10B981]" />
+                  Memory Reminiscence Question
                 </span>
-                <h2 className="text-xl md:text-2xl font-bold text-[#123B35] leading-snug">
+                <h2 className="text-xl md:text-2xl font-extrabold text-[#123B35] leading-snug">
                   {roundData.question}
                 </h2>
               </div>
@@ -274,8 +470,8 @@ export default function MemoryTriviaGamePage() {
                 variant="outline"
                 size="icon"
                 onClick={() => speakAloud(getTriviaSpeech(roundData, currentLangObj?.code || 'en-US'))}
-                className="h-12 w-12 shrink-0 rounded-2xl bg-[#BFDCD6]/30 text-[#17665B] hover:bg-[#BFDCD6] cursor-pointer"
-                title="Read question aloud"
+                className="h-12 w-12 shrink-0 rounded-full bg-[#E8F4F1] text-[#164E48] hover:bg-[#D2ECE6] border border-[#164E48]/15 cursor-pointer shadow-xs"
+                title="Read question aloud (shows top track bar & pause button)"
               >
                 <Volume2 className="w-6 h-6" />
               </Button>
@@ -295,25 +491,25 @@ export default function MemoryTriviaGamePage() {
 
             {/* Correct Celebration Card */}
             {gameState === 'FEEDBACK_CORRECT' && (
-              <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-300 text-xs text-emerald-950 space-y-2 animate-in fade-in duration-300">
-                <span className="font-bold text-sm flex items-center text-emerald-800">
-                  <CheckCircle2 className="w-5 h-5 mr-2 text-emerald-600" />
-                  Wonderful Memory Choice!
+              <div className="p-5 rounded-2xl bg-[#E8F4F1] border border-[#10B981]/40 text-xs text-[#123B35] space-y-2 animate-in fade-in duration-300">
+                <span className="font-extrabold text-sm flex items-center text-[#164E48]">
+                  <CheckCircle2 className="w-5 h-5 mr-2 text-[#10B981]" />
+                  Wonderful Memory Choice! 🎉
                 </span>
-                <p className="text-xs font-semibold leading-relaxed text-emerald-900">{roundData.encouragement_fact}</p>
+                <p className="text-xs font-semibold leading-relaxed text-[#3D615B]">{roundData.encouragement_fact}</p>
               </div>
             )}
           </Card>
 
-          {/* Large Accessible Touch Option Buttons */}
+          {/* Large Accessible Touch Option Buttons (Randomized Order) */}
           <div className="space-y-3">
             {roundData.options.map((optionText, idx) => {
               const isSelected = selectedIndex === idx;
               const isCorrectOption = idx === roundData.correct_index;
 
-              let buttonStyle = "bg-white text-[#123B35] border-[#DDE7E3] hover:border-[#17665B] hover:bg-[#F5F8F6]";
+              let buttonStyle = "bg-white text-[#123B35] border-[#164E48]/15 hover:border-[#164E48] hover:bg-[#E8F4F1]/50";
               if (gameState === 'FEEDBACK_CORRECT' && isCorrectOption) {
-                buttonStyle = "bg-emerald-600 text-white border-emerald-600 shadow-md";
+                buttonStyle = "bg-[#164E48] text-white border-[#164E48] shadow-md scale-[1.01]";
               } else if (gameState === 'FEEDBACK_HINT' && isSelected) {
                 buttonStyle = "bg-amber-100 text-amber-900 border-amber-300 animate-shake";
               }
@@ -323,16 +519,16 @@ export default function MemoryTriviaGamePage() {
                   key={idx}
                   onClick={() => handleOptionSelect(idx)}
                   disabled={gameState === 'FEEDBACK_CORRECT'}
-                  className={`w-full p-5 rounded-3xl border-2 text-left font-bold text-base md:text-lg flex items-center justify-between transition-all duration-200 cursor-pointer shadow-xs ${buttonStyle}`}
+                  className={`w-full p-5 rounded-3xl border-2 text-left font-extrabold text-base md:text-lg flex items-center justify-between transition-all duration-200 cursor-pointer shadow-xs active:scale-98 ${buttonStyle}`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <span className="w-8 h-8 rounded-full bg-slate-100 text-[#123B35] flex items-center justify-center text-xs font-bold shrink-0">
+                  <div className="flex items-center space-x-3.5">
+                    <span className="w-9 h-9 rounded-full bg-[#E8F4F1] text-[#164E48] flex items-center justify-center text-xs font-black shrink-0 border border-[#164E48]/10">
                       {String.fromCharCode(65 + idx)}
                     </span>
                     <span>{optionText}</span>
                   </div>
                   {gameState === 'FEEDBACK_CORRECT' && isCorrectOption && (
-                    <CheckCircle2 className="w-6 h-6 text-white shrink-0" />
+                    <CheckCircle2 className="w-6 h-6 text-[#10B981] shrink-0" />
                   )}
                 </button>
               );
@@ -345,7 +541,7 @@ export default function MemoryTriviaGamePage() {
               <Button
                 onClick={loadNextRound}
                 size="lg"
-                className="bg-[#17665B] hover:bg-[#123B35] text-white font-bold text-base py-6 px-8 rounded-2xl shadow-lg flex items-center space-x-2 cursor-pointer"
+                className="bg-[#164E48] hover:bg-[#113e39] text-white font-extrabold text-base py-6 px-8 rounded-full shadow-lg flex items-center space-x-2 cursor-pointer active:scale-95"
               >
                 <span>Share Next Memory Moment</span>
                 <ArrowRight className="w-5 h-5 ml-2" />
@@ -358,10 +554,10 @@ export default function MemoryTriviaGamePage() {
       {/* Photo Zoom Modal */}
       {showZoomModal && roundData && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#123B35]/60 backdrop-blur-md p-4 animate-in fade-in duration-200"
           onClick={() => setShowZoomModal(false)}
         >
-          <div className="relative max-w-4xl w-full bg-black rounded-3xl overflow-hidden shadow-2xl">
+          <div className="relative max-w-4xl w-full bg-black rounded-[2rem] overflow-hidden shadow-2xl border border-white/20">
             <button
               onClick={() => setShowZoomModal(false)}
               className="absolute top-4 right-4 p-2 rounded-full bg-black/60 text-white hover:bg-black"

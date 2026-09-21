@@ -64,8 +64,8 @@ export function PatientSpeechPlaybackBar() {
     };
   }, []);
 
-  // Display only when active speech synthesis is happening for Patient
-  if (!isSpeaking || !isPatient) return null;
+  // Display whenever active speech synthesis is speaking
+  if (!isSpeaking) return null;
 
   return (
     <AnimatePresence>
