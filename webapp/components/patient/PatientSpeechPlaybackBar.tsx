@@ -68,6 +68,9 @@ export function PatientSpeechPlaybackBar() {
   if (!isSpeaking) return null;
 
   const roleLabel = isPatient ? 'Aria • Patient POV' : 'Aria • Caregiver Insights';
+  const barGradient = isPatient
+    ? 'from-[#4F46E5] via-[#4338CA] to-[#3730A3]'
+    : 'from-[#164E48] via-[#17665B] to-[#123B35]';
 
   return (
     <AnimatePresence>
@@ -76,7 +79,7 @@ export function PatientSpeechPlaybackBar() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -25 }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="sticky top-0 z-50 w-full bg-gradient-to-r from-[#164E48] via-[#17665B] to-[#123B35] text-white shadow-xl border-b-2 border-white/20 px-4 py-3 select-none"
+        className={`sticky top-0 z-50 w-full bg-gradient-to-r ${barGradient} text-white shadow-xl border-b-2 border-white/20 px-4 py-3 select-none`}
       >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
           
@@ -93,7 +96,7 @@ export function PatientSpeechPlaybackBar() {
                       key={i}
                       animate={{ height: ['30%', `${h}%`, '30%'] }}
                       transition={{ duration: 0.45, repeat: Infinity, delay: i * 0.08 }}
-                      className="w-1 bg-emerald-300 rounded-full"
+                      className={`w-1 rounded-full ${isPatient ? 'bg-indigo-200' : 'bg-emerald-300'}`}
                     />
                   ))}
                 </div>
@@ -102,7 +105,7 @@ export function PatientSpeechPlaybackBar() {
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center space-x-2">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-300 flex items-center">
+                <span className={`text-xs font-extrabold uppercase tracking-wider flex items-center ${isPatient ? 'text-indigo-200' : 'text-emerald-300'}`}>
                   <Sparkles className="w-3.5 h-3.5 mr-1" />
                   {isPaused ? `${roleLabel} (Paused)` : `${roleLabel} Speaking`}
                 </span>
@@ -121,7 +124,7 @@ export function PatientSpeechPlaybackBar() {
             <div className="w-full h-2.5 rounded-full bg-black/30 overflow-hidden p-0.5 border border-white/20">
               <motion.div
                 className={`h-full rounded-full transition-all duration-150 ${
-                  isPaused ? 'bg-amber-400' : 'bg-gradient-to-r from-emerald-400 to-teal-200'
+                  isPaused ? 'bg-amber-400' : isPatient ? 'bg-gradient-to-r from-indigo-300 to-purple-200' : 'bg-gradient-to-r from-emerald-400 to-teal-200'
                 }`}
                 style={{ width: `${Math.max(3, progressPercent)}%` }}
               />

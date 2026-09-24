@@ -13,6 +13,8 @@ const badgeVariants = cva(
         pink: 'bg-[#E8F4F1] text-[#164E48] border border-[#164E48]/10',
         warning: 'bg-amber-500/15 text-amber-800 border border-amber-500/30',
         outline: 'border border-[#164E48]/15 text-[#123B35]',
+        lavender: 'bg-[#F5F3FF] text-[#4338CA] border border-[#C7D2FE]',
+        periwinkle: 'bg-[#4F46E5] text-white shadow-xs',
       },
     },
     defaultVariants: {

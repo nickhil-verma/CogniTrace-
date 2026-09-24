@@ -361,49 +361,49 @@ export default function MemoryTriviaGamePage() {
     <div className="max-w-3xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300 select-none">
       
       {/* Top Header Badge */}
-      <div className="flex items-center justify-between border-b border-[#164E48]/10 pb-4">
+      <div className="flex items-center justify-between border-b border-[#C7D2FE]/40 pb-4">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 rounded-2xl bg-[#164E48] text-white shadow-md">
+          <div className="p-2.5 rounded-2xl bg-[#4F46E5] text-white shadow-md">
             <Heart className="w-6 h-6 fill-current text-white" />
           </div>
           <div>
-            <span className="text-xs font-bold text-[#164E48] uppercase tracking-micro">Patient Memory Companion</span>
-            <h1 className="text-2xl font-extrabold text-[#123B35] tracking-tight">Memory Games</h1>
+            <span className="text-xs font-bold text-[#4F46E5] uppercase tracking-micro">Patient Memory Companion</span>
+            <h1 className="text-2xl font-extrabold text-[#1E1B4B] tracking-tight">Memory Games</h1>
           </div>
         </div>
 
-        <Badge variant="accent" className="text-xs px-3.5 py-1 font-bold">
+        <Badge variant="lavender" className="text-xs px-3.5 py-1 font-bold">
           {roundsCompleted > 0 ? `${roundsCompleted} Moments Shared Today` : 'Daily Reminiscence'}
         </Badge>
       </div>
 
       {/* ================= GAME STATE: LOADING ================= */}
       {gameState === 'LOADING' && (
-        <Card className="p-12 text-center space-y-6 bg-white border border-[#164E48]/10 rounded-3xl shadow-sm">
-          <div className="w-20 h-20 rounded-full bg-[#E8F4F1] text-[#164E48] flex items-center justify-center mx-auto animate-pulse shadow-inner border border-[#164E48]/10">
+        <Card className="p-12 text-center space-y-6 bg-white border border-[#C7D2FE] rounded-3xl shadow-sm">
+          <div className="w-20 h-20 rounded-full bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center mx-auto animate-pulse shadow-inner border border-[#C7D2FE]">
             <Sparkles className="w-10 h-10 animate-spin" />
           </div>
           <div className="space-y-2">
-            <h3 className="text-xl font-extrabold text-[#123B35]">Gathering Today's Memory Moments...</h3>
-            <p className="text-xs font-semibold text-[#3D615B]">Selecting an unasked photo memory for today.</p>
+            <h3 className="text-xl font-extrabold text-[#1E1B4B]">Gathering Today's Memory Moments...</h3>
+            <p className="text-xs font-semibold text-[#475569]">Selecting an unasked photo memory for today.</p>
           </div>
         </Card>
       )}
 
       {/* ================= GAME STATE: ALL COMPLETED TODAY ================= */}
       {gameState === 'COMPLETED_TODAY' && (
-        <Card className="p-8 md:p-10 text-center space-y-6 bg-gradient-to-b from-white to-[#E8F4F1]/40 border-2 border-[#164E48]/20 rounded-3xl shadow-xl animate-in fade-in duration-300">
-          <div className="w-20 h-20 rounded-full bg-[#164E48] text-white flex items-center justify-center mx-auto shadow-lg border-4 border-white">
+        <Card className="p-8 md:p-10 text-center space-y-6 bg-gradient-to-b from-white to-[#EEF2FF]/60 border-2 border-[#C7D2FE] rounded-3xl shadow-xl animate-in fade-in duration-300">
+          <div className="w-20 h-20 rounded-full bg-[#4F46E5] text-white flex items-center justify-center mx-auto shadow-lg border-4 border-white">
             <Trophy className="w-10 h-10 text-amber-300" />
           </div>
           <div className="space-y-3 max-w-lg mx-auto">
-            <Badge variant="teal" className="px-3.5 py-1 text-xs font-bold">
+            <Badge variant="lavender" className="px-3.5 py-1 text-xs font-bold">
               Daily Memory Quest Complete!
             </Badge>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-[#123B35] tracking-tight">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-[#1E1B4B] tracking-tight">
               You've Explored All Memory Moments for Today! 🎉
             </h2>
-            <p className="text-sm font-medium text-[#3D615B] leading-relaxed">
+            <p className="text-sm font-medium text-[#475569] leading-relaxed">
               Wonderful work! You have completed all of today's memory questions. Your mind is active, vibrant, and connected. 
               New memory moments will unlock tomorrow!
             </p>
@@ -413,7 +413,7 @@ export default function MemoryTriviaGamePage() {
             <Button
               onClick={handleResetTodayHistory}
               variant="outline"
-              className="w-full sm:w-auto px-6 py-3 rounded-full border-[#164E48]/20 text-[#164E48] font-bold text-xs shadow-sm hover:bg-[#E8F4F1]"
+              className="w-full sm:w-auto px-6 py-3 rounded-full border-[#C7D2FE] text-[#4F46E5] font-bold text-xs shadow-sm hover:bg-[#EEF2FF]"
             >
               <RotateCcw className="w-4 h-4 mr-2" />
               <span>Replay Today's Moments</span>
@@ -427,7 +427,7 @@ export default function MemoryTriviaGamePage() {
         <div className="space-y-6">
           
           {/* Main Archival Memory Photo Card */}
-          <Card className="overflow-hidden border border-[#164E48]/15 shadow-md bg-white relative rounded-3xl">
+          <Card className="overflow-hidden border border-[#C7D2FE] shadow-md bg-white relative rounded-3xl">
             <div className="relative h-64 md:h-80 w-full bg-slate-900 overflow-hidden group">
               <img
                 src={roundData.image_url}
@@ -455,14 +455,14 @@ export default function MemoryTriviaGamePage() {
           </Card>
 
           {/* Question Text & Read Aloud Controls */}
-          <Card className="p-6 bg-white border border-[#164E48]/15 shadow-sm space-y-4 rounded-3xl">
+          <Card className="p-6 bg-white border border-[#C7D2FE] shadow-sm space-y-4 rounded-3xl">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
-                <span className="text-xs font-extrabold text-[#164E48] flex items-center tracking-micro uppercase">
-                  <Smile className="w-4 h-4 mr-1.5 text-[#10B981]" />
+                <span className="text-xs font-extrabold text-[#4F46E5] flex items-center tracking-micro uppercase">
+                  <Smile className="w-4 h-4 mr-1.5 text-[#6366F1]" />
                   Memory Reminiscence Question
                 </span>
-                <h2 className="text-xl md:text-2xl font-extrabold text-[#123B35] leading-snug">
+                <h2 className="text-xl md:text-2xl font-extrabold text-[#1E1B4B] leading-snug">
                   {roundData.question}
                 </h2>
               </div>
@@ -470,7 +470,7 @@ export default function MemoryTriviaGamePage() {
                 variant="outline"
                 size="icon"
                 onClick={() => speakAloud(getTriviaSpeech(roundData, currentLangObj?.code || 'en-US'))}
-                className="h-12 w-12 shrink-0 rounded-full bg-[#E8F4F1] text-[#164E48] hover:bg-[#D2ECE6] border border-[#164E48]/15 cursor-pointer shadow-xs"
+                className="h-12 w-12 shrink-0 rounded-full bg-[#EEF2FF] text-[#4F46E5] hover:bg-[#E0E7FF] border border-[#C7D2FE] cursor-pointer shadow-xs"
                 title="Read question aloud (shows top track bar & pause button)"
               >
                 <Volume2 className="w-6 h-6" />
@@ -491,12 +491,12 @@ export default function MemoryTriviaGamePage() {
 
             {/* Correct Celebration Card */}
             {gameState === 'FEEDBACK_CORRECT' && (
-              <div className="p-5 rounded-2xl bg-[#E8F4F1] border border-[#10B981]/40 text-xs text-[#123B35] space-y-2 animate-in fade-in duration-300">
-                <span className="font-extrabold text-sm flex items-center text-[#164E48]">
-                  <CheckCircle2 className="w-5 h-5 mr-2 text-[#10B981]" />
+              <div className="p-5 rounded-2xl bg-[#EEF2FF] border border-[#6366F1]/40 text-xs text-[#1E1B4B] space-y-2 animate-in fade-in duration-300">
+                <span className="font-extrabold text-sm flex items-center text-[#4F46E5]">
+                  <CheckCircle2 className="w-5 h-5 mr-2 text-[#4F46E5]" />
                   Wonderful Memory Choice! 🎉
                 </span>
-                <p className="text-xs font-semibold leading-relaxed text-[#3D615B]">{roundData.encouragement_fact}</p>
+                <p className="text-xs font-semibold leading-relaxed text-[#475569]">{roundData.encouragement_fact}</p>
               </div>
             )}
           </Card>
@@ -507,9 +507,9 @@ export default function MemoryTriviaGamePage() {
               const isSelected = selectedIndex === idx;
               const isCorrectOption = idx === roundData.correct_index;
 
-              let buttonStyle = "bg-white text-[#123B35] border-[#164E48]/15 hover:border-[#164E48] hover:bg-[#E8F4F1]/50";
+              let buttonStyle = "bg-white text-[#1E1B4B] border-[#C7D2FE] hover:border-[#4F46E5] hover:bg-[#EEF2FF]";
               if (gameState === 'FEEDBACK_CORRECT' && isCorrectOption) {
-                buttonStyle = "bg-[#164E48] text-white border-[#164E48] shadow-md scale-[1.01]";
+                buttonStyle = "bg-[#4F46E5] text-white border-[#4F46E5] shadow-md scale-[1.01]";
               } else if (gameState === 'FEEDBACK_HINT' && isSelected) {
                 buttonStyle = "bg-amber-100 text-amber-900 border-amber-300 animate-shake";
               }
@@ -522,13 +522,13 @@ export default function MemoryTriviaGamePage() {
                   className={`w-full p-5 rounded-3xl border-2 text-left font-extrabold text-base md:text-lg flex items-center justify-between transition-all duration-200 cursor-pointer shadow-xs active:scale-98 ${buttonStyle}`}
                 >
                   <div className="flex items-center space-x-3.5">
-                    <span className="w-9 h-9 rounded-full bg-[#E8F4F1] text-[#164E48] flex items-center justify-center text-xs font-black shrink-0 border border-[#164E48]/10">
+                    <span className="w-9 h-9 rounded-full bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center text-xs font-black shrink-0 border border-[#C7D2FE]">
                       {String.fromCharCode(65 + idx)}
                     </span>
                     <span>{optionText}</span>
                   </div>
                   {gameState === 'FEEDBACK_CORRECT' && isCorrectOption && (
-                    <CheckCircle2 className="w-6 h-6 text-[#10B981] shrink-0" />
+                    <CheckCircle2 className="w-6 h-6 text-white shrink-0" />
                   )}
                 </button>
               );
@@ -541,7 +541,7 @@ export default function MemoryTriviaGamePage() {
               <Button
                 onClick={loadNextRound}
                 size="lg"
-                className="bg-[#164E48] hover:bg-[#113e39] text-white font-extrabold text-base py-6 px-8 rounded-full shadow-lg flex items-center space-x-2 cursor-pointer active:scale-95"
+                className="bg-[#4F46E5] hover:bg-[#4338CA] text-white font-extrabold text-base py-6 px-8 rounded-full shadow-lg flex items-center space-x-2 cursor-pointer active:scale-95"
               >
                 <span>Share Next Memory Moment</span>
                 <ArrowRight className="w-5 h-5 ml-2" />

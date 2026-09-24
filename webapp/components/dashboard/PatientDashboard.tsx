@@ -103,7 +103,7 @@ export function PatientDashboard() {
   return (
     <div className="space-y-8 max-w-4xl mx-auto animate-in fade-in duration-300">
       {/* ================= 1. LIVE TIME, DATE & WARM WEATHER BANNER ================= */}
-      <Card className="p-8 bg-gradient-to-r from-[#164E48] via-[#17665B] to-[#25756C] text-white rounded-3xl shadow-xl relative overflow-hidden border-0">
+      <Card className="p-8 bg-gradient-to-r from-[#4F46E5] via-[#4338CA] to-[#3730A3] text-white rounded-3xl shadow-xl relative overflow-hidden border-0">
         <div className="absolute -right-8 -bottom-8 w-56 h-56 rounded-full bg-white/10 blur-2xl pointer-events-none" />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2">
@@ -148,23 +148,23 @@ export function PatientDashboard() {
       </Card>
 
       {/* ================= 2. EMBEDDED IN-DASHBOARD VOICE AI COMPANION ================= */}
-      <Card className="p-8 text-center bg-gradient-to-b from-white to-[#F5F8F6] border-2 border-[#BFDCD6] rounded-3xl shadow-lg space-y-6">
+      <Card className="p-8 text-center bg-gradient-to-b from-white via-[#FAFAFF] to-[#F5F3FF] border-2 border-[#C7D2FE] rounded-3xl shadow-lg space-y-6">
         <div className="space-y-2">
-          <Badge variant="teal">{t('patient.voiceCompanion') || 'Voice Companion'}</Badge>
+          <Badge variant="lavender">{t('patient.voiceCompanion') || 'Voice Companion'}</Badge>
           <div className="flex items-center justify-center space-x-2">
-            <h2 className="text-2xl md:text-3xl font-extrabold text-[#123B35]">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-[#1E1B4B]">
               {t('patient.talkWithVoiceAI') || 'Talk with Aria, My Voice AI Companion'}
             </h2>
             <button
               type="button"
               onClick={() => speakText("Talk with Aria, your Voice AI companion. Tap the orb to speak.")}
-              className="p-1.5 rounded-full bg-[#E8F4F1] text-[#17665B] hover:bg-[#D2ECE6] transition-colors"
+              className="p-1.5 rounded-full bg-[#EEF2FF] text-[#4F46E5] hover:bg-[#E0E7FF] transition-colors"
               title="Tap to listen"
             >
               <Volume2 className="w-4 h-4" />
             </button>
           </div>
-          <p className="text-sm text-[#66736F] max-w-md mx-auto">
+          <p className="text-sm text-[#475569] max-w-md mx-auto">
             {t('patient.tapBelowAndSpeak') || 'Tap the button to speak, report a completed task, or ask what you should do next.'}
           </p>
         </div>
@@ -184,27 +184,27 @@ export function PatientDashboard() {
 
         {/* Speech Transcript Display */}
         {transcript && (
-          <div className="max-w-xl mx-auto bg-white p-4 rounded-2xl border border-[#DDE7E3] shadow-2xs text-left space-y-2 animate-in fade-in duration-200">
-            <div className="flex items-center justify-between text-xs text-[#66736F]">
-              <span className="font-semibold text-[#17665B]">Speech Transcript</span>
-              <Mic className="w-3.5 h-3.5 text-[#17665B]" />
+          <div className="max-w-xl mx-auto bg-white p-4 rounded-2xl border border-[#C7D2FE] shadow-2xs text-left space-y-2 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between text-xs text-[#475569]">
+              <span className="font-semibold text-[#4F46E5]">Speech Transcript</span>
+              <Mic className="w-3.5 h-3.5 text-[#4F46E5]" />
             </div>
-            <p className="text-sm font-semibold text-[#123B35]">&ldquo;{transcript}&rdquo;</p>
+            <p className="text-sm font-semibold text-[#1E1B4B]">&ldquo;{transcript}&rdquo;</p>
           </div>
         )}
 
         {/* AI Assistant Response Display */}
         {aiResponse && (
-          <div className="max-w-xl mx-auto bg-[#BFDCD6]/30 p-4 rounded-2xl border border-[#BFDCD6] text-left space-y-2 animate-in fade-in duration-200">
-            <div className="flex items-center justify-between text-xs text-[#17665B]">
+          <div className="max-w-xl mx-auto bg-[#EEF2FF] p-4 rounded-2xl border border-[#C7D2FE] text-left space-y-2 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between text-xs text-[#4338CA]">
               <span className="font-bold flex items-center">
-                <Sparkles className="w-3.5 h-3.5 mr-1" />
+                <Sparkles className="w-3.5 h-3.5 mr-1 text-[#6366F1]" />
                 AI Assistant Response
               </span>
               <button
                 type="button"
                 onClick={() => speakText(aiResponse)}
-                className="p-1 rounded-full text-[#17665B] hover:bg-white/50"
+                className="p-1 rounded-full text-[#4338CA] hover:bg-white/50"
               >
                 <Volume2 className="w-4 h-4" />
               </button>
@@ -240,10 +240,10 @@ export function PatientDashboard() {
         </div>
 
         {/* 3 Oversized Tactile Cards (90px+ min height with active depress animation) */}
-        <div className="pt-4 border-t border-[#164E48]/10 space-y-3">
+        <div className="pt-4 border-t border-[#C7D2FE]/40 space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-extrabold text-[#164E48] tracking-micro uppercase">Tactile Quick Activity Tiles</p>
-            <span className="text-[11px] font-semibold text-[#3D615B]">Tap to hear or open</span>
+            <p className="text-xs font-extrabold text-[#4338CA] tracking-micro uppercase">Tactile Quick Activity Tiles</p>
+            <span className="text-[11px] font-semibold text-[#475569]">Tap to hear or open</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
@@ -251,7 +251,7 @@ export function PatientDashboard() {
                 title: '📸 My Photo Album',
                 href: '/memories',
                 icon: ImageIcon,
-                color: 'bg-white text-[#164E48] border-[#164E48]/15 hover:border-[#164E48] hover:bg-[#E8F4F1]/50',
+                color: 'bg-white text-[#1E1B4B] border-[#C7D2FE] hover:border-[#4F46E5] hover:bg-[#F5F3FF]',
                 prompt: 'Show my photo album',
                 ttsText: 'My Photo Album. Tap to open your family photos.'
               },
@@ -259,7 +259,7 @@ export function PatientDashboard() {
                 title: "⏰ Today's Routine & Medicine",
                 href: '/reminders',
                 icon: Bell,
-                color: 'bg-white text-[#164E48] border-[#164E48]/15 hover:border-[#164E48] hover:bg-[#E8F4F1]/50',
+                color: 'bg-white text-[#1E1B4B] border-[#C7D2FE] hover:border-[#4F46E5] hover:bg-[#EEF2FF]',
                 prompt: 'What medicine should I take now?',
                 ttsText: "Today's Routine and Medicine. Tap to check your daily pills."
               },
@@ -267,7 +267,7 @@ export function PatientDashboard() {
                 title: '🧩 Memory Games',
                 href: '/patient/memory-trivia',
                 icon: Sparkles,
-                color: 'bg-white text-[#164E48] border-[#164E48]/15 hover:border-[#164E48] hover:bg-[#E8F4F1]/50',
+                color: 'bg-white text-[#1E1B4B] border-[#C7D2FE] hover:border-[#4F46E5] hover:bg-[#FAF5FF]',
                 prompt: 'Play a memory game',
                 ttsText: 'Memory Games. Tap to play personalized memory trivia.'
               }
@@ -279,7 +279,7 @@ export function PatientDashboard() {
                   className={`min-h-[100px] p-5 rounded-3xl border shadow-sm transition-all duration-200 flex flex-col justify-between space-y-3 cursor-pointer active:scale-95 group ${item.color}`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 rounded-2xl bg-[#E8F4F1] text-[#164E48] flex items-center justify-center shadow-xs border border-[#164E48]/10 group-hover:scale-110 transition-transform">
+                    <div className="w-12 h-12 rounded-2xl bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center shadow-xs border border-[#C7D2FE] group-hover:scale-110 transition-transform">
                       <ItemIcon className="w-6 h-6" />
                     </div>
                     <button
@@ -288,7 +288,7 @@ export function PatientDashboard() {
                         e.stopPropagation();
                         speakText(item.ttsText);
                       }}
-                      className="p-2 rounded-full bg-[#E8F4F1] text-[#164E48] hover:bg-[#164E48] hover:text-white transition-colors shadow-2xs"
+                      className="p-2 rounded-full bg-[#EEF2FF] text-[#4F46E5] hover:bg-[#4F46E5] hover:text-white transition-colors shadow-2xs"
                       title="Tap to listen"
                     >
                       <Volume2 className="w-4 h-4" />
@@ -309,23 +309,23 @@ export function PatientDashboard() {
       </Card>
 
       {/* ================= 3. 1-TAP DAILY MOOD CHECK-IN ================= */}
-      <Card className="p-6 bg-white border border-[#DDE7E3] rounded-3xl shadow-md space-y-4">
+      <Card className="p-6 bg-white border border-[#C7D2FE] rounded-3xl shadow-md space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Smile className="w-5 h-5 text-[#17665B]" />
-            <h2 className="text-lg font-bold text-[#123B35]">
+            <Smile className="w-5 h-5 text-[#4F46E5]" />
+            <h2 className="text-lg font-bold text-[#1E1B4B]">
               How are you feeling right now, Sunita?
             </h2>
           </div>
-          <span className="text-xs text-[#66736F] font-semibold">1-Tap Mood Check-In</span>
+          <span className="text-xs text-[#475569] font-semibold">1-Tap Mood Check-In</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { id: 'great', emoji: '😊', label: 'Feeling Great', color: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
-            { id: 'peaceful', emoji: '🙂', label: 'Peaceful', color: 'bg-teal-50 text-teal-800 border-teal-200' },
-            { id: 'okay', emoji: '😐', label: 'Just Okay', color: 'bg-amber-50 text-amber-800 border-amber-200' },
-            { id: 'need_support', emoji: '😔', label: 'Need Support', color: 'bg-rose-50 text-rose-800 border-rose-200' },
+            { id: 'great', emoji: '😊', label: 'Feeling Great', color: 'bg-indigo-50 text-indigo-900 border-indigo-200' },
+            { id: 'peaceful', emoji: '🙂', label: 'Peaceful', color: 'bg-purple-50 text-purple-900 border-purple-200' },
+            { id: 'okay', emoji: '😐', label: 'Just Okay', color: 'bg-amber-50 text-amber-900 border-amber-200' },
+            { id: 'need_support', emoji: '😔', label: 'Need Support', color: 'bg-rose-50 text-rose-900 border-rose-200' },
           ].map((item) => (
             <button
               key={item.id}
@@ -335,7 +335,7 @@ export function PatientDashboard() {
               }}
               className={`p-3.5 rounded-2xl border text-center transition-all duration-200 flex flex-col items-center space-y-1.5 ${
                 selectedMood === item.id
-                  ? 'ring-2 ring-[#17665B] scale-105 shadow-md bg-white border-[#17665B]'
+                  ? 'ring-2 ring-[#4F46E5] scale-105 shadow-md bg-white border-[#4F46E5]'
                   : `${item.color} hover:scale-102`
               }`}
             >
@@ -346,8 +346,8 @@ export function PatientDashboard() {
         </div>
 
         {selectedMood && (
-          <div className="p-3.5 rounded-2xl bg-[#E8F4F1] border border-[#BFDCD6] text-xs font-bold text-[#164E48] flex items-center space-x-2 animate-in fade-in duration-200">
-            <Sparkles className="w-4 h-4 shrink-0 text-[#17665B]" />
+          <div className="p-3.5 rounded-2xl bg-[#F5F3FF] border border-[#C7D2FE] text-xs font-bold text-[#4338CA] flex items-center space-x-2 animate-in fade-in duration-200">
+            <Sparkles className="w-4 h-4 shrink-0 text-[#4F46E5]" />
             <span>{getMoodFeedback(selectedMood)}</span>
           </div>
         )}
@@ -356,21 +356,21 @@ export function PatientDashboard() {
       {/* ================= 4. TWO COLUMN: MY CHECKLIST & MEMORIES ================= */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Today's Checklist */}
-        <Card className="p-6 space-y-4 bg-white border border-[#DDE7E3] rounded-3xl shadow-sm flex flex-col justify-between">
+        <Card className="p-6 space-y-4 bg-white border border-[#C7D2FE] rounded-3xl shadow-sm flex flex-col justify-between">
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-[#DDE7E3] pb-3">
+            <div className="flex items-center justify-between border-b border-[#E0E7FF] pb-3">
               <div className="flex items-center space-x-2">
-                <Bell className="w-5 h-5 text-[#17665B]" />
-                <h3 className="text-lg font-bold text-[#123B35]">{t('patient.checklistTitle') || 'My Daily Goals & Tasks'}</h3>
+                <Bell className="w-5 h-5 text-[#4F46E5]" />
+                <h3 className="text-lg font-bold text-[#1E1B4B]">{t('patient.checklistTitle') || 'My Daily Goals & Tasks'}</h3>
               </div>
-              <Link href="/reminders" className="text-xs font-bold text-[#17665B] hover:underline">
+              <Link href="/reminders" className="text-xs font-bold text-[#4F46E5] hover:underline">
                 {t('common.viewAll') || `View All (${reminders.length})`}
               </Link>
             </div>
 
             <div className="space-y-3">
               {reminders.length === 0 ? (
-                <div className="p-6 text-center text-xs text-[#66736F] border border-dashed border-[#DDE7E3] rounded-2xl">
+                <div className="p-6 text-center text-xs text-[#475569] border border-dashed border-[#C7D2FE] rounded-2xl">
                   {t('patient.noActiveTasks') || 'No active tasks right now. Great job!'}
                 </div>
               ) : (
@@ -380,18 +380,18 @@ export function PatientDashboard() {
                     onClick={() => toggleComplete(rem.id)}
                     className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
                       rem.status === 'Completed'
-                        ? 'bg-[#F5F8F6] border-[#DDE7E3] text-[#66736F] line-through'
-                        : 'bg-[#BFDCD6]/20 border-[#BFDCD6] text-[#123B35] hover:bg-[#BFDCD6]/40'
+                        ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] line-through'
+                        : 'bg-[#EEF2FF] border-[#C7D2FE] text-[#1E1B4B] hover:bg-[#E0E7FF]'
                     }`}
                   >
                     <div className="space-y-0.5">
                       <p className="font-bold text-base">{rem.title}</p>
-                      <p className="text-xs text-[#66736F]">
+                      <p className="text-xs text-[#64748B]">
                         {rem.time} {rem.dosageOrDetails ? `• ${rem.dosageOrDetails}` : ''}
                       </p>
                     </div>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                      rem.status === 'Completed' ? 'bg-[#17665B] text-white' : 'border-2 border-[#17665B] text-transparent'
+                      rem.status === 'Completed' ? 'bg-[#4F46E5] text-white' : 'border-2 border-[#4F46E5] text-transparent'
                     }`}>
                       <CheckCircle2 className="w-5 h-5 fill-current text-white" />
                     </div>
@@ -404,7 +404,7 @@ export function PatientDashboard() {
           <button
             type="button"
             onClick={() => submitVoiceTurn('What should I do next?')}
-            className="w-full py-2.5 rounded-2xl bg-[#BFDCD6]/30 text-[#17665B] font-bold text-xs flex items-center justify-center space-x-2 border border-[#BFDCD6] hover:bg-[#BFDCD6]/60 transition-colors shadow-2xs mt-2 active:scale-95"
+            className="w-full py-2.5 rounded-2xl bg-[#EEF2FF] text-[#4338CA] font-bold text-xs flex items-center justify-center space-x-2 border border-[#C7D2FE] hover:bg-[#E0E7FF] transition-colors shadow-2xs mt-2 active:scale-95"
           >
             <HelpCircle className="w-4 h-4" />
             <span>Ask AI: &ldquo;What should I do next?&rdquo;</span>
@@ -412,12 +412,12 @@ export function PatientDashboard() {
         </Card>
 
         {/* Photo Memory Album Card */}
-        <Card className="p-6 space-y-4 bg-white border border-[#DDE7E3] rounded-3xl shadow-sm flex flex-col justify-between">
+        <Card className="p-6 space-y-4 bg-white border border-[#C7D2FE] rounded-3xl shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between border-b border-[#DDE7E3] pb-3">
+            <div className="flex items-center justify-between border-b border-[#E0E7FF] pb-3">
               <div className="flex items-center space-x-2">
                 <ImageIcon className="w-5 h-5 text-[#C85C82]" />
-                <h3 className="text-lg font-bold text-[#123B35]">{t('patient.photoAlbumTitle') || 'My Cherished Memories'}</h3>
+                <h3 className="text-lg font-bold text-[#1E1B4B]">{t('patient.photoAlbumTitle') || 'My Cherished Memories'}</h3>
               </div>
               <Link href="/memories" className="text-xs font-bold text-[#C85C82] hover:underline">
                 {t('patient.openAlbum') || 'Open Album'}
@@ -426,7 +426,7 @@ export function PatientDashboard() {
 
             {memories.length > 0 ? (
               <div className="space-y-3 pt-3">
-                <div className="relative h-44 rounded-2xl overflow-hidden bg-slate-100 shadow-sm border border-[#DDE7E3]">
+                <div className="relative h-44 rounded-2xl overflow-hidden bg-slate-100 shadow-sm border border-[#E0E7FF]">
                   <img
                     src={memories[0].imageUrl}
                     alt={memories[0].title}
@@ -447,7 +447,7 @@ export function PatientDashboard() {
                 </button>
               </div>
             ) : (
-              <div className="p-6 text-center text-xs text-[#66736F]">
+              <div className="p-6 text-center text-xs text-[#475569]">
                 {t('patient.noPhotosYet') || 'No photo memories in album yet.'}
               </div>
             )}
@@ -456,20 +456,20 @@ export function PatientDashboard() {
       </div>
 
       {/* ================= 5. CAREGIVER CONNECTION & SAFETY CARD ================= */}
-      <Card className="p-6 bg-gradient-to-r from-red-50 via-white to-red-50 border-2 border-red-200 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
+      <Card className="p-6 bg-gradient-to-r from-indigo-50/80 via-white to-purple-50/80 border-2 border-indigo-200/80 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
         <div className="flex items-center space-x-4">
           <div className="relative">
-            <div className="w-14 h-14 rounded-full bg-[#17665B] text-white flex items-center justify-center text-xl font-extrabold shadow-md border-2 border-white">
+            <div className="w-14 h-14 rounded-full bg-[#4F46E5] text-white flex items-center justify-center text-xl font-extrabold shadow-md border-2 border-white">
               P
             </div>
             <span className="w-4 h-4 rounded-full bg-emerald-500 border-2 border-white absolute bottom-0 right-0" />
           </div>
           <div className="space-y-0.5">
             <div className="flex items-center space-x-2">
-              <h3 className="text-lg font-extrabold text-[#123B35]">Priya (Daughter)</h3>
-              <Badge variant="teal">My Caregiver</Badge>
+              <h3 className="text-lg font-extrabold text-[#1E1B4B]">Priya (Daughter)</h3>
+              <Badge variant="lavender">My Caregiver</Badge>
             </div>
-            <p className="text-xs text-[#66736F] font-semibold">
+            <p className="text-xs text-[#475569] font-semibold">
               Status: Available • Arriving home at 6:00 PM tonight
             </p>
           </div>
