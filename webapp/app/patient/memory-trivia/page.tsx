@@ -17,12 +17,16 @@ import {
   Lock,
   Smile,
   Trophy,
-  Calendar
+  Calendar,
+  Brain,
+  Music,
+  Image as ImageIcon
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useLanguage } from '@/hooks/useLanguage';
 import { speakText } from '@/lib/speech';
+import { SynapticMelodyGame } from '@/components/patient/SynapticMelodyGame';
 
 interface TriviaRoundData {
   round_id: string;
@@ -211,6 +215,7 @@ export default function MemoryTriviaGamePage() {
   const { isPatient, mounted } = useUserRole();
   const { currentLangObj } = useLanguage();
 
+  const [activeGameTab, setActiveGameTab] = useState<'TRIVIA' | 'MELODY'>('TRIVIA');
   const [gameState, setGameState] = useState<'LOADING' | 'QUESTION' | 'FEEDBACK_CORRECT' | 'FEEDBACK_HINT' | 'COMPLETED_TODAY'>('LOADING');
   const [roundData, setRoundData] = useState<TriviaRoundData | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -361,23 +366,57 @@ export default function MemoryTriviaGamePage() {
     <div className="max-w-3xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300 select-none">
       
       {/* Top Header Badge */}
-      <div className="flex items-center justify-between border-b border-[#C7D2FE]/40 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#C7D2FE]/40 pb-4">
         <div className="flex items-center space-x-3">
           <div className="p-2.5 rounded-2xl bg-[#4F46E5] text-white shadow-md">
             <Heart className="w-6 h-6 fill-current text-white" />
           </div>
           <div>
             <span className="text-xs font-bold text-[#4F46E5] uppercase tracking-micro">Patient Memory Companion</span>
-            <h1 className="text-2xl font-extrabold text-[#1E1B4B] tracking-tight">Memory Games</h1>
+            <h1 className="text-2xl font-extrabold text-[#1E1B4B] tracking-tight">Memory Games & Cognitive Exercises</h1>
           </div>
         </div>
 
-        <Badge variant="lavender" className="text-xs px-3.5 py-1 font-bold">
-          {roundsCompleted > 0 ? `${roundsCompleted} Moments Shared Today` : 'Daily Reminiscence'}
+        <Badge variant="lavender" className="text-xs px-3.5 py-1 font-bold shrink-0 self-start sm:self-auto">
+          {roundsCompleted > 0 ? `${roundsCompleted} Moments Shared Today` : 'Daily Cognitive Exercises'}
         </Badge>
       </div>
 
-      {/* ================= GAME STATE: LOADING ================= */}
+      {/* Interactive Game Switcher Tabs */}
+      <div className="flex p-1.5 bg-[#EEF2FF] border border-[#C7D2FE] rounded-2xl gap-1.5 shadow-inner">
+        <button
+          type="button"
+          onClick={() => setActiveGameTab('TRIVIA')}
+          className={`flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-extrabold flex items-center justify-center space-x-2 transition-all cursor-pointer ${
+            activeGameTab === 'TRIVIA'
+              ? 'bg-[#4F46E5] text-white shadow-md scale-[1.01]'
+              : 'text-[#475569] hover:bg-white/60 hover:text-[#1E1B4B]'
+          }`}
+        >
+          <ImageIcon className="w-4 h-4" />
+          <span>📸 Family Photo Memories</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveGameTab('MELODY')}
+          className={`flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-extrabold flex items-center justify-center space-x-2 transition-all cursor-pointer ${
+            activeGameTab === 'MELODY'
+              ? 'bg-[#4F46E5] text-white shadow-md scale-[1.01]'
+              : 'text-[#475569] hover:bg-white/60 hover:text-[#1E1B4B]'
+          }`}
+        >
+          <Music className="w-4 h-4" />
+          <span>🎵 Synaptic Melody Recall</span>
+        </button>
+      </div>
+
+      {/* ================= TAB 2: SYNAPTIC MELODY & PATTERN RECALL GAME ================= */}
+      {activeGameTab === 'MELODY' ? (
+        <SynapticMelodyGame />
+      ) : (
+        <>
+          {/* ================= GAME STATE: LOADING ================= */}
       {gameState === 'LOADING' && (
         <Card className="p-12 text-center space-y-6 bg-white border border-[#C7D2FE] rounded-3xl shadow-sm">
           <div className="w-20 h-20 rounded-full bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center mx-auto animate-pulse shadow-inner border border-[#C7D2FE]">
@@ -571,6 +610,8 @@ export default function MemoryTriviaGamePage() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );
