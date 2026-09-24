@@ -43,12 +43,18 @@ class LinguisticExtractor:
             mime_type = "audio/wav" if audio_bytes[:4] == b"RIFF" else "audio/webm"
 
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+            domain_bias_prompt = (
+                "Transcribe this patient speech audio recording into clear english text. "
+                "Domain & Clinical Vocabulary Guidance: Donepezil, Memantine, Galantamine, Rivastigmine, Aricept, "
+                "Namenda, Exelon, validation therapy, reminiscence, orientation, caregiver, neurologist, daily routines, "
+                "appointments, family relationships, dosage times. Output ONLY the exact transcribed spoken words."
+            )
             payload = {
                 "contents": [
                     {
                         "parts": [
                             {
-                                "text": "Transcribe this patient speech audio recording into clear english text. Output ONLY the exact transcribed spoken words."
+                                "text": domain_bias_prompt
                             },
                             {"inlineData": {"mimeType": mime_type, "data": b64_data}},
                         ]
@@ -76,7 +82,7 @@ class LinguisticExtractor:
         if gemini_text and len(gemini_text) > 1:
             return gemini_text
 
-        # 2. Secondary STT: Faster-Whisper Model
+        # 2. Secondary STT: Faster-Whisper Model with Domain Vocabulary Biasing
         model = self._get_model()
         if model:
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_file:
@@ -84,7 +90,11 @@ class LinguisticExtractor:
                 tmp_file.write(audio_bytes)
 
             try:
-                segments, _ = model.transcribe(tmp_path, beam_size=1)
+                whisper_initial_prompt = (
+                    "Clinical & Dementia Care Vocabulary: Donepezil, Memantine, Galantamine, Rivastigmine, "
+                    "Aricept, Namenda, Exelon, validation therapy, reminiscence, caregiver, neurologist, appointment, dosage."
+                )
+                segments, _ = model.transcribe(tmp_path, beam_size=1, initial_prompt=whisper_initial_prompt)
                 text = " ".join([segment.text for segment in segments]).strip()
                 if text:
                     return text

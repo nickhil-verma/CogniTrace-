@@ -6,6 +6,7 @@ import httpx
 
 from app.config import settings
 from app.database.dynamodb import dynamodb_service
+from app.services.asr_corrector import asr_corrector
 from app.models.voice_chat import VoiceAgentTurnResponse
 
 logger = logging.getLogger("cognitrace.caregiver_agent")
@@ -103,7 +104,19 @@ class CaregiverVoiceAgent:
         caregiver_id: str = "usr_demo_001",
         patient_id: str = "patient_001"
     ) -> VoiceAgentTurnResponse:
-        lower = transcript.lower()
+        # Step 0: Run Deterministic Phonetic Post-Correction Middleware grounded in Patient Entities
+        reminders = dynamodb_service.get_patient_reminders(patient_id)
+        rem_titles = [r.get("title") for r in reminders if r.get("title")]
+        patient_context = {
+            "patient_id": patient_id,
+            "patient_name": "Sunita",
+            "medications": ["Donepezil", "Memantine", "Galantamine", "Aricept"],
+            "reminders": rem_titles,
+            "family_members": ["Priya", "Mary", "Arun"]
+        }
+        correction_result = await asr_corrector.correct_transcription(transcript, patient_context)
+        sanitized_transcript = correction_result.corrected_transcript
+        lower = sanitized_transcript.lower()
 
         # 1. Guardrail Check: Memory deletion block
         if ("memory" in lower or "photo" in lower or "story" in lower) and \
@@ -111,11 +124,11 @@ class CaregiverVoiceAgent:
             speech = "Patient life stories and memories are permanent archival records. They cannot be deleted via voice commands."
             
             # Save caregiver history
-            dynamodb_service.save_caregiver_chat(caregiver_id, patient_id, "user", transcript)
+            dynamodb_service.save_caregiver_chat(caregiver_id, patient_id, "user", sanitized_transcript)
             dynamodb_service.save_caregiver_chat(caregiver_id, patient_id, "model", speech)
             
             return VoiceAgentTurnResponse(
-                transcript=transcript,
+                transcript=sanitized_transcript,
                 speech_response=speech,
                 agent_type="caregiver",
                 actions=[],
@@ -127,12 +140,12 @@ class CaregiverVoiceAgent:
         history_str = "\n".join([f"{h.get('role').upper()}: {h.get('message_text')}" for h in past_history])
 
         # 3. Save User turn in caregiver_chat_history
-        dynamodb_service.save_caregiver_chat(caregiver_id, patient_id, "user", transcript)
+        dynamodb_service.save_caregiver_chat(caregiver_id, patient_id, "user", sanitized_transcript)
 
         # 4. Attempt Gemini API Call if Key Present
         if GEMINI_API_KEY and GEMINI_API_KEY != "AQ.Ab8RN6LqjBmwVMdowBJZ6_kVfXs29firXQKFCsCuLMzeGiHJFQ_invalid":
             try:
-                ai_resp = await self._call_gemini_api(transcript, history_str, caregiver_id, patient_id)
+                ai_resp = await self._call_gemini_api(sanitized_transcript, history_str, caregiver_id, patient_id)
                 if ai_resp:
                     dynamodb_service.save_caregiver_chat(
                         caregiver_id,
@@ -146,7 +159,7 @@ class CaregiverVoiceAgent:
                 logger.warning(f"[CaregiverVoiceAgent] Gemini API failed: {e}. Using clinical deterministic engine.")
 
         # 5. Fallback Clinical Deterministic Engine
-        resp = self._caregiver_deterministic_engine(transcript, caregiver_id, patient_id)
+        resp = self._caregiver_deterministic_engine(sanitized_transcript, caregiver_id, patient_id)
         dynamodb_service.save_caregiver_chat(
             caregiver_id,
             patient_id,

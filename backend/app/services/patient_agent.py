@@ -7,6 +7,7 @@ import httpx
 from app.config import settings
 from app.database.dynamodb import dynamodb_service
 from app.services.vector_store import vector_store
+from app.services.asr_corrector import asr_corrector
 from app.models.voice_chat import VoiceAgentTurnResponse
 
 logger = logging.getLogger("cognitrace.patient_agent")
@@ -90,7 +91,19 @@ class PatientVoiceAgent:
         transcript: str,
         patient_id: str = "patient_001"
     ) -> VoiceAgentTurnResponse:
-        lower = transcript.lower()
+        # Step 0: Run Deterministic Phonetic Post-Correction Middleware grounded in Patient Entities
+        reminders = dynamodb_service.get_patient_reminders(patient_id)
+        rem_titles = [r.get("title") for r in reminders if r.get("title")]
+        patient_context = {
+            "patient_id": patient_id,
+            "patient_name": "Sunita",
+            "medications": ["Donepezil", "Memantine", "Galantamine", "Aricept"],
+            "reminders": rem_titles,
+            "family_members": ["Priya", "Mary", "Arun"]
+        }
+        correction_result = await asr_corrector.correct_transcription(transcript, patient_context)
+        sanitized_transcript = correction_result.corrected_transcript
+        lower = sanitized_transcript.lower()
 
         # 1. Guardrail Check: Block Deletions & Administrative Mutations Gently
         if any(w in lower for w in ["delete", "remove", "cancel", "edit appointment", "change appointment", "settings"]):
@@ -99,7 +112,7 @@ class PatientVoiceAgent:
             dynamodb_service.save_patient_chat(
                 patient_id=patient_id,
                 role="user",
-                message_text=transcript,
+                message_text=sanitized_transcript,
                 sentiment_flag="ANXIOUS" if "anxious" in lower or "where" in lower else "CALM"
             )
             dynamodb_service.save_patient_chat(
@@ -111,7 +124,7 @@ class PatientVoiceAgent:
             )
 
             return VoiceAgentTurnResponse(
-                transcript=transcript,
+                transcript=sanitized_transcript,
                 speech_response=speech,
                 agent_type="patient",
                 actions=[],
@@ -122,8 +135,8 @@ class PatientVoiceAgent:
         past_history = dynamodb_service.get_patient_chat_history(patient_id, limit=10)
         history_str = "\n".join([f"{h.get('role').upper()}: {h.get('message_text')}" for h in past_history])
 
-        # 3. Retrieve grounding memories from vector store
-        matched_memories = vector_store.search_memories(patient_id, transcript, top_k=2)
+        # 3. Retrieve grounding memories from vector store using sanitized transcript
+        matched_memories = vector_store.search_memories(patient_id, sanitized_transcript, top_k=2)
         memory_snippets = []
         for m in matched_memories:
             memory_snippets.append(f"- Memory '{m.get('title')}': {m.get('narrative') or m.get('description')} (Photo: {m.get('photo_url')})")
@@ -133,14 +146,14 @@ class PatientVoiceAgent:
         dynamodb_service.save_patient_chat(
             patient_id=patient_id,
             role="user",
-            message_text=transcript,
+            message_text=sanitized_transcript,
             sentiment_flag="CALM"
         )
 
         # 5. Attempt Gemini API Call if Key Present
         if GEMINI_API_KEY and GEMINI_API_KEY != "AQ.Ab8RN6LqjBmwVMdowBJZ6_kVfXs29firXQKFCsCuLMzeGiHJFQ_invalid":
             try:
-                ai_resp = await self._call_gemini_api(transcript, history_str, vector_context, patient_id, matched_memories)
+                ai_resp = await self._call_gemini_api(sanitized_transcript, history_str, vector_context, patient_id, matched_memories)
                 if ai_resp:
                     grounding_cue = ai_resp.retrieved_memory.get("title") if ai_resp.retrieved_memory else None
                     dynamodb_service.save_patient_chat(
@@ -155,7 +168,7 @@ class PatientVoiceAgent:
                 logger.warning(f"[PatientVoiceAgent] Gemini API failed: {e}. Using validation deterministic engine.")
 
         # 6. Fallback Validation Deterministic Engine
-        resp = self._patient_deterministic_engine(transcript, patient_id, matched_memories)
+        resp = self._patient_deterministic_engine(sanitized_transcript, patient_id, matched_memories)
         grounding_cue = resp.retrieved_memory.get("title") if resp.retrieved_memory else None
         dynamodb_service.save_patient_chat(
             patient_id=patient_id,
